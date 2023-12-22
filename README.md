@@ -63,7 +63,7 @@ Please see [these notes](https://github.com/calebmsword/javascript-notes/blob/ma
 
 ### customizer
 
-`cloneDeep` can take a customizer which allows the user to support custom types. The customizer has high priority over the default behavior of the algorithm, giving the user considerable power to extend `cloneDeep`'s functionality.
+`cloneDeep` can take a customizer which allows the user to support custom types. This gives the user considerable power to extend or change `cloneDeep`'s functionality.
 
 Here is an example of how we can use `cloneDeep` to properly clone objects which contain a custom class which has a [private property](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_properties). 
 
@@ -117,9 +117,21 @@ console.log(clonedObj.foo.get());  // {spam: 'eggs'}
 console.log(clonedObj.foo.get() === obj.foo.get());  // false
 ```
 
+If the customizer returns an object, the default behavior of `cloneDeep` will be overridden, even if the object does not return a `clone` property (in that case, the value will be cloned into the value `undefined`).
+
+There are many properties that will be observed in the object returned by the customizer:
+  - `clone`: What the value will be cloned into.
+  - `additionalValues`: This must be an array of objects. Use this to clone additional values that are not accessible as properties on `clone`.  The objects in the array should have two properties:
+    - `value`: another value to clone
+    - `assigner`: A function of an argument. It receives the clone of `value` and assigns it to some permanent place. 
+  - `ignoreProps`: By default, all properties in `clone` will be cloned. If this property is `true`, then those properties will **not** be cloned.
+  - `ignoreProto`: If `true`, then the algorithm will not force `clone` to share the prototype of `value`. 
+  - `ignore`: If `true`, value will not be cloned at all.
+  - `doThrow`: If `true`, any errors thrown by the customizer will be thrown by `cloneDeep`. Normally, they are logged as warnings and the algorithm will proceed with default behavior.
+
 ### cloneDeep vs structuredClone
 
-JavaScript has a native function `structuredClone` which deeply clones objects, and it is only sometimes preferable to `cloneDeep`. Differences between `structuredClone` and `cloneDeep` include:
+JavaScript has a native function `structuredClone` which deeply clones objects. Differences between `structuredClone` and `cloneDeep` include:
  - `structuredClone` cannot clone objects which have symbols or properties that are symbols. `cloneDeep` can.
  - `structuredClone` does not clone non-enumerable properties. `cloneDeep` does.
  - `structuredClone` does not preserve the extensible, sealed, or frozen property of an object or any of its nested objects. `cloneDeep` does.
