@@ -585,7 +585,8 @@ function cloneInternalNoRecursion(_value, customizer, log) {
  * or WeakSets). 
  * 
  * @param {any} value The value to deeply copy.
- * @param {Object} options Additional options for the clone.
+ * @param {Object|Function} options If a function, then this argument is used as 
+ * the customizer. If an object, it is used as a configuration object.
  * @param {Function} options.customizer Allows the user to inject custom logic. 
  * The function is given the value to copy. If the function returns an object, 
  * the value of the `clone` property on that object will be used as the clone. 
@@ -600,10 +601,12 @@ function cloneInternalNoRecursion(_value, customizer, log) {
  * @returns {Object} The deep copy.
  */
 function cloneDeep(value, options) {
-    if (typeof options !== "object") options = {};
+    if (typeof options === "function") options = { customizer: options };
+    else if (typeof options !== "object") options = {};
+    
     let { customizer, log, logMode } = options;
 
-    if (logMode !== "string");
+    if (logMode !== "string" || typeof log === "function");
     else if (logMode.toLowerCase() === "silent") 
         log = () => { /* no-op */ };
     else if (logMode.toLowerCase() === "quiet")
@@ -611,5 +614,5 @@ function cloneDeep(value, options) {
 
     return cloneInternalNoRecursion(value, customizer, log);
 }
-
+ 
 export default cloneDeep;
