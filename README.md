@@ -136,7 +136,7 @@ JavaScript has a native function `structuredClone` which deeply clones objects. 
  - `structuredClone` does not clone non-enumerable properties. `cloneDeep` does.
  - `structuredClone` does not preserve the extensible, sealed, or frozen property of an object or any of its nested objects. `cloneDeep` does.
  - `structuredClone` does not clone the property descriptor associated with any value in an object. `cloneDeep` does.
- - `structuredClone` supports all of the types listed [here]([supported type](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types). `cloneDeep` only supports the types listed under "JavaScript types" (and `Symbol`).
+ - `structuredClone` supports all of the types listed [here](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types). `cloneDeep` only supports the types listed under "JavaScript types" (and `Symbol`).
  - - Some runtimes implement `structuredClone` with recursion meaning that deeply nested objects can blow up the call stack. `cloneDeep` uses no recursion.
  - `structuredClone` throws an error if the user attempts to clone an object with methods. `cloneDeep` will copy the methods *by value* and noisily log a warning.
  - `structuredClone` throws an error when provided an object of an unsupported type. On the other hand, `cloneDeep` will copy the type as an empty object and noisily log a warning.
