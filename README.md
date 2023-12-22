@@ -1,4 +1,4 @@
-# clone-deep
+# cloneDeep
 A robust utility for deeply cloning JavaScript objects.
 
 ```javascript
