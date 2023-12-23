@@ -17,7 +17,7 @@ console.log(cloned[1] === object[1]);  // false
 ```
 
 
-The first argument to `cloneDeep` is the object to clone. The second argument can either be a function which will be used to customizer the behavior of the function, or it can be an object that can be used for configuration.
+The first argument to `cloneDeep` is the object to clone. The second argument can either be a function which will be used as a "customizer" for the behavior of the function, or it can be an object that can be used for configuration.
 
 ```javascript
 // many ways to call `cloneDeep`
