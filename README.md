@@ -55,7 +55,7 @@ const cloned = cloneDeep(originalObject, {
 
 ### What can and cannot be cloned
 
-Functions cannot be reliably cloned in JavaScript. Functions which do not access data in their closures can be cloned, but there is no way for an algorithm to know if a function accesses its closure. It is also not possible to clone methods on native JavaScript prototypes. `WeakMap` and `WeakSet` instances also cannot be cloned.
+Functions cannot be reliably cloned in JavaScript. Functions which do not access data in their closures can be cloned, but there is no way for an algorithm to know if a function accesses its closure. The techniques which can properly clone functions that do not access their closure are highly insecure and should not be used. It is also not possible to clone methods on native JavaScript prototypes. `WeakMap` and `WeakSet` instances also cannot be cloned.
 
 Most objects have `Object.prototype` in their prototype chain, but `Object.prototype` has functions so it cannot be cloned. In the vast majority of use cases, it is not possible to clone the prototype chain. Instead, it makes more sense to have the cloned object share the prototype of the original object.
 
