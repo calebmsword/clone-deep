@@ -26,7 +26,7 @@ const Tag = Object.freeze({
     UINT32: '[object Uint32Array]'
 });
 
-function cloneInternalNoRecursion(_value, customizer, log) {
+function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
     
     if (typeof log !== "function") log = console.warn;
 
@@ -178,7 +178,7 @@ function cloneInternalNoRecursion(_value, customizer, log) {
         // Perform user-injected logic if applicable.
         if (typeof customizer === "function") {
 
-            let clone, additionalValues, ignore, doThrow;
+            let clone, additionalValues, ignore;
 
             try {
                 const customResult = customizer(value);
@@ -191,8 +191,7 @@ function cloneInternalNoRecursion(_value, customizer, log) {
                        additionalValues,
                        ignore,
                        ignoreProps,
-                       ignoreProto,
-                       doThrow
+                       ignoreProto
                     } = customResult);
 
                     if (ignore === true) continue;
@@ -205,10 +204,10 @@ function cloneInternalNoRecursion(_value, customizer, log) {
                     if (Array.isArray(additionalValues))
                         additionalValues.forEach(object => {
                             if (typeof object === "object") {
-                                if (object.parentOrAssigner === undefined)
-                                    object.parentOrAssigner = object.assigner
-                                                              || object.parent;
-                                queue.push(object);
+                                queue.push({
+                                    value: object.value,
+                                    parentOrAssigner: object.assigner
+                                });
                             }
                         });
                 }
@@ -571,9 +570,6 @@ function cloneInternalNoRecursion(_value, customizer, log) {
  *  - `ignoreProto` - If `true`, the prototype of the value will not be copied 
  * to the clone. 
  *  - `ignore` - If `true`, the value will not be cloned at all.
- *  - `doThrow` - If `true`, errors thrown by the customizer will be thrown by 
- * `cloneDeep`. Otherwise, errors thrown by the customizer will be sent to the 
- * logger function.
  * 
  * The customizer has extremely high priority over the default behavior of the 
  * algorithm. The only logic the algorithm prioritizes over the customizer is 
@@ -598,13 +594,16 @@ function cloneInternalNoRecursion(_value, customizer, log) {
  * @param {String} options.logMode Case-insensitive. If "silent", no warnings 
  * will be logged. Use with caution, as failures to perform true clones are
  * logged as warnings. If "quiet", the stack trace of the warning is ignored.
+ * @param {Boolean} options.letCustomizerThrow If `true`, errors thrown by the 
+ * customizer will be thrown by `cloneDeep`. By default, the error is logged and 
+ * the algorithm proceeds with default behavior.
  * @returns {Object} The deep copy.
  */
 function cloneDeep(value, options) {
     if (typeof options === "function") options = { customizer: options };
     else if (typeof options !== "object") options = {};
     
-    let { customizer, log, logMode } = options;
+    let { customizer, log, logMode, letCustomizerThrow } = options;
 
     if (logMode !== "string" || typeof log === "function");
     else if (logMode.toLowerCase() === "silent") 
@@ -612,7 +611,7 @@ function cloneDeep(value, options) {
     else if (logMode.toLowerCase() === "quiet")
         log = error => console.warn(error.message);
 
-    return cloneInternalNoRecursion(value, customizer, log);
+    return cloneInternalNoRecursion(value, customizer, log, letCustomizerThrow);
 }
  
 export default cloneDeep;

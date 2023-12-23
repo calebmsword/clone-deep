@@ -16,32 +16,39 @@ console.log(cloned[0] === object[0]);  // false
 console.log(cloned[1] === object[1]);  // false
 ```
 
-
 The first argument to `cloneDeep` is the object to clone. The second argument can either be a function which will be used as a "customizer" for the behavior of the function, or it can be an object that can be used for configuration.
 
 ```javascript
-// many ways to call `cloneDeep`
+// Many ways to call `cloneDeep`:
+let cloned;
 
-// 1: default behavior
-const cloned = cloneDeep(originalObject);
+// 1: Default behavior
+cloned = cloneDeep(originalObject);
 
-// 2: provide a customizer function
-const cloned = cloneDeep(originalObject, customizer)
+// 2: Provide a customizer function
+cloned = cloneDeep(originalObject, myCustomizer)
 
-// 3: provide a configuration object
-const cloned = cloneDeep(originalObject, {
+// 3: Provide a configuration object
+cloned = cloneDeep(originalObject, {
 
     // This is another way to provide a customizer.
     customizer: myCustomizer,
 
-    // Not every JavaScript object can be cloned. Warnings are, by default, logged to the
-    // console when failures to perform true clones occur. You can provide a custom logger
-    // which receives the error object containing the warning.
+    // If `true`, any errors thrown by the customizer will be thrown by 
+    // `cloneDeep`. Normally, they are logged as warnings and the algorithm will 
+    // proceed with default behavior.
+    letCustomizerThrow: true,
+
+    // Not every JavaScript object can be cloned. Warnings are, by default, 
+    // logged to the console when failures to perform true clones occur. You can 
+    // provide a custom logger which receives the error object containing the 
+    // warning.
     log: myLogFunction,
 
-    // If the user does not provide a custom log function, then you can change the behavior
-    // when warnings occur. The two supported modes are "quiet" (warnings are less verbose) and
-    // "silent" (no warnings are logged to the console--use with caution!).
+    // If the user does not provide a custom log function, then you can change 
+    // the behavior when warnings occur. The two supported modes are "quiet" 
+    // (warnings are less verbose) and "silent" (no warnings are logged to the 
+    // console--use with caution!).
     logMode: "quiet"
 });
 ```
@@ -53,11 +60,16 @@ const cloned = cloneDeep(originalObject, {
 `cloneDeep` has none of these limitations. See [this section](#cloneDeep-vs-structuredClone) for more specifics on the differrences between `cloneDeep` and `structuredClone`.
 
 
-### What can and cannot be cloned
+### What cannot be cloned
 
-Functions cannot be reliably cloned in JavaScript. Functions which do not access data in their closures can be cloned, but there is no way for an algorithm to know if a function accesses its closure. The techniques which can properly clone functions that do not access their closure are highly insecure and should not be used. It is also not possible to clone methods on native JavaScript prototypes. `WeakMap` and `WeakSet` instances also cannot be cloned.
+Functions cannot be reliably cloned in JavaScript. 
+ - It is impossible to clone native JavaScript functions.
+ - It is impossible to clone functions which manipulate data in their closures.
+ - The techniques which properly clone some functions use `eval` or the `Function` constructor which are highly insecure.
+ 
+`WeakMap` and `WeakSet` instances also cannot be cloned.
 
-Most objects have `Object.prototype` in their prototype chain, but `Object.prototype` has functions so it cannot be cloned. In the vast majority of use cases, it is not possible to clone the prototype chain. Instead, it makes more sense to have the cloned object share the prototype of the original object.
+Most objects have `Object.prototype` or some other native JavaScript prototype in their prototype chain, but native functions cannot be cloned. This means that it is usually impossible to clone the prototype chain. Instead, it makes more sense to have the cloned object share the prototype of the original object.
 
 Please see [these notes](https://github.com/calebmsword/javascript-notes/blob/main/deep-clone.md#deep-clone-and-functions) for an in-depth discussion on the challenge of cloning functions.
 
@@ -65,7 +77,7 @@ Please see [these notes](https://github.com/calebmsword/javascript-notes/blob/ma
 
 `cloneDeep` can take a customizer which allows the user to support custom types. This gives the user considerable power to extend or change `cloneDeep`'s functionality.
 
-Here is an example of how we can use `cloneDeep` to properly clone objects which contain a custom class which has a [private property](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_properties). 
+Here is how we can use `cloneDeep` to clone objects containing custom classes with a [private property](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_properties). 
 
 ```javascript
 import cloneDeep from "./clone-deep.js";
@@ -127,7 +139,13 @@ There are many properties that will be observed in the object returned by the cu
   - `ignoreProps`: By default, all properties in `clone` will be cloned. If this property is `true`, then those properties will **not** be cloned.
   - `ignoreProto`: If `true`, then the algorithm will not force `clone` to share the prototype of `value`. 
   - `ignore`: If `true`, value will not be cloned at all.
-  - `doThrow`: If `true`, any errors thrown by the customizer will be thrown by `cloneDeep`. Normally, they are logged as warnings and the algorithm will proceed with default behavior.
+
+### clone-deep-utils
+
+clone-deep-utils.js contains two utilities.
+
+ 1) `cloneDeepFully` This method will clone an object as well as each object in its prototype chain. The API is exactly the same as `cloneDeep` except that the options object can take the additional property `force`. If `force` is `true`, `cloneDeepFully` will clone prototypes with methods. Otherwise, it stops once it reaches any prototype with methods.
+ 2) `useCustomizers` This function takes an array of customizer functions and returns a new customizer. The new customizer calls each customizer one at a time, in order, and returns an object if once any of the customizers returns an object. Use this to avoid code reuse when creating multiple useful customizers.
 
 ### cloneDeep vs structuredClone
 
@@ -145,4 +163,6 @@ JavaScript has a native function `structuredClone` which deeply clones objects. 
 
 ### acknowledgements
 
-This algorithm is a heavily modified version of the the [cloneDeep](https://lodash.com/docs/4.17.15#cloneDeep) utility from Lodash.
+ - This algorithm is a heavily modified version of the the [cloneDeep](https://lodash.com/docs/4.17.15#cloneDeep) utility from Lodash. If anyone knows who specifically implemented the algorithm, I will thank them directly.
+ - Thanks to Tiago Bertolo, the author of [this article](https://medium.com/@tiagobertolo). It reminded to clone the metadata of objects.
+ - 
