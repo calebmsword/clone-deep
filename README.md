@@ -96,7 +96,9 @@ wrapper.set({ spam: "eggs" });
 
 const obj = { foo: wrapper };
 
+// The customizer gets one argument: the value to clone
 function myCustomizer(value) {
+
     // If the customizer does not return an object, cloneDeep performs default behavior
     if (Object.getPrototypeOf(value) !== Wrapper.prototype) {
         return;
