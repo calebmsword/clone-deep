@@ -117,7 +117,7 @@ function myCustomizer(value) {
                 clonedWrapper.set(cloned);
             }
         }]
-    }
+    };
 }
 
 const clonedObj = cloneDeep(obj, myCustomizer);
