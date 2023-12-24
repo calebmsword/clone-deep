@@ -23,7 +23,9 @@ const Tag = Object.freeze({
     UINT8: '[object Uint8Array]',
     UINT8CLAMPED: '[object Uint8ClampedArray]',
     UINT16: '[object Uint16Array]',
-    UINT32: '[object Uint32Array]'
+    UINT32: '[object Uint32Array]',
+    BIGINT64: "[object BigInt64Array]",
+    BIGUINT64: "[object BigUint64Array]"
 });
 
 function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
@@ -350,7 +352,9 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                             Tag.UINT8,
                             Tag.UINT8CLAMPED,
                             Tag.UINT16,
-                            Tag.UINT32
+                            Tag.UINT32,
+                            Tag.BIGINT64,
+                            Tag.BIGUINT64
                         ].includes(tagOf(value))) {
                     // copy data over to clone
                     const buffer = new value.buffer.constructor(

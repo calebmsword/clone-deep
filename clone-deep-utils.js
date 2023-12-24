@@ -1,4 +1,4 @@
-import cloneDeep from "./clone-deep";
+import cloneDeep from "./clone-deep.js";
 
 /**
  * Deeply clones the provided object and its prototype chain.
@@ -38,23 +38,26 @@ export function cloneDeepFully(value, options) {
      * @returns {Boolean}
      */
     function hasMethods(o) {
-        return getAllPropertiesOf(o).every(key => typeof o[key] !== "function");
+        return getAllPropertiesOf(o).some(key => typeof o[key] === "function");
     }
 
     const clone = cloneDeep(value, options);
     
     let tempClone = clone;
     let tempOrig = value;
+    
+    while (Object.getPrototypeOf(tempOrig) !== null 
+           && (!hasMethods(Object.getPrototypeOf(tempOrig)) || options.force)) {
 
-    while (Object.getPrototypeOf(tempOrig) !== null
-           && (!hasMethods(tempOrig) || options.force)) {
         const newProto = cloneDeep(Object.getPrototypeOf(tempOrig), options);
 
         Object.setPrototypeOf(tempClone, newProto);
-        [tempClone, tempOrig].forEach(temp => {
-            temp = Object.getPrototypeOf(temp);
-        });
+        
+        tempClone = Object.getPrototypeOf(tempClone);
+        tempOrig = Object.getPrototypeOf(tempOrig);
     }
+
+    return clone;
 }
 
 /**

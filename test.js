@@ -1,4 +1,5 @@
 import cloneDeep from "./clone-deep.js";
+import { cloneDeepFully } from "./clone-deep-utils.js";
 
 const map = new Map();
 map.set("p", { p: "p", g: { h: "h" } });
@@ -209,8 +210,52 @@ const cloneWrapperFactoryCustomizer = () => {
     console.log("cloned.wrapper.get() === original.wrapper.get()?", original.wrapper.get() === cloned.wrapper.get());
 }
 
+const testCloneDeepFully = () => {
+    const a = Object.create(null);
+    a.test = "test";
+
+    const b = Object.create(a);
+    b.method = function() {};
+
+    const c = Object.create(b);
+    c.prop = "prop";
+
+    const d = Object.create(c);
+    d.own = "own";
+
+    const dCloned = cloneDeepFully(d);
+
+    const dProto1 = Object.getPrototypeOf(dCloned);
+    const dProto2 = Object.getPrototypeOf(dProto1);
+    const dProto3 = Object.getPrototypeOf(dProto2);
+
+    console.log("cloned:", dCloned);
+    console.log("proto of cloned:", dProto1);
+    console.log("proto-proto of cloned:", dProto2);
+    console.log("proto-proto-proto of cloned:", dProto3);
+
+    console.log("cloned === original", d === dCloned);
+    console.log("proto of cloned === proto of original", dProto1 === c);
+    console.log("proto^2 of cloned === proto^2 of original", dProto2 === b);
+    console.log("proto^3 of cloned === proto^3 of original", dProto3 === a);
+
+    const dClonedForced = cloneDeepFully(d, {
+        force: true
+    });
+
+    const dForcedProto1 = Object.getPrototypeOf(dClonedForced);
+    const dForcedProto2 = Object.getPrototypeOf(dForcedProto1);
+    const dForcedProto3 = Object.getPrototypeOf(dForcedProto2);
+
+    console.log("cloned === original", d === dClonedForced);
+    console.log("proto of cloned === proto of original", dForcedProto1 === c);
+    console.log("proto^2 of cloned === proto^2 of original", dForcedProto2 === b);
+    console.log("proto^3 of cloned === proto^3 of original", dForcedProto3 === a);
+}
+
 testClone();
 dontCloneMethodsCustomizer();
 actuallyDontCloneMethodsCustomizer();
 cloneWrapperEs6ClassCustomizer();
 cloneWrapperFactoryCustomizer();
+testCloneDeepFully();
