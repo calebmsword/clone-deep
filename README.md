@@ -130,7 +130,7 @@ console.log(clonedObj.foo.get());  // {spam: 'eggs'}
 console.log(clonedObj.foo.get() === obj.foo.get());  // false
 ```
 
-If the customizer returns an object, the default behavior of `cloneDeep` will be overridden, even if the object does not return a `clone` property (in that case, the value will be cloned into the value `undefined`).
+If the customizer returns an object, the default behavior of `cloneDeep` will be overridden, even if the object does not have a `clone` property (in that case, the value will be cloned into the value `undefined`).
 
 There are many properties that will be observed in the object returned by the customizer:
   - `clone`: What the value will be cloned into.
