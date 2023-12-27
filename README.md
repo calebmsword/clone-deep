@@ -179,3 +179,4 @@ the PORT command line option is optional (defaults to 8888), and visiting `http:
  - Thanks to Tiago Bertolo, the author of [this article](https://medium.com/@tiagobertolo/which-is-the-best-method-for-deep-cloning-in-javascript-are-they-all-bad-101f32d620c5). It reminded me to clone the metadata of objects.
  - Thanks to MDN and its documentation on the [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm).
  - Thanks to to contributors of the HTML Standards document for their description of the [structured clone algorithm](https://html.spec.whatwg.org/multipage/structured-data.html#safe-passing-of-structured-data).
+ - Thanks to StackExchange user Jonathan Tran for his `http.createServer` example.
