@@ -252,34 +252,9 @@ const testCloneDeepFully = () => {
     console.log("proto^3 of cloned === proto^3 of original", dForcedProto3 === a);
 }
 
-const testNesting = () => {
-    const LAYERS = 10**6;
-
-    const obj = {};
-    let next = obj;
-    for (let i = 0; i < LAYERS; i++) {
-        next.b = {};
-        next = next.b;
-    }
-
-    const ITERATIONS = 100;
-
-    const before = Date.now();
-
-    for (let i = 0; i < ITERATIONS; i++) cloneDeep(obj);
-
-    const after = Date.now();
-
-    console.log(
-        `${LAYERS} layers, ${ITERATIONS} iterations, average time (s):\n`,
-        ((after - before) / ITERATIONS) / 1000
-    );
-}
-
 testClone();
 dontCloneMethodsCustomizer();
 actuallyDontCloneMethodsCustomizer();
 cloneWrapperEs6ClassCustomizer();
 cloneWrapperFactoryCustomizer();
 testCloneDeepFully();
-// testNesting();
