@@ -169,7 +169,7 @@ The file `test.js` contains some informal tests. It runs `cloneDeep` in a myriad
 ### benchmarking
 
 Some simple benchmarking can be performed by running `node serve.js <PORT>`, where 
-the PORT command line option is optional. This **must** be done in the directory containing `index.html`.
+the PORT command line option is optional (defaults to 8888), and visiting `http://localhost:<PORT>`. This **must** be done in the directory containing `index.html`.
 
 `script.js` runs `cloneDeep` and `structuredClone` on the same object. You can use your favorite browser's dev tools to benchmark the result.
 
