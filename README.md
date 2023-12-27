@@ -162,6 +162,17 @@ JavaScript has a native function `structuredClone` which deeply clones objects. 
  - `structuredClone` will identify if an object was created by a native JavaScript constructor function even if the object's prototype is changed or if the `Symbol.toStringTag` property is changed; furthermore, the cloned object will have the prototype from the native constructor function from even if the original object changed its prototype. On the other hand, `deepClone` uses `Object.prototype.toString.call` to identify the type of an object and the cloned object will share the original object's prototype no matter the result of `Object.prototype.toString.call`.
  - If the prototype of the original object is the prototype of any [supported type](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types) for the structured clone algorithm, then object returned by `structuredClone` will share the original object's prototype; otherwise, the prototype of the object will be `Object.prototype`. Meanwhile, the object cloned by `cloneDeep` will always share the prototype of the original object. 
 
+### testing
+
+The file `test.js` contains some informal tests. It runs `cloneDeep` in a myriad of ways and logs the result. Simply do `node test.js` to run the "tests".
+
+### benchmarking
+
+Some simple benchmarking can be performed by running `node serve.js <PORT>`, where 
+the PORT command line option is optional. This **must** be done in the directory containing `index.html`.
+
+`script.js` runs `cloneDeep` and `structuredClone` on the same object. You can use your favorite browser's dev tools to benchmark the result.
+
 ### acknowledgements
 
  - This algorithm is a heavily modified version of the the [cloneDeep](https://lodash.com/docs/4.17.15#cloneDeep) utility from Lodash. If anyone knows who specifically implemented the algorithm, I will thank them directly.
