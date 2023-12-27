@@ -63,13 +63,13 @@ export function cloneDeepFully(value, options) {
 /**
  * Creates a customizer which composes other customizers.
  * The customizers are executed in order. The first to return an object is used 
- * as the result. If an element in the array is not callable, an error will be 
+ * as the result. Non-callable customizers will be skipped.
  * @param {Function[]} customizers An array of customizer functions.
  * @returns {Function} A new customizer which composes the provided customizers.
  */
 export function useCustomizers(customizers) {
-    return function customizer(value) {
-        for (customizer of customizers) {
+    return function combinedCustomizer(value) {
+        for (const customizer of customizers) {
             if (typeof customizer !== "function") continue;
 
             const result = customizer(value);
