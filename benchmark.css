@@ -1,0 +1,121 @@
+:root {
+    --main-background-color: rgb(176, 175, 175);
+    --content-background-color: rgba(0, 191, 255, 0.726); 
+    --content-border-color: black;
+    --button-color: rgb(255, 174, 0);
+    --button-hover-color: rgb(174, 126, 24);
+    --button-border-color: black;
+}
+
+html, body {
+    margin: 0px;
+    padding: 0px;
+    background-color: var(--main-background-color);
+}
+
+.main-container {
+    width: 400px;
+    height: 400px;
+    margin: 20px;
+    display: flex;
+    border-style: solid;
+    background-color: var(--content-background-color);
+    border-color: var(--content-border-color);
+    border-radius: 10px;
+    border-width: 2px;
+    flex-direction: column;
+}
+
+.table-title {
+    font-size: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.table {
+    width: auto;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    border-style: solid;
+    border-color: black;
+    border-width: 2px;
+    margin: 0px 50px 50px 50px;
+    font-family:'Courier New', Courier, monospace;
+    font-size: 12px;
+}
+
+.table-col {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.table-col .title {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+.table-col .result {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+.table-col .title-text-container {
+    display: flex;
+    justify-content: end;
+}
+
+.table-col .result-text-container { 
+    display: flex;
+    justify-content: start;
+}
+
+.iterations-container {
+    padding: 20px;
+    width: 100%;
+    flex-grow: 0.25;
+    display: flex;
+    justify-content: center;
+}
+
+.iterations-container .label-container {
+    display: flex;
+    justify-content: end;
+    padding-right: 10px;
+}
+
+.iterations-container .input-container {
+    width: 60%;
+}
+
+.buttons {
+    flex-grow: 0.75;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 20px;
+}
+
+.button {
+    background-color: var(--button-color);
+    border-color: var(--button-border-color);
+    margin-right: 5px;
+    border-style: solid;
+    border-width: 2px;
+    height: 30px;
+    width: fit-content;
+    padding: 0px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+}
+
+.button:hover {
+    background-color: var(--button-hover-color);
+    cursor: pointer;
+}

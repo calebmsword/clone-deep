@@ -3,10 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <title>Benchmark cloneDeep</title>
-    
+    <link rel="stylesheet" href="./benchmark.css">
+    <script defer type="module" src="./script.js"></script>
 </head>
 <body>
-    Test
-    <script type="module" src="./script.js"></script>
+    <div class="main-container">
+        <div class="table-title-container">
+            <div class="table-title">Average Time:</div>
+        </div>
+        <div class="table">
+            <div class="table-col left">
+                <div class="title">
+                    <div class="title-text-container top">
+                        <div class="title-text">structuredClone (ms):</div>
+                    </div>
+                </div>
+                <div class="title bottom">
+                    <div class="title-text-container">
+                        <div class="title-text">cloneDeep (ms):</div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-col right">
+                <div class="result top">
+                    <div class="result-text-container">
+                        <div class="result-text">---</div>
+                    </div>
+                </div>
+                <div class="result bottom">
+                    <div class="result-text-container">
+                        <div class="result-text">---</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="iterations-container">
+            <div class= "label-container">
+                <div class="label">Number of iterations:</div>
+            </div>
+            <div class="input-container">
+                <input class="iterations" type="number" placeholder="1000">
+            </div>
+        </div>
+        <div class="buttons">
+            <div class="button primitives-only">
+                <div class="button-text">primitives-only object</div>
+            </div>
+            <div class="button ordinary-object">
+                <div class="button-text">complex object</div>
+                
+            </div>
+            <div class="button deeply-nested">
+                <div class="button-text">deeply nested</div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

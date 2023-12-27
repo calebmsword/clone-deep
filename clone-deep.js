@@ -70,54 +70,6 @@ function getWarning(message, cause) {
 const TOP_LEVEL = Symbol("TOP_LEVEL");
 
 /**
- * Handles the assignment of the cloned value to some persistent place.
- * @param {any} cloned The cloned value.
- * @param {Object|Function|Symbol} parentOrAssigner Either the parent object 
- * that the cloned value will be assigned to, or a function which assigns the 
- * value itself. If equal to TOP_LEVEL, then it is the value that will be 
- * returned by the algorithm. 
- * @param {String|Symbol} prop If `parentOrAssigner` is a parent object, then 
- * `parentOrAssigner[prop]` will be assigned `cloned`.
- * @param {Object} metadata The property descriptor for the object. If not an 
- * object, then this is ignored.
- * @returns The cloned value.
- */
-function assign(cloned, parentOrAssigner, prop, metadata) {
-    if (parentOrAssigner === TOP_LEVEL) 
-        result = cloned;
-    else if (typeof parentOrAssigner === "function") 
-        parentOrAssigner(cloned, prop, metadata);
-    else if (typeof metadata === "object") {
-        const clonedMetadata = { 
-            configurable: metadata.configurable,
-            enumerable: metadata.enumerable
-        };
-
-        const hasAccessor = ["get", "set"].some(key => 
-            typeof metadata[key] === "function");
-        
-        // `cloned` or getAccessor will determine the value
-        if (!hasAccessor) {
-            clonedMetadata.value = metadata.value;
-            clonedMetadata.writable = metadata.writeable;
-        }
-        else if (typeof metadata.get === "function")
-            clonedMetadata.get = metadata.get;
-        else if (typeof metadata.set === "function")
-            clonedMetadata.set = metadata.set;
-
-        // defineProperty throws if property with accessors is writeable
-        if (hasAccessor)
-            log(Warning.ACCESSOR);
-
-        Object.defineProperty(parentOrAssigner, prop, clonedMetadata);
-    }
-    else 
-        parentOrAssigner[prop] = cloned;
-    return cloned;
-}
-
-/**
  * Gets a "tag", which is an string which identifies the type of a value.
  * `Object.prototype.toString` returns a string like `"[object <Type>]"`,  where 
  * type is the type of the object. We refer this return value as the **tag**. 
@@ -184,6 +136,54 @@ function isTypeArray(tag) {
  */
 function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
     
+    /**
+     * Handles the assignment of the cloned value to some persistent place.
+     * @param {any} cloned The cloned value.
+     * @param {Object|Function|Symbol} parentOrAssigner Either the parent object 
+     * that the cloned value will be assigned to, or a function which assigns 
+     * the value itself. If equal to TOP_LEVEL, then it is the value that will 
+     * be returned by the algorithm. 
+     * @param {String|Symbol} prop If `parentOrAssigner` is a parent object, 
+     * then `parentOrAssigner[prop]` will be assigned `cloned`.
+     * @param {Object} metadata The property descriptor for the object. If not 
+     * an object, then this is ignored.
+     * @returns The cloned value.
+     */
+    function assign(cloned, parentOrAssigner, prop, metadata) {
+        if (parentOrAssigner === TOP_LEVEL) 
+            result = cloned;
+        else if (typeof parentOrAssigner === "function") 
+            parentOrAssigner(cloned, prop, metadata);
+        else if (typeof metadata === "object") {
+            const clonedMetadata = { 
+                configurable: metadata.configurable,
+                enumerable: metadata.enumerable
+            };
+
+            const hasAccessor = ["get", "set"].some(key => 
+                typeof metadata[key] === "function");
+            
+            // `cloned` or getAccessor will determine the value
+            if (!hasAccessor) {
+                clonedMetadata.value = metadata.value;
+                clonedMetadata.writable = metadata.writeable;
+            }
+            else if (typeof metadata.get === "function")
+                clonedMetadata.get = metadata.get;
+            else if (typeof metadata.set === "function")
+                clonedMetadata.set = metadata.set;
+
+            // defineProperty throws if property with accessors is writeable
+            if (hasAccessor)
+                log(Warning.ACCESSOR);
+
+            Object.defineProperty(parentOrAssigner, prop, clonedMetadata);
+        }
+        else 
+            parentOrAssigner[prop] = cloned;
+        return cloned;
+    }
+
     if (typeof log !== "function") log = console.warn;
 
     /** 
