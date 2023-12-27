@@ -1,3 +1,6 @@
+/**
+ * Contains the tag for all supported types.
+ */
 const Tag = Object.freeze({
     ARGUMENTS: '[object Arguments]',
     ARRAY: '[object Array]',
@@ -28,189 +31,249 @@ const Tag = Object.freeze({
     BIGUINT64: "[object BigUint64Array]"
 });
 
+/**
+ * Used to log warnings.
+ */
+class CloneDeepWarning extends Error {
+    constructor(message, cause) {
+        super(message, cause);
+        this.name = CloneDeepWarning.name;
+    }
+}
+
+/**
+ * Common CloneDeepWarning instances.
+ */
+const Warning = {
+    ACCESSOR: getWarning("Cloning value whose property descriptor is a " + 
+                            "get or set accessor."),
+    WEAKMAP: getWarning("Attempted to clone unsupported type WeakMap."),
+    WEAKSET: getWarning("Attempted to clone unsupported type WeakSet.")
+}
+
+/**
+ * Creates a CloneDeepWarning instance, a subclass of Error.
+ * @param {String} message The error message.
+ * @param {Object} cause If an object with a `cause` property, it will add a 
+ * cause to the error when logged.
+ * @returns {Error} A CloneDeepWarning, which is an Error subclass.
+ */
+function getWarning(message, cause) {
+    return new CloneDeepWarning(message, cause);
+}
+
+/** 
+ * This symbol is used to indicate that the cloned value is the top-level object 
+ * that will be returned by `cloneDeep`.
+ * @type {Symbol}
+ */ 
+const TOP_LEVEL = Symbol("TOP_LEVEL");
+
+/**
+ * Handles the assignment of the cloned value to some persistent place.
+ * @param {any} cloned The cloned value.
+ * @param {Object|Function|Symbol} parentOrAssigner Either the parent object 
+ * that the cloned value will be assigned to, or a function which assigns the 
+ * value itself. If equal to TOP_LEVEL, then it is the value that will be 
+ * returned by the algorithm. 
+ * @param {String|Symbol} prop If `parentOrAssigner` is a parent object, then 
+ * `parentOrAssigner[prop]` will be assigned `cloned`.
+ * @param {Object} metadata The property descriptor for the object. If not an 
+ * object, then this is ignored.
+ * @returns The cloned value.
+ */
+function assign(cloned, parentOrAssigner, prop, metadata) {
+    if (parentOrAssigner === TOP_LEVEL) 
+        result = cloned;
+    else if (typeof parentOrAssigner === "function") 
+        parentOrAssigner(cloned, prop, metadata);
+    else if (typeof metadata === "object") {
+        const clonedMetadata = { 
+            configurable: metadata.configurable,
+            enumerable: metadata.enumerable
+        };
+
+        const hasAccessor = ["get", "set"].some(key => 
+            typeof metadata[key] === "function");
+        
+        // `cloned` or getAccessor will determine the value
+        if (!hasAccessor) {
+            clonedMetadata.value = metadata.value;
+            clonedMetadata.writable = metadata.writeable;
+        }
+        else if (typeof metadata.get === "function")
+            clonedMetadata.get = metadata.get;
+        else if (typeof metadata.set === "function")
+            clonedMetadata.set = metadata.set;
+
+        // defineProperty throws if property with accessors is writeable
+        if (hasAccessor)
+            log(Warning.ACCESSOR);
+
+        Object.defineProperty(parentOrAssigner, prop, clonedMetadata);
+    }
+    else 
+        parentOrAssigner[prop] = cloned;
+    return cloned;
+}
+
+/**
+ * Gets a "tag", which is an string which identifies the type of a value.
+ * `Object.prototype.toString` returns a string like `"[object <Type>]"`,  where 
+ * type is the type of the object. We refer this return value as the **tag**. 
+ * Normally, the tag is determined by what `this[Symbol.toStringTag]` is, but 
+ * the JavaScript specification for `Object.prototype.toString` requires that 
+ * many native JavaScript objects return a specific tag if the object does not 
+ * have the `Symbol.toStringTag` property. Also, classes introduced after ES6 
+ * typically have their own non-writable `Symbol.toStringTag` property. This 
+ * makes `Object.prototype.toString.call` a stronger type-check that 
+ * `instanceof`.
+ * 
+ * @example
+ * ```
+ * const date = new Date();
+ * console.log(date instanceof Date);  // true
+ * console.log(tagOf(date));  // "[object Date]"
+ * 
+ * const dateSubclass = Object.create(Date.prototype);
+ * console.log(dateSubclass instance Date);  // true;
+ * console.log(tagOf(dateSubClass));  // "[object Object]"
+ * 
+ * // This is not a perfect type check because we can do:
+ * dateSubclass[Symbol.toStringTag] = "Date"
+ * console.log(tagOf(dateSubClass));  // "[object Date]"
+ * ```
+ * 
+ * @param {any} value The value to get the tag of.
+ * @returns {String} tag A string indicating the value's type.
+ */
+function tagOf(value) {
+    return Object.prototype.toString.call(value);
+}
+
+/**
+ * Returns `true` if the tag is that of a TypeArray subclass, `false` otherwise.
+ * @param {String} tag A tag. See `tagOf`.
+ * @returns {Boolean}
+ */
+function isTypeArray(tag) {
+    return [   
+        Tag.DATAVIEW, 
+        Tag.FLOAT32,
+        Tag.FLOAT64,
+        Tag.INT8,
+        Tag.INT16,
+        Tag.INT32,
+        Tag.UINT8,
+        Tag.UINT8CLAMPED,
+        Tag.UINT16,
+        Tag.UINT32,
+        Tag.BIGINT64,
+        Tag.BIGUINT64
+    ].includes(tag);
+}
+
+/**
+ * Clones the provided value.
+ * @param {any} _value The value to clone.
+ * @param {Function} customizer A customizer function.
+ * @param {Function} log Receives an error object for logging.
+ * @param {Boolean} doThrow Whether errors in the customizer should cause the 
+ * function to throw.
+ * @returns {Object}
+ */
 function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
     
     if (typeof log !== "function") log = console.warn;
 
+    /** 
+     * Contains the return value of this function.
+     * @type {Symbol}
+     */
     let result;
 
-    // Will be used to store cloned values so that we don't loop infinitely on 
-    // circular references.
+    /** 
+     * Will be used to store cloned values so that we don't loop infinitely on 
+     * circular references.
+     * @type {Symbol}
+     */ 
     const cloneStore = new Map();
 
-    // This symbol is used to indicate that the cloned value is the top-level 
-    // object that will be returned by the function.
-    const TOP_LEVEL = Symbol("TOP_LEVEL");
-
-    // A queue so we can avoid recursion.
+    /** 
+     * A queue so we can avoid recursion.
+     * @type {Object[]}
+     */ 
     const queue = [{ value: _value, parentOrAssigner: TOP_LEVEL }];
     
-    // We will do a second pass through everything to check Object.isExtensible, 
-    // Object.isSealed and Object.isFrozen. We do it last so we don't run into 
-    // issues where we append properties on a frozen object, etc
+    /** 
+     * We will do a second pass through everything to check Object.isExtensible,
+     * Object.isSealed and Object.isFrozen. We do it last so we don't run into 
+     * issues where we append properties on a frozen object, etc.
+     * @type {Object[]}
+     */ 
     const isExtensibleSealFrozen = [];
-    
-    // Used to log warnings.
-    class CloneDeepWarning extends Error {
-        constructor(message, cause) {
-            super(message, cause);
-            this.name = CloneDeepWarning.name;
-        }
-    }
-
-    // Common warnings.
-    const Warning = {
-        ACCESSOR: getWarning("Cloning value whose property descriptor is a " + 
-                             "get or set accessor."),
-        WEAKMAP: getWarning("Attempted to clone unsupported type WeakMap."),
-        WEAKSET: getWarning("Attempted to clone unsupported type WeakSet.")
-    }
-
-    /**
-     * Creates a CloneDeepWarning instance, a subclass of Error.
-     * @param {String} message The error message.
-     * @param {Object} cause If an object with a `cause` property, it will add 
-     * a cause to the error when logged.
-     * @returns {Error} A CloneDeepWarning, which is an Error subclass.
-     */
-    function getWarning(message, cause) {
-        return new CloneDeepWarning(message, cause);
-    }
-
-    /**
-     * Handles the assignment of the cloned value to some persistent place.
-     * @param {any} cloned The cloned value.
-     * @param {Object|Function|Symbol} parentOrAssigner Either the parent 
-     * object that the cloned value will be assigned to, or a function which 
-     * assigns the value itself. If equal to TOP_LEVEL, then the value returned 
-     * by the outer function will be assigned the cloned value. 
-     * @param {String|Symbol} prop If `parentOrAssigner` is a parent object, 
-     * then `parentOrAssigner[prop]` will be assigned `cloned`.
-     * @param {Object} metadata The property descriptor for the object. If 
-     * not an object, then this is ignored.
-     * @returns The cloned value.
-     */
-    function assign(cloned, parentOrAssigner, prop, metadata) {
-        if (parentOrAssigner === TOP_LEVEL) 
-            result = cloned;
-        else if (typeof parentOrAssigner === "function") 
-            parentOrAssigner(cloned, prop, metadata);
-        else if (typeof metadata === "object") {
-            const clonedMetadata = { 
-                configurable: metadata.configurable,
-                enumerable: metadata.enumerable
-            };
-
-            const hasAccessor = ["get", "set"].some(key => 
-                typeof metadata[key] === "function");
-            
-            // `cloned` or getAccessor will determine the value
-            if (!hasAccessor) {
-                clonedMetadata.value = metadata.value;
-                clonedMetadata.writable = metadata.writeable;
-            }
-            else if (typeof metadata.get === "function")
-                clonedMetadata.get = metadata.get;
-            else if (typeof metadata.set === "function")
-                clonedMetadata.set = metadata.set;
-
-            // defineProperty throws if property with accessors is writeable
-            if (hasAccessor)
-                log(Warning.ACCESSOR);
-
-            Object.defineProperty(parentOrAssigner, prop, clonedMetadata);
-        }
-        else 
-            parentOrAssigner[prop] = cloned;
-        return cloned;
-    }
-    
-    /**
-     * Gets a "tag", which is an string which identifies the type of a value.
-     * `Object.prototype.toString` returns a string like `"[object <Type>]"`, 
-     * where type is the type of the object. We refer this return value as the 
-     * **tag**. Normally, the tag is determined by what 
-     * `this[Symbol.toStringTag]` is, but the JavaScript specification for 
-     * `Object.prototype.toString` requires that many native JavaScript objects 
-     * return a specific tag if the object does not have the 
-     * `Symbol.toStringTag` property. This makes 
-     * `Object.prototype.toString.call` a stronger type-check that `instanceof`.
-     * 
-     * @example
-     * ```
-     * const date = new Date();
-     * console.log(date instanceof Date);  // true
-     * console.log(tagOf(date));  // "[object Date]"
-     * 
-     * const dateSubclass = Object.create(Date.prototype);
-     * console.log(dateSubclass instance Date);  // true;
-     * console.log(tagOf(dateSubClass));  // "[object Object]"
-     * 
-     * // This is not a perfect type check because we can do:
-     * dateSubclass[Symbol.toStringTag] = "Date"
-     * console.log(tagOf(dateSubClass));  // "[object Date]"
-     * ```
-     * 
-     * @param {any} value The value to get the tag of.
-     * @returns {String} tag A string indicating the value's type.
-     */
-    function tagOf(value) {
-        return Object.prototype.toString.call(value);
-    }
-
-    /**
-     * True if the tag is that of a TypeArray subclass, false otherwise.
-     * @param {String} tag A tag. See `tagOf`.`
-     * @returns {Boolean}
-     */
-    function isTypeArray(tag) {
-        return [   
-            Tag.DATAVIEW, 
-            Tag.FLOAT32,
-            Tag.FLOAT64,
-            Tag.INT8,
-            Tag.INT16,
-            Tag.INT32,
-            Tag.UINT8,
-            Tag.UINT8CLAMPED,
-            Tag.UINT16,
-            Tag.UINT32,
-            Tag.BIGINT64,
-            Tag.BIGUINT64
-        ].includes(tag);
-    }
 
     for (let obj = queue.shift(); obj !== undefined; obj = queue.shift()) {
-        // `value` is the value to deeply clone
-        // `parentOrAssigner` is either
-        //     - TOP_LEVEL - this value is the top-level object that will be 
-        //                   returned by the function
-        //     - object    - a parent object this value is nested under
-        //     - function  - an "assigner" that has the responsiblity of 
-        //                   assigning the cloned value to something
-        // `prop` is used with `parentOrAssigner` if it is an object so that the 
-        // cloned object will be assigned to `parentOrAssigner[prop]`.
-        // `metadata` contains the property descriptor(s) for the value. It may 
-        // be undefined.
-        const { value, parentOrAssigner, prop, metadata } = obj;
 
-        // Will contain the cloned object.
+        /**
+         * The value to deeply clone.
+         * @type {any}
+         */ 
+        const value = obj.value;
+
+        /** 
+         * `parentOrAssigner` is either
+         *  - `TOP_LEVEL`: this value is the top-level object that will be 
+         * returned by the function
+         *  - object: a parent object `value` is nested under
+         *  - function: an "assigner" that has the responsibility of assigning 
+         * the cloned value to something
+         * @type {Symbol|Object|Function|undefined}
+         */ 
+        const parentOrAssigner = obj.parentOrAssigner;
+
+        /**
+         * `prop` is used with `parentOrAssigner` if it is an object so that the 
+         * cloned object will be assigned to `parentOrAssigner[prop]`.
+         * @type {String|undefined}
+         */
+        const prop = obj.prop;
+
+        /**
+         * Contains the property descriptor for this value, or undefined.
+         * @type {Object|undefined}
+         */
+        const metadata = obj.metadata;
+
+        /**
+         * Will contain the cloned object.
+         * @type {any}
+         */
         let cloned;
 
-        // Check for circular references.
+        // See if we have a circular reference.
         const seen = cloneStore.get(value);
         if (seen !== undefined) {
             assign(seen, parentOrAssigner, prop, metadata);
             continue;
         }
 
-        // If true, do not not clone the properties of value.
-        let ignoreProps;
+        /**
+         * If true, do not not clone the properties of value.
+         * @type {Boolean}
+         */
+        let ignoreProps = false;
 
-        // If true, do not have `cloned` share the prototype of `value`.
-        let ignoreProto;
-
-        // Is true if the customizer determines the value of `cloned`.
+        /**
+         * If true, do not have `cloned` share the prototype of `value`.
+         * @type {Boolean}
+         */
+        let ignoreProto = false;
+        
+        /**
+         * Is true if the customizer determines the value of `cloned`.
+         * @type {Boolean}
+         */
         let useCustomizerClone;
 
         // Perform user-injected logic if applicable.
@@ -264,6 +327,10 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             }
         }
 
+        /**
+         * Identifies the type of the value.
+         * @type {String}
+         */
         const tag = tagOf(value);
 
         try {
@@ -272,7 +339,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
             // If value is primitive, just assign it directly.
             else if (value === null || !["object", "function"]
-                    .includes(typeof value)) {
+                        .includes(typeof value)) {
                 assign(value, parentOrAssigner, prop, metadata);
                 continue;
             }
