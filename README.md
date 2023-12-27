@@ -55,7 +55,7 @@ cloned = cloneDeep(originalObject, {
 
 ### why should I use cloneDeep? JavaScript has structuredClone now!
 
-`structuredClone` has many limitations. It cannot clone objects with symbols. It does not clone non-enumerable properties. It does preserve the extensible, sealed, or frozen status of the object or its nested objects. It does not clone the property descriptor associated with any values in the object.
+`structuredClone` has many limitations. It cannot clone objects with symbols. It does not clone non-enumerable properties. It does not preserve the extensible, sealed, or frozen status of the object or its nested objects. It does not clone the property descriptor associated with any values in the object.
 
 `cloneDeep` has none of these limitations. See [this section](#cloneDeep-vs-structuredClone) for more about the differences between `cloneDeep` and `structuredClone`.
 
@@ -176,6 +176,6 @@ the PORT command line option is optional (defaults to 8888), and visiting `http:
 ### acknowledgements
 
  - This algorithm is a heavily modified version of the the [cloneDeep](https://lodash.com/docs/4.17.15#cloneDeep) utility from Lodash. If anyone knows who specifically implemented the algorithm, I will thank them directly.
- - Thanks to Tiago Bertolo, the author of [this article]([https://medium.com/@tiagobertolo](https://medium.com/@tiagobertolo/which-is-the-best-method-for-deep-cloning-in-javascript-are-they-all-bad-101f32d620c5)). It reminded me to clone the metadata of objects.
+ - Thanks to Tiago Bertolo, the author of [this article](https://medium.com/@tiagobertolo/which-is-the-best-method-for-deep-cloning-in-javascript-are-they-all-bad-101f32d620c5). It reminded me to clone the metadata of objects.
  - Thanks to MDN and its documentation on the [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm).
- - Thanks to to contributors of the HTML Standards document for their description of the [structured clone algorithm](https://html.spec.whatwg.org/multipage/structured-data.html#safe-passing-of-structured-data).
+ - Thanks to StackExchange user Jonathan Tran for his `http.createServer` example.
