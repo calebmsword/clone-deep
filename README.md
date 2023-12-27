@@ -114,7 +114,7 @@ function myCustomizer(value) {
         additionalValues: [{
             value: value.get();
 
-            // The assigner will decide where the clone of `value.get` will be stored
+            // `assigner` decides where the clone of `value.get` will be stored
             assigner(cloned) {
                 clonedWrapper.set(cloned);
             }
