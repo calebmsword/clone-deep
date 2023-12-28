@@ -67,15 +67,12 @@ document.onmousemove = e => {
     currentHovered = e ? e.target : e;
 }
 
-
-
 function doBenchmark(object) {
     document.body.style.cssText = "cursor: wait !important";
 
     const temp = currentHovered?.style?.cursor;
     const wasHovered = currentHovered;
     if (wasHovered) wasHovered.style.cssText = "cursor: wait !important";
-
     
     setTimeout(() => {
         const result = [];

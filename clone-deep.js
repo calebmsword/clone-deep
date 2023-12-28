@@ -1,7 +1,7 @@
 /**
  * Contains the tag for all supported types.
  */
-const Tag = Object.freeze({
+export const Tag = Object.freeze({
     ARGUMENTS: '[object Arguments]',
     ARRAY: '[object Array]',
     BOOLEAN: '[object Boolean]',
@@ -104,11 +104,11 @@ function tagOf(value) {
 }
 
 /**
- * Returns `true` if the tag is that of a TypeArray subclass, `false` otherwise.
+ * Returns `true` if tag is that of a TypedArray subclass, `false` otherwise.
  * @param {String} tag A tag. See `tagOf`.
  * @returns {Boolean}
  */
-function isTypeArray(tag) {
+function isTypedArray(tag) {
     return [   
         Tag.DATAVIEW, 
         Tag.FLOAT32,
@@ -163,24 +163,23 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             const hasAccessor = ["get", "set"].some(key => 
                 typeof metadata[key] === "function");
             
-            // `cloned` or getAccessor will determine the value
             if (!hasAccessor) {
-                clonedMetadata.value = metadata.value;
+                // `cloned` or getAccessor will determine the value
+                clonedMetadata.value = cloned;
+
+                // defineProperty throws if property with accessors is writeable
                 clonedMetadata.writable = metadata.writeable;
             }
-            else if (typeof metadata.get === "function")
+
+            if (typeof metadata.get === "function")
                 clonedMetadata.get = metadata.get;
-            else if (typeof metadata.set === "function")
+            if (typeof metadata.set === "function")
                 clonedMetadata.set = metadata.set;
 
-            // defineProperty throws if property with accessors is writeable
-            if (hasAccessor)
-                log(Warning.ACCESSOR);
+            if (hasAccessor) log(Warning.ACCESSOR);
 
             Object.defineProperty(parentOrAssigner, prop, clonedMetadata);
         }
-        else 
-            parentOrAssigner[prop] = cloned;
         return cloned;
     }
 
@@ -214,7 +213,6 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
     const isExtensibleSealFrozen = [];
 
     for (let obj = queue.shift(); obj !== undefined; obj = queue.shift()) {
-
         /**
          * The value to deeply clone.
          * @type {any}
@@ -431,7 +429,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                                     metadata);
                 }
                 
-                else if (isTypeArray(tag)) {
+                else if (isTypedArray(tag)) {
                     // copy data over to clone
                     const buffer = new value.buffer.constructor(
                         value.buffer.byteLength);
@@ -466,7 +464,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                             value: subValue, 
                             parentOrAssigner: cloned => {
                                 isExtensibleSealFrozen.push([subValue, cloned]);
-                                map.set(key, cloned)
+                                set.add(cloned)
                             }
                         });
                     });
@@ -489,6 +487,10 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             ignoreProto = true;
         }
 
+        // If the customizer returned a primitive, skip the following.
+        if (useCustomizerClone && cloned === null || typeof cloned !== "object")
+            continue;
+
         cloneStore.set(value, cloned);
 
         isExtensibleSealFrozen.push([value, cloned]);
@@ -505,9 +507,9 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             .forEach(array => {
                 array.forEach(key => {
                     
-                    // We already assigned TypeArray elements. Only add prop if 
+                    // We already assigned TypedArray elements. Only add prop if 
                     // it isn't already assigned.
-                    if (isTypeArray(tag) 
+                    if (isTypedArray(tag) 
                         && Number.isInteger(Number(key))
                         && Number(key) >= 0
                         && Number(key) < value.byteLength)
@@ -519,7 +521,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                         prop: key,
                         metadata: Object.getOwnPropertyDescriptor(value, key)
                     });
-                })
+                });
             });
     }
 
@@ -564,7 +566,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
  * created). A warning is logged if this occurs.
  * 
  * This method will clone many of JavaScripts native classes. These include 
- * Date, RegExp, ArrayBuffer, all the TypeArray classes, Map, Set, Number, 
+ * Date, RegExp, ArrayBuffer, all the TypedArray subclasses, Map, Set, Number, 
  * Boolean, String, and Symbol. The algorithm type-checks for these classes 
  * using `Object.prototype.toString.call`, so if you override the 
  * `Symbol.toStringTag` irresponsibly, the algorithm may incorrectly try to 
