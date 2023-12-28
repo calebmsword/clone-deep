@@ -27,7 +27,6 @@ export function cloneDeepFully(value, options) {
      * @returns {Array[String|Symbol]} An array of property names.
      */
     function getAllPropertiesOf(o) {
-        if ([null, undefined].includes(o)) return [];
         return [Object.getOwnPropertyNames(o), Object.getOwnPropertySymbols(o)]
             .flat();
     }
@@ -42,13 +41,26 @@ export function cloneDeepFully(value, options) {
     }
 
     const clone = cloneDeep(value, options);
+
+    // `cloneDeep` "clones" functions into empty objects. If you use 
+    // `cloneDeepFully` on a function without force, make the prototype 
+    // Function.prototype.
+    if (typeof value === "function" 
+        && value !== Function.prototype 
+        && !options.force) {
+        Object.setPrototypeOf(clone, Function.prototype);
+        return clone;
+    }
     
     let tempClone = clone;
     let tempOrig = value;
     
-    while (Object.getPrototypeOf(tempOrig) !== null 
-           && (!hasMethods(Object.getPrototypeOf(tempOrig)) || options.force)) {
-
+    while (tempOrig !== null && ["object", "function"].includes(typeof tempOrig)
+           && Object.getPrototypeOf(tempOrig) !== null 
+           && (Object.getPrototypeOf(tempOrig) === Function.prototype
+               || !hasMethods(Object.getPrototypeOf(tempOrig)) 
+               || options.force)) {
+        
         const newProto = cloneDeep(Object.getPrototypeOf(tempOrig), options);
 
         Object.setPrototypeOf(tempClone, newProto);

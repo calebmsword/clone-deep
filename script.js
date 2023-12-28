@@ -57,7 +57,8 @@ function getNestedObject() {
     return obj;
 }
 
-function assignValues([sc, cd]) {
+function assignValues(values) {
+    const [sc, cd] = values.map(n => n.toFixed(4));
     structuredCloneResult.textContent = String(sc);
     cloneDeepResult.textContent = String(cd);
 }
@@ -73,7 +74,7 @@ function doBenchmark(object) {
     const temp = currentHovered?.style?.cursor;
     const wasHovered = currentHovered;
     if (wasHovered) wasHovered.style.cssText = "cursor: wait !important";
-    
+
     setTimeout(() => {
         const result = [];
 

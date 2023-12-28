@@ -48,7 +48,11 @@ const Warning = {
     ACCESSOR: getWarning("Cloning value whose property descriptor is a " + 
                             "get or set accessor."),
     WEAKMAP: getWarning("Attempted to clone unsupported type WeakMap."),
-    WEAKSET: getWarning("Attempted to clone unsupported type WeakSet.")
+    WEAKSET: getWarning("Attempted to clone unsupported type WeakSet."),
+    FUNCTION_DOT_PROTOTYPE: getWarning(
+        "Attempted to clone Function.prototype. strict mode does not allow " + 
+        "the `caller`, `callee` or `arguments` properties to be accessed. " + 
+        "Native methods also cannot be cloned, so they will copied directly. ")
 }
 
 /**
@@ -345,7 +349,34 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             // We won't clone weakmaps or weaksets.
             else if ([Tag.WEAKMAP, Tag.WEAKSET].includes(tag))
                 throw tag === Tag.WEAKMAP ? Warning.WEAKMAP : Warning.WEAKSET;
-
+            
+            else if (value === Function.prototype) {
+                // Brute-force copy Function.prototype.
+                // The values are methods or primitives so no nesting/circular 
+                // references. It is easiest to just copy everything by hand.
+                // Warning: the caller, callee, and arguments properties cannot 
+                // be accessed in strict mode. So don't copy those.
+                const clone = {};  // inherit from Object.prototype
+                [
+                    Object.getOwnPropertyNames(Function.prototype),
+                    Object.getOwnPropertySymbols(Function.prototype)
+                ]
+                    .forEach(array => {
+                        array.forEach(key => {
+                            if (["caller", "callee", "arguments"].includes(key))
+                                return;
+                            Object.defineProperty(
+                                clone, 
+                                key, 
+                                Object.getOwnPropertyDescriptor(
+                                    Function.prototype, key));
+                        });
+                    });
+                cloned = assign(clone, parentOrAssigner, prop, metadata);
+                log(Warning.FUNCTION_DOT_PROTOTYPE);
+                continue;
+            }
+            
             // We only copy functions if they are methods.
             else if (typeof value === "function") {
                 cloned = assign(parentOrAssigner !== TOP_LEVEL 
@@ -354,13 +385,13 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                     parentOrAssigner, 
                     prop, 
                     metadata);
-                log(getWarning(`Attempted to clone function` + 
-                               `${typeof prop === "string"
-                                    ? ` with name ${prop}`
-                                    : ""  }. ` + 
-                               "JavaScript functions cannot be cloned. If " + 
-                               "this function is a method, then it will be " + 
-                               "copied directly."));
+                    log(getWarning(`Attempted to clone function` + 
+                                   `${typeof prop === "string"
+                                        ? ` with name ${prop}`
+                                        : ""  }. ` + 
+                                   "JavaScript functions cannot be cloned. " + 
+                                   "If this function is a method, then it " + 
+                                   "will be copied directly."));
                 if (parentOrAssigner === TOP_LEVEL) continue;
             }
             
@@ -499,7 +530,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
         if (ignoreProto !== true
             && Object.getPrototypeOf(cloned) !== Object.getPrototypeOf(value))
             Object.setPrototypeOf(cloned, Object.getPrototypeOf(value));
-
+        
         if (ignoreProps === true) continue;
 
         // Now copy all enumerable and non-enumerable properties.
@@ -563,7 +594,9 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
  * Functions also cannot be properly cloned. If you provide a function to this 
  * method, an empty object will be returned. However, if you provide an object 
  * with methods, they will be copied by value (no new function object will be 
- * created). A warning is logged if this occurs.
+ * created). A warning is logged if this occurs. Note that 
+ * `typeof Function.prototype === "function"` so Function.prototype is handled 
+ * just like functions.
  * 
  * This method will clone many of JavaScripts native classes. These include 
  * Date, RegExp, ArrayBuffer, all the TypedArray subclasses, Map, Set, Number, 

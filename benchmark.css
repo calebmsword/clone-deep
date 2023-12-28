@@ -15,7 +15,7 @@ html, body {
 
 .main-container {
     width: 400px;
-    height: 400px;
+    height: 450px;
     margin: 20px;
     display: flex;
     border-style: solid;
@@ -93,7 +93,7 @@ html, body {
 }
 
 .buttons {
-    flex-grow: 0.75;
+    flex-grow: 0.85;
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
@@ -103,7 +103,7 @@ html, body {
 .button {
     background-color: var(--button-color);
     border-color: var(--button-border-color);
-    margin-right: 5px;
+    margin: 1.5px 5px 1.5px 0px;
     border-style: solid;
     border-width: 2px;
     height: 30px;
