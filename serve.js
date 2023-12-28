@@ -8,7 +8,7 @@ Thanks to stackoverflow user Jonathan Tran.
 https://stackoverflow.com/a/13635318/22334683
 */
 
-const port = process.argv[2] || 8888;
+const port = process.argv[2] || 8787;
 
 var contentTypesByExtension = {
     ".html": "text/html",

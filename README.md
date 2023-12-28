@@ -164,14 +164,13 @@ JavaScript has a native function `structuredClone` which deeply clones objects. 
 
 ### testing
 
-The file `test.js` contains some informal tests. It runs `cloneDeep` in a myriad of ways and logs the result. Simply do `node test.js` to run the "tests".
+The file `clone-deep.test.js` contains all unit tests. Execute `node --test` to run them. Execute `node --test --experimental-test-coverage` to see coverage results.
 
 ### benchmarking
 
-Some simple benchmarking can be performed by running `node serve.js <PORT>`, where 
-the PORT command line option is optional (defaults to 8888), and visiting `http://localhost:<PORT>`. This **must** be done in the directory containing `index.html`.
+Some rudimentary benchmarking can be performed by running `node serve.js <PORT>` (where the PORT command line option is optional and defaults to 8787) and visiting `http://localhost:<PORT>`. This **must** be done in the directory containing `index.html`.
 
-`script.js` runs `cloneDeep` and `structuredClone` on the same object. You can use your favorite browser's dev tools to benchmark the result.
+`script.js` and `benchmark.css` contain the JavaScript and styling, respectively, for the hosted web page. You can use your favorite browser's dev tools to profile the result.
 
 ### acknowledgements
 
