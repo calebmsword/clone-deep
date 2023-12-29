@@ -49,7 +49,7 @@ export const supportedPrototypes = Object.freeze([
     Set.prototype,
     String.prototype,
     Symbol.prototype,
-    // ArrayBuffer.prototype,
+    ArrayBuffer.prototype,
     DataView.prototype,
     Float32Array.prototype,
     Float64Array.prototype,
