@@ -1,4 +1,4 @@
-# cloneDeep
+# cms-clone-deep
 A robust utility for deeply cloning JavaScript objects.
 
 ```javascript
