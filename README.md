@@ -185,7 +185,9 @@ The file `clone-deep.test.js` contains all unit tests. Execute `node --test` to 
 
 ## benchmarking
 
-Some rudimentary benchmarking can be performed by running `node serve.js <PORT>` (where the PORT command line option is optional and defaults to 8787) and visiting `http://localhost:<PORT>`. This **must** be done in the directory containing `index.html`.
+Benchmarking can only be done within the repository. Clone this repository if you would like to see the benchmarking UI.
+
+Some rudimentary benchmarking can be performed by running `node serve.js <PORT>` (where the `PORT` command line option is optional and defaults to `8787`) and visiting `http://localhost:<PORT>`. This **must** be done in the directory containing `index.html`.
 
 `benchmark.js` and `benchmark.css` contain the JavaScript and styling, respectively, for the hosted web page. You can use your favorite browser's dev tools to profile the result.
 
