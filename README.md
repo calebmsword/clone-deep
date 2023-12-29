@@ -170,7 +170,7 @@ The file `clone-deep.test.js` contains all unit tests. Execute `node --test` to 
 
 Some rudimentary benchmarking can be performed by running `node serve.js <PORT>` (where the PORT command line option is optional and defaults to 8787) and visiting `http://localhost:<PORT>`. This **must** be done in the directory containing `index.html`.
 
-`script.js` and `benchmark.css` contain the JavaScript and styling, respectively, for the hosted web page. You can use your favorite browser's dev tools to profile the result.
+`benchmark.js` and `benchmark.css` contain the JavaScript and styling, respectively, for the hosted web page. You can use your favorite browser's dev tools to profile the result.
 
 ### acknowledgements
 
