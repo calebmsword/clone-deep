@@ -419,12 +419,39 @@ describe("cloneDeep without customizer", () => {
         assert.strictEqual(getProto(cloned), getProto(map));
     });
 
-    test("Errors with causes are cloned", () => {
+    test("Error clones get stack and cause", () => {
         const error = new Error("error", { cause: "cause" });
 
         const cloned = cloneDeep(error);
 
         assert.strictEqual(cloned.cause, error.cause);
+        assert.strictEqual(cloned.stack, error.stack);
+    });
+
+    test("Errors are cloned correctly even if monkeypatched", () => {
+        let doMonkeypatch = true;
+        try {
+
+            const CurrentError = Error;
+            Error = function(...args) {
+                if (doMonkeypatch !== true) return new CurrentError(...args);
+                const error = new CurrentError(...args);
+                delete error.stack;
+                return error;
+            }
+            Error.prototype = CurrentError.prototype;
+
+            const error = new Error("error", { cause: "cause" });
+
+            const cloned = cloneDeep(error);
+    
+            assert.strictEqual(cloned.cause, error.cause);
+            assert.strictEqual(cloned.stack, error.stack);
+        }
+        catch (error) {
+            doMonkeypatch = false;
+            throw error;
+        }
     });
 
     test('Function.prototype is "cloned" with allowed properties', () => {
@@ -514,6 +541,35 @@ describe("cloneDeep without customizer", () => {
 
             assert.strictEqual(calls.length, 1);
             assert.notStrictEqual(calls[0].arguments[0].cause, undefined);
+        }
+        catch(error) {
+            temporarilyMonkeypatch = false;
+            throw error;
+        }
+    });
+
+    test("Errors without stacks thrown outside customizer handled", () => {
+        let temporarilyMonkeypatch = true;
+        try {
+            const log = mock.fn(() => {});
+
+            // save current implementation
+            const objectDotCreate = Object.create;
+            Object.create = (...args) => {
+                if (temporarilyMonkeypatch === true) 
+                    throw Object.assign(objectDotCreate(Error.prototype));
+                else 
+                    return objectDotCreate(...args);
+            }
+
+            cloneDeep({}, { log });
+
+            const calls = log.mock.calls;
+
+            temporarilyMonkeypatch = false;
+
+            assert.strictEqual(calls.length, 1);
+            assert.notStrictEqual(calls[0].arguments[0].stack, undefined);
         }
         catch(error) {
             temporarilyMonkeypatch = false;
@@ -691,6 +747,20 @@ describe("cloneDeep customizer", () => {
         cloneDeep({}, {
             customizer: () => {
                 throw "not an error object";
+            },
+            log
+        });
+
+        const calls = log.mock.calls;
+        assert.strictEqual(calls.length, 1);
+    });
+
+    test("If customizer throws without stack, cloneDeep handles it", () => {
+        const log = mock.fn(() => {});
+
+        cloneDeep({}, {
+            customizer: () => {
+                throw Object.assign(Object.create(Error.prototype));
             },
             log
         });
