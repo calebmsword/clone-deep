@@ -10,8 +10,8 @@ let numIterations = 1000;
 const textinput = document.querySelector(".iterations");
 
 
-textinput.addEventListener("input", event => {
-    numIterations = event?.target?.value || 1000;
+textinput.addEventListener("input", e => {
+    numIterations = e.target.value || 1000;
 });
 
 function getPrimitivesOnlyObject() {
@@ -72,7 +72,7 @@ function assignValues(values) {
 
 let currentHovered;
 document.onmousemove = e => {
-    currentHovered = e ? e.target : e;
+    currentHovered = e.target;
 }
 
 function doBenchmark(object) {
@@ -80,8 +80,7 @@ function doBenchmark(object) {
 
     const temp = currentHovered?.style?.cursor;
     const wasHovered = currentHovered;
-    if (wasHovered.style?.cursor) 
-        wasHovered.style.cssText = "cursor: wait !important";
+    if (wasHovered) wasHovered.style.cssText = "cursor: wait !important";
 
     function useCloneDeep(obj) {
         return cloneDeep(obj, { logMode: "silent" });
@@ -102,7 +101,7 @@ function doBenchmark(object) {
         });
 
         document.body.style.cursor = "auto";
-        if (wasHovered.style?.cursor) wasHovered.style.cursor = temp;
+        if (wasHovered) wasHovered.style.cursor = temp;
         assignValues(result);
 
     // Give browser time to repaint so cursor changes before expensive 
