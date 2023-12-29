@@ -10,9 +10,8 @@
         "checkJs": true,
         "strict": true
     },
-    "exclude": [
-        "benchmark.js",
-        "serve.js",
-        "test.js"
+    "include": [
+        "clone-deep.js",
+        "clone-deep-utils.js"
     ]
 }
