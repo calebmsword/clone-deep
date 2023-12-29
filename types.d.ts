@@ -11,10 +11,17 @@ export type Customizer = (value: any) => any|void;
 export type Log = (error: Error) => any;
 
 export interface CloneDeepOptions {
-    customizer: Customizer
+    customizer?: Customizer
     log?: Log,
     logMode?: string,
     letCustomizerThrow?: boolean
 }
 
 export type CloneDeepOptionsOrCustomizer = CloneDeepOptions | Customizer;
+
+export interface CloneDeepFullyOptions extends CloneDeepOptions {
+    force?: boolean
+}
+
+export type CloneDeepFullyOptionsOrCustomizer = 
+    CloneDeepFullyOptions | Customizer;

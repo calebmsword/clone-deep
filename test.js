@@ -1,12 +1,22 @@
 import assert from "node:assert";
 import { describe, mock, test } from "node:test";
 
-import cloneDeep, { Tag } from "./clone-deep.js";
+import cloneDeep, { 
+    Tag, 
+    supportedPrototypes, 
+    forbiddenProps 
+} from "./clone-deep.js";
 import { cloneDeepFully, useCustomizers } from "./clone-deep-utils.js";
+
+const consoleDotWarn = console.warn;
+
+try {
+// There are so many warnings logged that it slows the test down
+console.warn = () => {};
 
 const getProto = object => Object.getPrototypeOf(object);
 
-describe("default cloneDeep", () => {
+describe("cloneDeep without customizer", () => {
 
     const tagOf = value => Object.prototype.toString.call(value);
     
@@ -154,7 +164,7 @@ describe("default cloneDeep", () => {
         const type = {
             weakmap: [new WeakMap(), Tag.WEAKMAP],
             weakset: [new WeakSet(), Tag.WEAKSET],
-            function: [() => {}, "[object Function]"]
+            function: [() => {}, Tag.FUNCTION]
         }
 
         for (const key of Object.keys(type)) {
@@ -282,14 +292,22 @@ describe("default cloneDeep", () => {
         assert.strictEqual(calls[0].arguments[0] instanceof Error, true);
     });
 
-    test("A warning is logged if Function.prototype is cloned", () => {
-        const log = mock.fn(() => {});
+    test("A warning is logged if proto w/ forbidden props is cloned", () => {
+        Object.values(forbiddenProps).forEach(({ prototype }) => {
+            const log = mock.fn(() => {});
 
-        cloneDeep(Function.prototype, { log });
+            cloneDeep(prototype, { log });
 
-        const calls = log.mock.calls;
-        assert.strictEqual(calls.length, 1);
-        assert.strictEqual(calls[0].arguments[0] instanceof Error, true);
+            const calls = log.mock.calls;
+            const error = calls[0].arguments[0];
+            assert.strictEqual(calls.length > 0, true);
+            assert.strictEqual(error instanceof Error, true);
+            assert.strictEqual(
+                error.message.includes(
+                    "The cloned object will not have any inaccessible " + 
+                    "properties"),
+                true);
+        });
     });
 
     test("A cloned map has cloned content of the original map", () => {
@@ -353,7 +371,7 @@ describe("default cloneDeep", () => {
         const log = mock.fn(() => {});
 
         // A warning will be logged.
-        cloneDeep({ func: () => {} }, { logMode: "quiet" });
+        cloneDeep({ func: () => {} }, { log, logMode: "quiet" });
 
         assert.strictEqual(log.mock.calls.length, 0);
     });
@@ -362,7 +380,7 @@ describe("default cloneDeep", () => {
         const log = mock.fn(() => {});
 
         // A warning will be logged.
-        cloneDeep({ func: () => {} }, { logMode: "silent" });
+        cloneDeep({ func: () => {} }, { log, logMode: "silent" });
 
         assert.strictEqual(log.mock.calls.length, 0);
     });
@@ -380,7 +398,7 @@ describe("default cloneDeep", () => {
         assert.strictEqual(cloned.typedArray.prop, "prop");
     });
 
-    test("Extensibility, sealedness, and frozeness cloned", () => {
+    test("Extensibility, sealedness, and frozenness cloned", () => {
         const cloned = cloneDeep({
             inextensible: Object.preventExtensions({}),
             sealed: Object.seal({}),
@@ -433,15 +451,79 @@ describe("default cloneDeep", () => {
         });
     });
 
-    test('functions are "cloned" into an empty object', () => {
+    test('functions become empty objects inheriting Function.prototype', () => {
         [function() {}, () => {}].forEach(func => {
             const cloned = cloneDeep(func);
 
-            assert.strictEqual(getProto(cloned), Object.prototype);
+            assert.strictEqual(getProto(cloned), Function.prototype);
             assert.strictEqual([
                 ...Object.getOwnPropertyNames(cloned),
                 ...Object.getOwnPropertySymbols(cloned)
             ].length, 0);
+        });
+    });
+
+    test("Errors with causes thrown outside customizer handled", () => {
+        let temporarilyMonkeypatch = true;
+        try {
+            const log = mock.fn(() => {});
+
+            // save current implementation
+            const objectDotCreate = Object.create;
+            Object.create = (...args) => {
+                if (temporarilyMonkeypatch === true) 
+                    throw new Error("error", { cause: "cause" });
+                else 
+                    return objectDotCreate(...args);
+            }
+
+            cloneDeep({}, { log });
+
+            const calls = log.mock.calls;
+
+            temporarilyMonkeypatch = false;
+
+            assert.strictEqual(calls.length, 1);
+            assert.notStrictEqual(calls[0].arguments[0].cause, undefined);
+        }
+        catch(error) {
+            temporarilyMonkeypatch = false;
+            throw error;
+        }
+    });
+
+    test("Non-error objects thrown outside customizer handled", () => {
+        let temporarilyMonkeypatch = true;
+        try {
+            const log = mock.fn(() => {});
+
+            // save current implementation
+            const objectDotCreate = Object.create;
+            Object.create = (...args) => {
+                if (temporarilyMonkeypatch === true) 
+                    throw "not an error object";
+                else 
+                    return objectDotCreate(...args);
+            }
+
+            cloneDeep({}, { log });
+
+            const calls = log.mock.calls;
+
+            temporarilyMonkeypatch = false;
+
+            assert.strictEqual(calls.length, 1);
+            assert.notStrictEqual(calls[0].arguments[0].cause, undefined);
+        }
+        catch(error) {
+            temporarilyMonkeypatch = false;
+            throw error;
+        }
+    });
+
+    test("Native prototypes can be cloned without errors", () => {
+        supportedPrototypes.forEach(proto => {
+            cloneDeep(proto);
         });
     });
 });
@@ -498,34 +580,45 @@ describe("cloneDeep customizer", () => {
         assert.strictEqual(original.prop[1], undefined);
     });
 
-    test("Improper additionalValues are ignored ", () => {
+    test("Improper additionalValues are ignored + warnings are logged ", () => {
+        const log = mock.fn(() => {});
+        
         const a = "a";
         const b = "b";
 
         const newValue1 = "newValue1";
         const newValue2 = "newValue2";
 
-        const cloned = cloneDeep({ a, b }, value => {
-            const clone = {};
-            if (value === a)
-                return {
-                    clone,
-                    additionalValues: {
-                        value: newValue1,
-                        assigner: cloned => {
-                            clone[0] = cloned;
-                        }
-                    },
-                    ignoreProto: true,
-                    ignoreProps: true
-                };
-            if (value === b)
-                return {
-                    clone,
-                    additionalValues: [newValue2],
-                    ignoreProto: true,
-                    ignoreProps: true
-                };
+        const cloned = cloneDeep({ a, b }, {
+            customizer: value => {
+                const clone = {};
+                if (value === a)
+                    return {
+                        clone,
+                        additionalValues: {
+                            value: newValue1,
+                            assigner: cloned => {
+                                clone[0] = cloned;
+                            }
+                        },
+                        ignoreProto: true,
+                        ignoreProps: true
+                    };
+                if (value === b)
+                    return {
+                        clone,
+                        additionalValues: [newValue2],
+                        ignoreProto: true,
+                        ignoreProps: true
+                    };
+            },
+            log
+        });
+
+        const calls = log.mock.calls;
+        assert.strictEqual(calls.length, 2);
+        calls.forEach(call => {
+            assert.strictEqual(call.arguments[0] instanceof Error, true);
         });
 
         assert.notStrictEqual(cloned[0], newValue1);
@@ -592,6 +685,35 @@ describe("cloneDeep customizer", () => {
         }))
     });
 
+    test("If customizer throws non-error, cloneDeep handles it", () => {
+        const log = mock.fn(() => {});
+
+        cloneDeep({}, {
+            customizer: () => {
+                throw "not an error object";
+            },
+            log
+        });
+
+        const calls = log.mock.calls;
+        assert.strictEqual(calls.length, 1);
+    });
+
+    test("If customizer throws error with cause, cloneDeep handles it", () => {
+        const log = mock.fn(() => {});
+
+        cloneDeep({}, {
+            customizer: () => {
+                throw new Error("error", { cause: "cause" });
+            },
+            log
+        });
+
+        const calls = log.mock.calls;
+        assert.strictEqual(calls.length, 1);
+        assert.notStrictEqual(calls[0].arguments[0].cause, undefined);
+    });
+
     test("Customizer can cause cloned value to not share prototype", () => {
         const proto = {};
         const original = Object.create(proto);
@@ -606,7 +728,6 @@ describe("cloneDeep customizer", () => {
         assert.notStrictEqual(getProto(cloned), getProto(original));
     });
 });
-
 
 describe("cloneDeepFully", () => {
 
@@ -635,8 +756,7 @@ describe("cloneDeepFully", () => {
     });
 
     test("Without force, prototypes with methods are not cloned", () => {
-        const proto = {};
-        const original = Object.create(proto);
+        const original = Object.create({});
 
         const cloned = cloneDeepFully(original);
 
@@ -646,8 +766,7 @@ describe("cloneDeepFully", () => {
     });
 
     test('Prototypes with methods can be "cloned" by force', () => {
-        const proto = {};
-        const original = Object.create(proto);
+        const original = Object.create({});
 
         const cloned = cloneDeepFully(original, { force: true });
 
@@ -667,7 +786,7 @@ describe("cloneDeepFully", () => {
         [() => {}, function() {}].forEach(func => {
             const cloned = cloneDeepFully(func);
 
-            assert.strictEqual(getProto(cloned), getProto(func));
+            // assert.strictEqual(getProto(cloned), getProto(func));
             assert.strictEqual(getProto(cloned), Function.prototype);
         });
     });
@@ -678,31 +797,87 @@ describe("cloneDeepFully", () => {
 
             assert.notStrictEqual(getProto(cloned), getProto(func));
         });
-    })
+    });
+
+    test("Native prototypes can be fully cloned without errors", () => {
+        supportedPrototypes.forEach(proto => {
+            cloneDeepFully(proto);
+        });
+    });
+
+    test("cloneDeepFully can provide customizer", () => {
+        const original = "original";
+        const clone = {};
+        const cloned = cloneDeepFully(original, () => ({ clone }));
+
+        assert.notStrictEqual(cloned, original);
+        assert.strictEqual(cloned, clone);
+    });
+
+    test("cloneDeepFully can provide logger", () => {
+        const log = mock.fn(() => {});
+
+        cloneDeepFully({ func: () => {} }, { log });
+
+        assert.strictEqual(log.mock.calls.length, 1);
+    });
+
+    test("cloneDeepFully can provide logMode", () => {
+        const logQuiet = mock.fn(() => {});
+        const logSil = mock.fn(() => {});
+
+        cloneDeepFully({ func: () => {} }, { log: logQuiet, logMode: "quiet" });
+        cloneDeepFully({ func: () => {} }, { log: logSil, logMode: "silent" });
+
+        assert.strictEqual(logQuiet.mock.calls.length, 0);
+        assert.strictEqual(logSil.mock.calls.length, 0);
+    });
+
+    test("cloneDeepFully can cause customizer to throw", () => {
+        assert.throws(() => {
+            cloneDeepFully({}, {
+                customizer() {
+                    throw "throw";
+                },
+                letCustomizerThrow: true
+            })
+        });
+    });
 });
 
 describe("useCustomizers", () => {
 
     test("useCustomizers takes functions and returns a function", () => {
-        const combined = useCustomizers(() => {}, () => {});
+        const combined = useCustomizers([() => {}, () => {}]);
 
         assert.strictEqual(typeof combined, "function");
     });
 
+    test("useCustomizers throws if the argument is not an array", () => {
+        assert.throws(() => useCustomizers("not an array"));
+    });
+
+    test("useCustomizers throws if array contains non-functions", () => {
+        assert.throws(() => useCustomizers(["not a function"]));
+    });
+
     test("useCustomizers can combine functionality", () => {
+        const a = "a";
+        const b = "b";
+
         const map = {
-            a: "z",
-            b: "y"
+            [a]: "z",
+            [b]: "y"
         }
 
-        const expectedProperties = ["z", "y"];
+        const expectedProperties = Object.values(map);
         
-        const getCustomizer = str => value => 
+        const getPropertyMapCustomizer = str => value => 
             value === str ? { clone: map[value] } : undefined;
 
-        const cloned = cloneDeep({ a: "a", b: "b" }, useCustomizers([
-            getCustomizer("a"),
-            getCustomizer("b")
+        const cloned = cloneDeep({ a, b }, useCustomizers([
+            getPropertyMapCustomizer(a),
+            getPropertyMapCustomizer(b)
         ]));
 
         assert.strictEqual([
@@ -722,9 +897,9 @@ describe("useCustomizers", () => {
     test("useCustomizers calls each of its functions in order", () => {
         const result = [];
 
-        const getCustomizer = value => () => result.push(value);
-        const customizer01 = mock.fn(getCustomizer(1));
-        const customizer02 = mock.fn(getCustomizer(2));
+        const getValuePusher = value => () => result.push(value);
+        const customizer01 = mock.fn(getValuePusher(1));
+        const customizer02 = mock.fn(getValuePusher(2));
 
         cloneDeep({}, useCustomizers([customizer01, customizer02]));
 
@@ -732,35 +907,10 @@ describe("useCustomizers", () => {
         assert.strictEqual(customizer02.mock.calls.length, 1);
         assert.deepEqual(result, [1, 2]);
     });
-
-    test("useCustomizers ignores elements that are not functions", () => {
-        const map = {
-            a: "z",
-            b: "y"
-        }
-
-        const expectedProperties = ["z", "y"];
-        
-        const getCustomizer = str => value => 
-            value === str ? { clone: map[value] } : undefined;
-
-        const cloned = cloneDeep({ a: "a", b: "b" }, useCustomizers([
-            getCustomizer("a"),
-            "not a function",
-            getCustomizer("b")
-        ]));
-
-        assert.strictEqual([
-            ...Object.getOwnPropertyNames(cloned),
-            ...Object.getOwnPropertySymbols(cloned)
-        ].length, expectedProperties.length);
-
-        Object.values(cloned).forEach(value => {
-            assert.strictEqual(expectedProperties.includes(value), true);
-        });
-
-        expectedProperties.forEach(key => {
-            assert.strictEqual(Object.values(cloned).includes(key), true);
-        });
-    });
 });
+
+}
+catch(error) {
+    console.warn = consoleDotWarn;
+    throw error;
+}

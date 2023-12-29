@@ -1,5 +1,6 @@
 /**
- * Contains the tag for all supported types.
+ * Contains the tag for various types.
+ * @type {Object<string, string>}
  */
 export const Tag = Object.freeze({
     ARGUMENTS: '[object Arguments]',
@@ -7,6 +8,7 @@ export const Tag = Object.freeze({
     BOOLEAN: '[object Boolean]',
     DATE: '[object Date]',
     ERROR: '[object Error]',
+    FUNCTION: "[object Function]",
     MAP: '[object Map]',
     NUMBER: '[object Number]',
     OBJECT: '[object Object]',
@@ -32,43 +34,114 @@ export const Tag = Object.freeze({
 });
 
 /**
+ * All prototypes of supported types.
+ */
+export const supportedPrototypes = Object.freeze([
+    Array.prototype,
+    Boolean.prototype,
+    Date.prototype,
+    Error.prototype,
+    Function.prototype,
+    Map.prototype,
+    Number.prototype,
+    Object.prototype,
+    RegExp.prototype,
+    Set.prototype,
+    String.prototype,
+    Symbol.prototype,
+    ArrayBuffer.prototype,
+    DataView.prototype,
+    Float32Array.prototype,
+    Float64Array.prototype,
+    Int8Array.prototype,
+    Int16Array.prototype,
+    Int32Array.prototype,
+    Uint8Array.prototype,
+    Uint8ClampedArray.prototype,
+    Uint16Array.prototype,
+    Uint32Array.prototype,
+    BigInt64Array.prototype,
+    BigUint64Array.prototype
+]);
+
+/**
+ * Some native prototypes have properties that cannot be accessed or reassigned.
+ * All such properties are stored here.
+ */
+export const forbiddenProps = Object.freeze({
+    [Tag.FUNCTION]: { 
+        prototype: Function.prototype,
+        properties: ["caller", "callee", "arguments"]
+    },
+    [Tag.MAP]: {
+        prototype: Map.prototype,
+        properties: ["size"]
+    },
+    [Tag.SET]: {
+        prototype: Set.prototype,
+        properties: ["size"]
+    },
+    [Tag.SYMBOL]: {
+        prototype: Symbol.prototype,
+        properties: ["description"]
+    },
+    [Tag.ARRAYBUFFER]: {
+        prototype: ArrayBuffer.prototype,
+        properties: ["byteLength", "maxByteLength", "resizable"]
+    },
+    [Tag.DATAVIEW]: {
+        prototype: DataView.prototype,
+        properties: ["buffer", "byteLength", "byteOffset"]
+    }
+});
+
+/**
  * Used to log warnings.
  */
 class CloneDeepWarning extends Error {
-    constructor(message, cause) {
+    /**
+     * @param {string} message 
+     * @param {any} [cause] 
+     * @param {string} [stack]
+     */
+    constructor(message, cause, stack) {
         super(message, cause);
         this.name = CloneDeepWarning.name;
+        if (typeof stack === "string") this.stack = stack;
     }
 }
 
 /**
- * Common CloneDeepWarning instances.
+ * Creates a {@link CloneDeepWarning} instance.
+ * @param {String} message The error message.
+ * @param {Object} [cause] If an object with a `cause` property, it will add a 
+ * cause to the error when logged.
+ * @param {string} [stack] If provided, determines the stack associated with the
+ * error object.
+ * @returns {CloneDeepWarning} 
+ */
+function getWarning(message, cause, stack) {
+    return new CloneDeepWarning(message, cause, stack);
+}
+
+/**
+ * Commonly-used {@link CloneDeepWarning} instances.
  */
 const Warning = {
-    ACCESSOR: getWarning("Cloning value whose property descriptor is a " + 
-                            "get or set accessor."),
     WEAKMAP: getWarning("Attempted to clone unsupported type WeakMap."),
     WEAKSET: getWarning("Attempted to clone unsupported type WeakSet."),
     FUNCTION_DOT_PROTOTYPE: getWarning(
         "Attempted to clone Function.prototype. strict mode does not allow " + 
-        "the `caller`, `callee` or `arguments` properties to be accessed. " + 
-        "Native methods also cannot be cloned, so they will copied directly. ")
-}
-
-/**
- * Creates a CloneDeepWarning instance, a subclass of Error.
- * @param {String} message The error message.
- * @param {Object} cause If an object with a `cause` property, it will add a 
- * cause to the error when logged.
- * @returns {Error} A CloneDeepWarning, which is an Error subclass.
- */
-function getWarning(message, cause) {
-    return new CloneDeepWarning(message, cause);
+        "the caller, callee or arguments properties to be accessed so those " +
+        "properties will not be cloned. Also, native methods cannot be " + 
+        "cloned so all methods in Function.prototype will copied directly."),
+    IMPROPER_ADDITIONAL_VALUES: getWarning(
+        "The additionalValue property must be an array of objects.")
 }
 
 /** 
  * This symbol is used to indicate that the cloned value is the top-level object 
- * that will be returned by `cloneDeep`.
+ * that will be returned by {@link cloneDeep}.
  * @type {Symbol}
  */ 
 const TOP_LEVEL = Symbol("TOP_LEVEL");
@@ -101,7 +174,7 @@ const TOP_LEVEL = Symbol("TOP_LEVEL");
  * ```
  * 
  * @param {any} value The value to get the tag of.
- * @returns {String} tag A string indicating the value's type.
+ * @returns {string} tag A string indicating the value's type.
  */
 function tagOf(value) {
     return Object.prototype.toString.call(value);
@@ -109,8 +182,8 @@ function tagOf(value) {
 
 /**
  * Returns `true` if tag is that of a TypedArray subclass, `false` otherwise.
- * @param {String} tag A tag. See `tagOf`.
- * @returns {Boolean}
+ * @param {string} tag A tag. See {@link tagOf}.
+ * @returns {boolean}
  */
 function isTypedArray(tag) {
     return [   
@@ -132,25 +205,25 @@ function isTypedArray(tag) {
 /**
  * Clones the provided value.
  * @param {any} _value The value to clone.
- * @param {Function} customizer A customizer function.
+ * @param {Function|undefined} customizer A customizer function.
  * @param {Function} log Receives an error object for logging.
- * @param {Boolean} doThrow Whether errors in the customizer should cause the 
- * function to throw.
- * @returns {Object}
+ * @param {boolean|undefined} doThrow Whether errors in the customizer should 
+ * cause the function to throw.
+ * @returns {any}
  */
 function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
-    
+
     /**
      * Handles the assignment of the cloned value to some persistent place.
      * @param {any} cloned The cloned value.
-     * @param {Object|Function|Symbol} parentOrAssigner Either the parent object 
-     * that the cloned value will be assigned to, or a function which assigns 
-     * the value itself. If equal to TOP_LEVEL, then it is the value that will 
-     * be returned by the algorithm. 
-     * @param {String|Symbol} prop If `parentOrAssigner` is a parent object, 
-     * then `parentOrAssigner[prop]` will be assigned `cloned`.
-     * @param {Object} metadata The property descriptor for the object. If not 
-     * an object, then this is ignored.
+     * @param {Object|Function|Symbol|undefined} parentOrAssigner Either the 
+     * parent object that the cloned value will be assigned to, or a function 
+     * which assigns the value itself. If equal to TOP_LEVEL, then it is the 
+     * value that will be returned by the algorithm. 
+     * @param {PropertyKey|undefined} prop If `parentOrAssigner` is a parent 
+     * object, then `parentOrAssigner[prop]` will be assigned `cloned`.
+     * @param {PropertyDescriptor|undefined} metadata The property descriptor 
+     * for the object. If not an object, then this is ignored.
      * @returns The cloned value.
      */
     function assign(cloned, parentOrAssigner, prop, metadata) {
@@ -158,21 +231,24 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             result = cloned;
         else if (typeof parentOrAssigner === "function") 
             parentOrAssigner(cloned, prop, metadata);
-        else if (typeof metadata === "object") {
+        else if (typeof prop !== "undefined" && typeof metadata === "object") {
+            /**
+             * @type {PropertyDescriptor}
+             */
             const clonedMetadata = { 
                 configurable: metadata.configurable,
                 enumerable: metadata.enumerable
             };
 
-            const hasAccessor = ["get", "set"].some(key => 
-                typeof metadata[key] === "function");
+            const hasAccessor = typeof metadata.get === "function"
+                                || typeof metadata.set === "function";
             
             if (!hasAccessor) {
                 // `cloned` or getAccessor will determine the value
                 clonedMetadata.value = cloned;
 
-                // defineProperty throws if property with accessors is writeable
-                clonedMetadata.writable = metadata.writeable;
+                // defineProperty throws if property with accessors is writable
+                clonedMetadata.writable = metadata.writable;
             }
 
             if (typeof metadata.get === "function")
@@ -180,31 +256,31 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             if (typeof metadata.set === "function")
                 clonedMetadata.set = metadata.set;
 
-            if (hasAccessor) log(Warning.ACCESSOR);
+            if (hasAccessor) 
+                log(getWarning(
+                    `Cloning value with name ${String(prop)} whose property` +
+                    "descriptor contains a get or set accessor."));
 
             Object.defineProperty(parentOrAssigner, prop, clonedMetadata);
         }
         return cloned;
     }
 
-    if (typeof log !== "function") log = console.warn;
-
     /** 
      * Contains the return value of this function.
-     * @type {Symbol}
+     * @type {any}
      */
     let result;
 
     /** 
      * Will be used to store cloned values so that we don't loop infinitely on 
      * circular references.
-     * @type {Symbol}
      */ 
     const cloneStore = new Map();
 
     /** 
      * A queue so we can avoid recursion.
-     * @type {Object[]}
+     * @type {import("./types").QueueElement[]}
      */ 
     const queue = [{ value: _value, parentOrAssigner: TOP_LEVEL }];
     
@@ -212,14 +288,13 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
      * We will do a second pass through everything to check Object.isExtensible,
      * Object.isSealed and Object.isFrozen. We do it last so we don't run into 
      * issues where we append properties on a frozen object, etc.
-     * @type {Object[]}
+     * @type {Array<[any, any]>[]}
      */ 
     const isExtensibleSealFrozen = [];
 
     for (let obj = queue.shift(); obj !== undefined; obj = queue.shift()) {
         /**
          * The value to deeply clone.
-         * @type {any}
          */ 
         const value = obj.value;
 
@@ -230,20 +305,17 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
          *  - object: a parent object `value` is nested under
          *  - function: an "assigner" that has the responsibility of assigning 
          * the cloned value to something
-         * @type {Symbol|Object|Function|undefined}
          */ 
         const parentOrAssigner = obj.parentOrAssigner;
 
         /**
          * `prop` is used with `parentOrAssigner` if it is an object so that the 
          * cloned object will be assigned to `parentOrAssigner[prop]`.
-         * @type {String|undefined}
          */
         const prop = obj.prop;
 
         /**
          * Contains the property descriptor for this value, or undefined.
-         * @type {Object|undefined}
          */
         const metadata = obj.metadata;
 
@@ -262,21 +334,21 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
         /**
          * If true, do not not clone the properties of value.
-         * @type {Boolean}
+         * @type {boolean}
          */
         let ignoreProps = false;
 
         /**
          * If true, do not have `cloned` share the prototype of `value`.
-         * @type {Boolean}
+         * @type {boolean}
          */
         let ignoreProto = false;
         
         /**
          * Is true if the customizer determines the value of `cloned`.
-         * @type {Boolean}
+         * @type {boolean}
          */
-        let useCustomizerClone;
+        let useCustomizerClone = false;
 
         // Perform user-injected logic if applicable.
         if (typeof customizer === "function") {
@@ -306,13 +378,15 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
                     if (Array.isArray(additionalValues))
                         additionalValues.forEach(object => {
-                            if (typeof object === "object") {
+                            if (typeof object === "object")
                                 queue.push({
                                     value: object.value,
                                     parentOrAssigner: object.assigner
                                 });
-                            }
+                            else throw Warning.IMPROPER_ADDITIONAL_VALUES;
                         });
+                    else if (additionalValues !== undefined)
+                        throw Warning.IMPROPER_ADDITIONAL_VALUES;
                 }
             }
             catch(error) {
@@ -321,11 +395,20 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                 clone = undefined;
                 useCustomizerClone = false;
                 
-                error.message = "customizer encountered error. Its results " + 
-                                "will be ignored for the current value, and " + 
-                                "the algorithm will proceed with default " + 
-                                "behavior. Error encountered: " + error.message;
-                log(getWarning(error.message, error.cause));
+                const msg = "customizer encountered error. Its results will " + 
+                            "be ignored for the current value and the " + 
+                            "algorithm will proceed with default behavior. "
+
+                if (error instanceof Error) {
+                    error.message = `${msg}Error encountered: ${error.message}`;
+                    const cause = error.cause 
+                        ? { cause: error.cause } 
+                        : undefined;
+                    const stack = error.stack ? error.stack : undefined;
+                    log(getWarning(error.message, cause, stack));
+                }
+                else 
+                    log(getWarning(msg, { cause: error }));
             }
         }
 
@@ -334,6 +417,15 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
          * @type {String}
          */
         const tag = tagOf(value);
+
+        if (forbiddenProps[tag] !== undefined
+            && forbiddenProps[tag].prototype === value)
+            log(getWarning(
+                `Attempted to clone ${tag.substring(8, tag.length - 1)}. ` + 
+                `This object cannot have the following properties accessed: ` + 
+                `${forbiddenProps[tag].properties.join(", ")}. The cloned ` + 
+                "object will not have any inaccessible properties."
+            ));
 
         try {
             // skip the following "else if" branches
@@ -346,42 +438,25 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                 continue;
             }
 
-            // We won't clone weakmaps or weaksets.
+            // We won't clone weakmaps or weaksets (or their prototypes).
             else if ([Tag.WEAKMAP, Tag.WEAKSET].includes(tag))
                 throw tag === Tag.WEAKMAP ? Warning.WEAKMAP : Warning.WEAKSET;
             
-            else if (value === Function.prototype) {
-                // Brute-force copy Function.prototype.
-                // The values are methods or primitives so no nesting/circular 
-                // references. It is easiest to just copy everything by hand.
-                // Warning: the caller, callee, and arguments properties cannot 
-                // be accessed in strict mode. So don't copy those.
-                const clone = {};  // inherit from Object.prototype
-                [
-                    Object.getOwnPropertyNames(Function.prototype),
-                    Object.getOwnPropertySymbols(Function.prototype)
-                ]
-                    .forEach(array => {
-                        array.forEach(key => {
-                            if (["caller", "callee", "arguments"].includes(key))
-                                return;
-                            Object.defineProperty(
-                                clone, 
-                                key, 
-                                Object.getOwnPropertyDescriptor(
-                                    Function.prototype, key));
-                        });
-                    });
-                cloned = assign(clone, parentOrAssigner, prop, metadata);
-                log(Warning.FUNCTION_DOT_PROTOTYPE);
-                continue;
-            }
-            
+            // Ordinary objects, or the rare `arguments` clone.
+            // Also, treat prototypes like ordinary objects. The tag wrongly 
+            // indicates that prototypes are instances of themselves.
+            else if ([Tag.OBJECT, Tag.ARGUMENTS].includes(tag)
+                     || supportedPrototypes.includes(value))
+                cloned = assign(Object.create(Object.getPrototypeOf(value)), 
+                                parentOrAssigner, 
+                                prop,
+                                metadata);
+
             // We only copy functions if they are methods.
             else if (typeof value === "function") {
                 cloned = assign(parentOrAssigner !== TOP_LEVEL 
                         ? value 
-                        : {}, 
+                        : Object.create(Function.prototype), 
                     parentOrAssigner, 
                     prop, 
                     metadata);
@@ -389,9 +464,11 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                                    `${typeof prop === "string"
                                         ? ` with name ${prop}`
                                         : ""  }. ` + 
-                                   "JavaScript functions cannot be cloned. " + 
-                                   "If this function is a method, then it " + 
-                                   "will be copied directly."));
+                                   "JavaScript functions cannot be reliably " +
+                                   "cloned. If this function is a method, " + 
+                                   "it will be copied directly. If this is " + 
+                                   "the top-level object being cloned, then " + 
+                                   "an empty object will be returned."));
                 if (parentOrAssigner === TOP_LEVEL) continue;
             }
             
@@ -401,13 +478,6 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                                 prop, 
                                 metadata);
 
-            // Ordinary objects, or the rare `arguments` clone
-            else if ([Tag.OBJECT, Tag.ARGUMENTS].includes(tag))
-                cloned = assign(Object.create(Object.getPrototypeOf(value)), 
-                                parentOrAssigner, 
-                                prop,
-                                metadata);
-            
             // values that will be called using contructor
             else {
                 const Value = value.constructor;
@@ -474,43 +544,67 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                 }
 
                 else if (Tag.MAP === tag) {
-                    const map = new Value;
-                    cloned = assign(map, parentOrAssigner, prop, metadata);
-                    value.forEach((subValue, key) => {
+                    /**
+                     * @type {Map<any, any>}
+                     */
+                    const originalMap = value;
+                    const cloneMap = new Value;
+
+                    cloned = assign(cloneMap, parentOrAssigner, prop, metadata);
+
+                    originalMap.forEach((subValue, key) => {
                         queue.push({ 
-                            value: subValue, 
-                            parentOrAssigner: cloned => {
+                            value: subValue,
+                            /**
+                             * @param {any} cloned 
+                             */ 
+                            parentOrAssigner(cloned) {
                                 isExtensibleSealFrozen.push([subValue, cloned]);
-                                map.set(key, cloned)
+                                cloneMap.set(key, cloned)
                             }
                         });
                     });
                 }
 
                 else if (Tag.SET === tag) {
-                    const set = new Value;
-                    cloned = assign(set, parentOrAssigner, prop, metadata);
-                    value.forEach(subValue => {
+                    /**
+                     * @type {Set<any>}
+                     */
+                    const originalSet = value;
+                    const cloneSet = new Value;
+
+                    cloned = assign(cloneSet, parentOrAssigner, prop, metadata);
+
+                    originalSet.forEach(subValue => {
                         queue.push({ 
-                            value: subValue, 
-                            parentOrAssigner: cloned => {
+                            value: subValue,
+                            /**
+                             * @param {any} cloned 
+                             */
+                            parentOrAssigner(cloned) {
                                 isExtensibleSealFrozen.push([subValue, cloned]);
-                                set.add(cloned)
+                                cloneSet.add(cloned)
                             }
                         });
                     });
                 }
 
-                else
-                    throw getWarning("Attempted to clone unsupported type.");
+                else throw getWarning("Attempted to clone unsupported type.");
             }
         }
         catch(error) {
-            error.message = "Encountered error while attempting to clone " + 
-                            "specific value. The value will be \"cloned\" " + 
-                            "into an empty object. Error encountered: " + 
-                            error.message
-            log(getWarning(error.message, error.cause));
+            const msg = "Encountered error while attempting to clone " + 
+            "specific value. The value will be \"cloned\" into an empty " + 
+            "object."
+
+            if (error instanceof Error) {
+                error.message = `${msg} Error encountered: ${error.message}`;
+                const cause = error.cause ? { cause: error.cause } : undefined;
+                const stack = error.stack ? error.stack: undefined;
+                log(getWarning(error.message, cause, stack));
+            } 
+            else log(getWarning(msg, { cause: error }));
+
             cloned = assign({}, parentOrAssigner, prop, metadata);
 
             // We don't want the prototype if we failed and set the value to an 
@@ -537,10 +631,16 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
         [Object.getOwnPropertyNames(value), Object.getOwnPropertySymbols(value)]
             .forEach(array => {
                 array.forEach(key => {
-                    
+                    if (typeof key === "string" 
+                        && forbiddenProps[tag] !== undefined
+                        && value === forbiddenProps[tag].prototype
+                        && forbiddenProps[tag].properties.includes(key)) 
+                        return;
+
                     // We already assigned TypedArray elements. Only add prop if 
                     // it isn't already assigned.
                     if (isTypedArray(tag) 
+                        && typeof key !== "symbol"
                         && Number.isInteger(Number(key))
                         && Number(key) >= 0
                         && Number(key) < value.byteLength)
@@ -706,36 +806,52 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
  * or WeakSets). 
  * 
  * @param {any} value The value to deeply copy.
- * @param {Object|Function} options If a function, then this argument is used as 
- * the customizer. If an object, it is used as a configuration object.
- * @param {Function} options.customizer Allows the user to inject custom logic. 
- * The function is given the value to copy. If the function returns an object, 
- * the value of the `clone` property on that object will be used as the clone. 
+ * @param {import("./types").CloneDeepOptionsOrCustomizer} [optionsOrCustomizer] 
+ * If a function, this argument is used as the customizer.
+ * @param {object} [optionsOrCustomizer] If an object, this argument is used as 
+ * a configuration object.
+ * @param {import("./types").Customizer} optionsOrCustomizer.customizer Allows 
+ * the user to inject custom logic. The function is given the value to copy. If 
+ * the function returns an object, the value of the `clone` property on that object will be used as the clone. 
  * See the documentation for `cloneDeep` for more information.
- * @param {Function} options.log Any errors which occur during the algorithm can 
- * optionally be passed to a log function. `log` should take one argument, which 
- * will be the error encountered. Use this to the log the error to a custom 
- * logger.
- * @param {String} options.logMode Case-insensitive. If "silent", no warnings 
- * will be logged. Use with caution, as failures to perform true clones are
- * logged as warnings. If "quiet", the stack trace of the warning is ignored.
- * @param {Boolean} options.letCustomizerThrow If `true`, errors thrown by the 
- * customizer will be thrown by `cloneDeep`. By default, the error is logged and 
- * the algorithm proceeds with default behavior.
+ * @param {import("./types").Log} optionsOrCustomizer.log Any errors which occur 
+ * during the algorithm can optionally be passed to a log function. `log` should 
+ * take one argument which will be the error encountered. Use this to the log 
+ * the error to a custom logger.
+ * @param {string} optionsOrCustomizer.logMode Case-insensitive. If "silent", no 
+ * warnings will be logged. Use with caution, as failures to perform true clones 
+ * are logged as warnings. If "quiet", the stack trace of the warning is 
+ * ignored.
+ * @param {boolean} optionsOrCustomizer.letCustomizerThrow If `true`, errors 
+ * thrown by the customizer will be thrown by `cloneDeep`. By default, the error 
+ * is logged and the algorithm proceeds with default behavior.
  * @returns {Object} The deep copy.
  */
-function cloneDeep(value, options) {
-    if (typeof options === "function") options = { customizer: options };
-    else if (typeof options !== "object") options = {};
+function cloneDeep(value, optionsOrCustomizer) {
+    let customizer;
+    let log;
+    let logMode;
+    let letCustomizerThrow;
 
-    let { customizer, log, logMode, letCustomizerThrow } = options;
+    if (typeof optionsOrCustomizer === "function")
+        customizer = optionsOrCustomizer;
+    else if (typeof optionsOrCustomizer === "object") {
+        ({ log, logMode, letCustomizerThrow } = optionsOrCustomizer);
+        
+        customizer = optionsOrCustomizer.customizer;
+    }
 
-    if (typeof logMode !== "string" || typeof log === "function");
-    else if (logMode.toLowerCase() === "silent")
-        log = () => { /* no-op */ };
-    else if (logMode.toLowerCase() === "quiet")
-        log = error => console.warn(error.message);
+    if (typeof log !== "function") log = console.warn;
 
+    if (typeof logMode === "string")
+        if (logMode.toLowerCase() === "silent")
+            log = () => {};
+        else if (logMode.toLowerCase() === "quiet")
+            /**
+             * @type {(error: Error) => void}
+             */
+            log = error => console.warn(error.message);
+    
     return cloneInternalNoRecursion(value, customizer, log, letCustomizerThrow);
 }
  
