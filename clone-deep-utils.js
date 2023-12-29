@@ -32,10 +32,9 @@ export function cloneDeepFully(value, options) {
      * This includes symbols and non-enumerable properties. `undefined` or 
      * `null` returns an empty array.
      * @param {Object} o An object.
-     * @returns {(String|Symbol)[]} An array of property names.
+     * @returns {(string|symbol)[]} An array of property names.
      */
     function getAllPropertiesOf(o) {
-        /** @readonly */
         return [Object.getOwnPropertyNames(o), Object.getOwnPropertySymbols(o)]
             .flat();
     }
@@ -48,10 +47,6 @@ export function cloneDeepFully(value, options) {
     function hasMethods(o) {
         // We cannot access some properties of Function.prototype in strict mode
         if (o === Function.prototype) return true;
-        // TypeScript doesn't allow Symbols to be the index of an object. This 
-        // is actually intended behavior. See 
-        // https://github.com/Microsoft/TypeScript/issues/24587.
-        // @ts-ignore
         return getAllPropertiesOf(o).some(key => typeof o[key] === "function");
     }
 

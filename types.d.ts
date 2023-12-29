@@ -27,7 +27,6 @@ export interface CloneDeepFullyOptions extends CloneDeepOptions {
 export type CloneDeepFullyOptionsOrCustomizer = 
     CloneDeepFullyOptions | Customizer;
 
-
 declare module "cms-clone-deep" {
 
 /**
