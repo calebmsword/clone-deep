@@ -2,7 +2,7 @@
 A robust utility for deeply cloning JavaScript objects.
 
 ```javascript
-import cloneDeep from "./clone-deep.js";
+import cloneDeep from "cms-clone-deep";
 
 const object = [{ foo: "bar" }, { baz: { spam: "eggs" } }];
 const cloned = cloneDeep(object);
@@ -16,10 +16,26 @@ console.log(cloned[0] === object[0]);  // false
 console.log(cloned[1] === object[1]);  // false
 ```
 
+## installation
+
+First, install [node.js](https://nodejs.org/en) on your machine. At the time of this writing, the current stable version is **20.10.0**.
+ - I would recommend version **20.1.0** or higher which is when the test runner received the `--experimental-test-coverage` option.
+ - I wouldn't go any lower than version **16.13.2** which was the first version of node to support ES2022.
+
+After that, using the terminal in any [package](https://nodejs.org/api/packages.html#modules-packages), execute `npm install cms-clone-deep`. In any JavaScript file in that package, functions can be imported like so:
+
+```javascript
+import cloneDeep, { cloneDeepFully, useCustomizers } from "cms-clone-deep";
+```
+
+## cloneDeep
+
 The first argument to `cloneDeep` is the object to clone. The second argument can either be a function which will be used as a "customizer" for the behavior of the function, or it can be an object that can be used for configuration.
 
 ```javascript
 // Many ways to call `cloneDeep`:
+import cloneDeep from "cms-clone-deep";
+
 let cloned;
 
 // 1: Default behavior
@@ -53,13 +69,13 @@ cloned = cloneDeep(originalObject, {
 });
 ```
 
-### why should I use cloneDeep? JavaScript has structuredClone now!
+## why should I use cloneDeep? JavaScript has structuredClone now!
 
 `structuredClone` has many limitations. It cannot clone objects with symbols. It does not clone non-enumerable properties. It does not preserve the extensible, sealed, or frozen status of the object or its nested objects. It does not clone the property descriptor associated with any values in the object.
 
 `cloneDeep` has none of these limitations. See [this section](#cloneDeep-vs-structuredClone) for more about the differences between `cloneDeep` and `structuredClone`.
 
-### What cannot be cloned
+## What cannot be cloned
 
 Functions cannot be reliably cloned in JavaScript. 
  - It is impossible to clone native JavaScript functions.
@@ -72,7 +88,7 @@ Most objects have `Object.prototype` or some other native JavaScript prototype i
 
 Please see [these notes](https://github.com/calebmsword/javascript-notes/blob/main/deep-clone.md#deep-clone-and-functions) for an in-depth discussion on the challenge of cloning functions.
 
-### customizer
+## customizers
 
 `cloneDeep` can take a customizer which allows the user to support custom types. This gives the user considerable power to extend or change `cloneDeep`'s functionality.
 
@@ -141,14 +157,14 @@ There are many properties that will be observed in the object returned by the cu
   - `ignoreProto`: If `true`, then the algorithm will not force `clone` to share the prototype of `value`. 
   - `ignore`: If `true`, value will not be cloned at all.
 
-### clone-deep-utils
+## `cloneDeepFully` and `useCustomizers`
 
-clone-deep-utils.js contains two utilities.
+`cloneDeep` is the heart and soul of this package. But `cms-clone-deep` comes with two additional functions:
 
  1) `cloneDeepFully` This function will clone an object as well as each object in its prototype chain. The API is exactly the same as `cloneDeep` except that the options object can take the additional property `force`. If `force` is `true`, `cloneDeepFully` will clone prototypes with methods. Otherwise, it stops once it reaches any prototype with methods.
  2) `useCustomizers` This function takes an array of customizer functions and returns a new customizer. The new customizer calls each customizer one at a time, in order, and returns an object if once any of the customizers returns an object. Use this to avoid code reuse when creating multiple useful customizers.
 
-### cloneDeep vs structuredClone
+## cloneDeep vs structuredClone
 
 JavaScript has a native function `structuredClone` which deeply clones objects. Differences between `structuredClone` and `cloneDeep` include:
  - `structuredClone` cannot clone objects which have symbols or properties that are symbols. `cloneDeep` can.
@@ -162,17 +178,17 @@ JavaScript has a native function `structuredClone` which deeply clones objects. 
  - `structuredClone` will identify if an object was created by a native JavaScript constructor function even if the object's prototype is changed or if the `Symbol.toStringTag` property is changed; furthermore, the cloned object will have the prototype from the native constructor function from even if the original object changed its prototype. On the other hand, `deepClone` uses `Object.prototype.toString.call` to identify the type of an object and the cloned object will share the original object's prototype no matter the result of `Object.prototype.toString.call`.
  - If the prototype of the original object is the prototype of any [supported type](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types) for the structured clone algorithm, then object returned by `structuredClone` will share the original object's prototype; otherwise, the prototype of the object will be `Object.prototype`. Meanwhile, the object cloned by `cloneDeep` will always share the prototype of the original object. 
 
-### testing
+## testing
 
 The file `clone-deep.test.js` contains all unit tests. Execute `node --test` to run them. Execute `node --test --experimental-test-coverage` to see coverage results.
 
-### benchmarking
+## benchmarking
 
 Some rudimentary benchmarking can be performed by running `node serve.js <PORT>` (where the PORT command line option is optional and defaults to 8787) and visiting `http://localhost:<PORT>`. This **must** be done in the directory containing `index.html`.
 
 `benchmark.js` and `benchmark.css` contain the JavaScript and styling, respectively, for the hosted web page. You can use your favorite browser's dev tools to profile the result.
 
-### acknowledgements
+## acknowledgements
 
  - This algorithm is a heavily modified version of the the [cloneDeep](https://lodash.com/docs/4.17.15#cloneDeep) utility from Lodash. If anyone knows who specifically implemented the algorithm, I will thank them directly.
  - Thanks to Tiago Bertolo, the author of [this article](https://medium.com/@tiagobertolo/which-is-the-best-method-for-deep-cloning-in-javascript-are-they-all-bad-101f32d620c5). It reminded me to clone the metadata of objects.
