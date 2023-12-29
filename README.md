@@ -37,6 +37,7 @@ The first argument to `cloneDeep` is the object to clone. The second argument ca
 import cloneDeep from "cms-clone-deep";
 
 let cloned;
+let originalObject = {};
 
 // 1: Default behavior
 cloned = cloneDeep(originalObject);
