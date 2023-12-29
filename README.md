@@ -179,17 +179,17 @@ JavaScript has a native function `structuredClone` which deeply clones objects. 
  - `structuredClone` will identify if an object was created by a native JavaScript constructor function even if the object's prototype is changed or if the `Symbol.toStringTag` property is changed; furthermore, the cloned object will have the prototype from the native constructor function from even if the original object changed its prototype. On the other hand, `deepClone` uses `Object.prototype.toString.call` to identify the type of an object and the cloned object will share the original object's prototype no matter the result of `Object.prototype.toString.call`.
  - If the prototype of the original object is the prototype of any [supported type](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types) for the structured clone algorithm, then object returned by `structuredClone` will share the original object's prototype; otherwise, the prototype of the object will be `Object.prototype`. Meanwhile, the object cloned by `cloneDeep` will always share the prototype of the original object. 
 
-## testing
+## cloning this repository
+
+There are some features which are only accessible by cloning the repository. This is done by installing [git](https://git-scm.com/downloads). Once you have `git`, execute `git clone https://github.com/calebmsword/clone-deep.git` and a directory *clone-deep/* will be made containing the source code.
+
+### testing
 
 The file `clone-deep.test.js` contains all unit tests. Execute `node --test` to run them. Execute `node --test --experimental-test-coverage` to see coverage results.
 
-## benchmarking
+### benchmarking
 
-Benchmarking can only be done within the repository. Clone this repository if you would like to see the benchmarking UI.
-
-Some rudimentary benchmarking can be performed by running `node serve.js <PORT>` (where the `PORT` command line option is optional and defaults to `8787`) and visiting `http://localhost:<PORT>`. This **must** be done in the directory containing `index.html`.
-
-`benchmark.js` and `benchmark.css` contain the JavaScript and styling, respectively, for the hosted web page. You can use your favorite browser's dev tools to profile the result.
+Some rudimentary benchmarking can be done within the repository. In the directory containing the source code, execute `node serve.js <PORT>`, where the `PORT` command line option is optional and defaults to `8787`, and visit `http://localhost:<PORT>` to see the benchmarking UI. `benchmark.js` and `benchmark.css` contain the JavaScript and styling, respectively, for the hosted web page. You can use your favorite browser's dev tools to profile the result.
 
 ## acknowledgements
 
