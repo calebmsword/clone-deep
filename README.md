@@ -20,7 +20,6 @@ console.log(cloned[1] === object[1]);  // false
 
 First, install [node.js](https://nodejs.org/en) on your machine. At the time of this writing, the current stable version is **20.10.0**.
  - I would recommend version **20.1.0** or higher which is when the test runner received the `--experimental-test-coverage` option.
- - I wouldn't go any lower than version **16.13.2** which was the first version of node to support ES2022.
 
 After that, using the terminal in any [package](https://nodejs.org/api/packages.html#modules-packages), execute `npm install cms-clone-deep`. In any JavaScript file in that package, functions can be imported like so:
 
