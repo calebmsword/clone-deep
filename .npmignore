@@ -1,4 +1,6 @@
 node_modules/
+.github/
 benchmark.css
 benchmark.js
 serve.js
+package-lock.json

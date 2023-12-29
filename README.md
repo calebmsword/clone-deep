@@ -1,5 +1,5 @@
 # cms-clone-deep
-A robust utility for deeply cloning JavaScript objects.
+A dependency-free utility for deeply cloning JavaScript objects.
 
 ```javascript
 import cloneDeep from "cms-clone-deep";
