@@ -350,6 +350,12 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
          */
         let useCustomizerClone = false;
 
+        /**
+         * Any properties in `value` added here will not be cloned.
+         * @type {(string|symbol)[]}
+         */
+        let propsToIgnore = [];
+
         // Perform user-injected logic if applicable.
         if (typeof customizer === "function") {
 
@@ -421,10 +427,10 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
         if (forbiddenProps[tag] !== undefined
             && forbiddenProps[tag].prototype === value)
             log(getWarning(
-                `Attempted to clone ${tag.substring(8, tag.length - 1)}. ` + 
-                `This object cannot have the following properties accessed: ` + 
-                `${forbiddenProps[tag].properties.join(", ")}. The cloned ` + 
-                "object will not have any inaccessible properties."
+                `Attempted to clone ${tag.substring(8, tag.length - 1)}` + 
+                ".prototype. This object cannot have the following properties" + 
+                `accessed: ${forbiddenProps[tag].properties.join(", ")}. The ` + 
+                "cloned object will not have any inaccessible properties."
             ));
 
         try {
@@ -507,6 +513,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                     const regExp = new Value(value.source, /\w*$/.exec(value));
                     regExp.lastIndex = value.lastIndex;
                     cloned = assign(regExp, parentOrAssigner, prop, metadata);
+                    propsToIgnore.push("lastIndex");
                 }
 
                 else if (Tag.ERROR === tag) {
@@ -514,11 +521,6 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                     const clonedError = cause === undefined
                         ? new Value(value.message)
                         : new Value(value.message, { cause });
-
-                    // stack is achieved with a get accessor that will cause 
-                    // cloned error to have incorrect stack trace. So we will 
-                    // get the properties ourselves
-                    ignoreProps = true;
 
                     const descriptor = Object.getOwnPropertyDescriptor(
                         new Error, "stack");
@@ -536,6 +538,8 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                                     parentOrAssigner,
                                     prop,
                                     metadata);
+
+                    propsToIgnore.push("cause", "stack");
                 }
 
                 else if (Tag.ARRAYBUFFER === tag) {
@@ -560,6 +564,9 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                         parentOrAssigner,
                         prop,
                         metadata);
+
+                    for (let n = 0; n < cloned.length; n++)
+                        propsToIgnore.push(String(n));
                 }
 
                 else if (Tag.MAP === tag) {
@@ -656,15 +663,8 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                         && forbiddenProps[tag].properties.includes(key)) 
                         return;
 
-                    // We already assigned TypedArray elements. Only add prop if 
-                    // it isn't already assigned.
-                    if (isTypedArray(tag) 
-                        && typeof key !== "symbol"
-                        && Number.isInteger(Number(key))
-                        && Number(key) >= 0
-                        && Number(key) < value.byteLength)
-                        return;
-
+                    if (propsToIgnore.includes(key)) return;
+                    
                     queue.push({ 
                         value: value[key], 
                         parentOrAssigner: cloned,

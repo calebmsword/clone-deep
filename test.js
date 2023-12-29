@@ -454,6 +454,15 @@ describe("cloneDeep without customizer", () => {
         }
     });
 
+    test("Errors have additional properties cloned", () => {
+        const error = new Error("error");
+        error.property = "property";
+
+        const cloned = cloneDeep(error);
+
+        assert.strictEqual(cloned.property, error.property);
+    });
+
     test('Function.prototype is "cloned" with allowed properties', () => {
         const expectedProperties = [
             "length",
