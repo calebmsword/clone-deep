@@ -1,5 +1,5 @@
 export interface QueueElement {
-    value: any|Map<any, any>|Set<any>,
+    value: any,
     parentOrAssigner?: Symbol|Object|Function,
     prop?: string | symbol,
     metadata?: PropertyDescriptor
