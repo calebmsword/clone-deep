@@ -60,7 +60,7 @@ describe("cloneDeep without customizer", () => {
 
     original.circular = original;
 
-    test("The cloned object does not === original", () => {
+    test("cloned !== original", () => {
         const cloned = cloneDeep(original);
 
         assert.notStrictEqual(cloned, original);
@@ -432,14 +432,14 @@ describe("cloneDeep without customizer", () => {
         let doMonkeypatch = true;
         try {
 
-            const CurrentError = Error;
+            const OriginalError = Error;
             Error = function(...args) {
-                if (doMonkeypatch !== true) return new CurrentError(...args);
-                const error = new CurrentError(...args);
+                if (doMonkeypatch !== true) return new OriginalError(...args);
+                const error = new OriginalError(...args);
                 delete error.stack;
                 return error;
             }
-            Error.prototype = CurrentError.prototype;
+            Error.prototype = OriginalError.prototype;
 
             const error = new Error("error", { cause: "cause" });
 
