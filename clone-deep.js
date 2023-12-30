@@ -709,9 +709,16 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
  * @returns {Object} The deep copy.
  */
 function cloneDeep(value, optionsOrCustomizer) {
+    /** @type {import("./types").Customizer|undefined} */
     let customizer;
+
+    /** @type {import("./types").Log|undefined} */
     let log;
+
+    /** @type {string|undefined} */
     let logMode;
+
+    /** @type {boolean|undefined} */
     let letCustomizerThrow;
 
     if (typeof optionsOrCustomizer === "function")
@@ -728,9 +735,7 @@ function cloneDeep(value, optionsOrCustomizer) {
         if (logMode.toLowerCase() === "silent")
             log = () => {};
         else if (logMode.toLowerCase() === "quiet")
-            /**
-             * @type {(error: Error) => void}
-             */
+            /** @type {(error: Error) => void} */
             log = error => console.warn(error.message);
     
     return cloneInternalNoRecursion(value, customizer, log, letCustomizerThrow);

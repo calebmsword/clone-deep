@@ -19,9 +19,8 @@ console.log(cloned[1] === object[1]);  // false
 ## installation
 
 First, install [node.js](https://nodejs.org/en) on your machine. At the time of this writing, the current stable version is **20.10.0**.
- - I would recommend version **20.1.0** or higher which is when the test runner received the `--experimental-test-coverage` option.
 
-After that, using the terminal in any [package](https://nodejs.org/api/packages.html#modules-packages), execute `npm install cms-clone-deep`. In any JavaScript file in that package, functions can be imported like so:
+After that, using the terminal in any [package](https://nodejs.org/api/packages.html#modules-packages), execute `npm install cms-clone-deep`. In any ES6 module in that package, functions can be imported like so:
 
 ```javascript
 import cloneDeep, { cloneDeepFully, useCustomizers } from "cms-clone-deep";
@@ -79,7 +78,7 @@ cloned = cloneDeep(originalObject, {
 
 Functions cannot be reliably cloned in JavaScript. 
  - It is impossible to clone native JavaScript functions.
- - It is impossible to clone functions which manipulate data in their closures.
+ - It is almost always impossible to clone functions which manipulate data in their closures.
  - The techniques which properly clone some functions use `eval` or the `Function` constructor which are highly insecure.
  
 `WeakMap` and `WeakSet` instances also cannot be cloned.
@@ -123,7 +122,7 @@ function myCustomizer(value) {
     const clonedWrapper = new Wrapper();
 
     return {
-        // the `clone` property on the returned object will be used as the cloned value
+        // the `clone` property stores the clone of `value`
         clone: clonedWrapper,
 
         // Let's clone the private property as well
@@ -180,11 +179,14 @@ JavaScript has a native function `structuredClone` which deeply clones objects. 
 
 ## cloning this repository
 
-There are some features which are only accessible by cloning the repository. This is done by installing [git](https://git-scm.com/downloads). Once you have `git`, execute `git clone https://github.com/calebmsword/clone-deep.git` and a directory *clone-deep/* will be made containing the source code.
+There are some features which are only accessible by cloning the repository. This is done by installing [git](https://git-scm.com/downloads). Once you have `git`, execute `git clone https://github.com/calebmsword/clone-deep.git` and a directory *clone-deep/* will be made containing the source code. Then execute `npm install`.
+
+### typescript & jsdoc
+This repository uses type annotations in [JSDoc](https://jsdoc.app/) to add type-checking to JavaScript. While this requires the `typescript` module, there is no compilation step. The codebase is entirely JavaScript. VSCode will still highlight errors like it would for TypeScript files.
 
 ### testing
 
-The file `clone-deep.test.js` contains all unit tests. Execute `node --test` to run them. Execute `node --test --experimental-test-coverage` to see coverage results.
+The file `clone-deep.test.js` contains all unit tests. Execute `node --test` to run them. If you are using node v20.1.0 or higher, execute `node --test --experimental-test-coverage` to see coverage results.
 
 ### benchmarking
 
