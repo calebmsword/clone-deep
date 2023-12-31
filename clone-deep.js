@@ -212,9 +212,9 @@ function isTypedArray(tag) {
 /**
  * Clones the provided value.
  * @param {any} _value The value to clone.
- * @param {import("./types").Customizer|undefined} customizer A customizer 
+ * @param {import("./public-types").Customizer|undefined} customizer A customizer 
  * function.
- * @param {import("./types").Log} log Receives an error object for logging.
+ * @param {import("./public-types").Log} log Receives an error object for logging.
  * @param {boolean} doThrow Whether errors in the customizer should 
  * cause the function to throw.
  * @returns {any}
@@ -222,10 +222,10 @@ function isTypedArray(tag) {
 function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
     /**
-     * @type {import("./types").Assign<any>}
+     * @type {import("./private-types").Assign<any>}
      * Handles the assignment of the cloned value to some persistent place.
      * @param {any} cloned The cloned value.
-     * @param {Object|import("./types").assigner|Symbol|Object} 
+     * @param {Object|import("./private-types").assigner|Symbol|Object} 
      * [parentOrAssigner] Either the parent object that the cloned value will 
      * be assigned to, or a function which assigns the value itself. If equal to 
      * `TOP_LEVEL`, then it is the value that will be returned by the algorithm. 
@@ -289,7 +289,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
     /** 
      * A queue so we can avoid recursion.
-     * @type {import("./types").QueueElement[]}
+     * @type {import("./private-types").QueueElement[]}
      */ 
     const queue = [{ value: _value, parentOrAssigner: TOP_LEVEL }];
     
@@ -371,7 +371,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             /** @type {any} */
             let clone;
 
-            /** @type {import("./types").AdditionalValues|undefined} */
+            /** @type {import("./public-types").AdditionalValues|undefined} */
             let additionalValues; 
 
             /** @typo {boolean|undefined} */
@@ -600,7 +600,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                 }
                 
                 else if (isTypedArray(tag)) {
-                    /** @type {import("./types").TypedArrayConstructor} */
+                    /** @type {import("./private-types").TypedArrayConstructor} */
                     const TypedArray = value.constructor;
 
                     /** @type {ArrayBufferConstructor} */
@@ -754,19 +754,18 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
 /**
  * @param {any} value The value to deeply copy.
- * @param {import("./types").CloneDeepOptions|import("./types").Customizer} 
+ * @param {import("./public-types").CloneDeepOptions|import("./public-types").Customizer} 
  * [optionsOrCustomizer] If a function, this argument is used as the customizer.
  * @param {object} [optionsOrCustomizer] If an object, this argument is used as 
  * a configuration object.
- * @param {import("./types").Customizer} optionsOrCustomizer.customizer Allows 
- * the user to inject custom logic. The function is given the value to copy. If 
- * the function returns an object, the value of the `clone` property on that 
- * object will be used as the clone. See the documentation for `cloneDeep` for 
- * more information.
- * @param {import("./types").Log} optionsOrCustomizer.log Any errors which occur 
- * during the algorithm can optionally be passed to a log function. `log` should 
- * take one argument which will be the error encountered. Use this to the log 
- * the error to a custom logger.
+ * @param {import("./public-types").Customizer} optionsOrCustomizer.customizer 
+ * Allows the user to inject custom logic. The function is given the value to 
+ * copy. If the function returns an object, the value of the `clone` property on 
+ * that object will be used as the clone.
+ * @param {import("./public-types").Log} optionsOrCustomizer.log Any errors 
+ * which occur during the algorithm can optionally be passed to a log function. 
+ * `log` should take one argument which will be the error encountered. Use this 
+ * to log the error to a custom logger.
  * @param {string} optionsOrCustomizer.logMode Case-insensitive. If "silent", no 
  * warnings will be logged. Use with caution, as failures to perform true clones 
  * are logged as warnings. If "quiet", the stack trace of the warning is 
@@ -777,10 +776,10 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
  * @returns {Object} The deep copy.
  */
 function cloneDeep(value, optionsOrCustomizer) {
-    /** @type {import("./types").Customizer|undefined} */
+    /** @type {import("./public-types").Customizer|undefined} */
     let customizer;
 
-    /** @type {import("./types").Log|undefined} */
+    /** @type {import("./public-types").Log|undefined} */
     let log;
 
     /** @type {string|undefined} */

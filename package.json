@@ -2,10 +2,10 @@
   "name": "cms-clone-deep",
   "repository": "https://github.com/calebmsword/clone-deep",
   "type": "module",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "A dependency-free utility for deeply cloning JavaScript objects.",
   "main": "index.js",
-  "types": "types.d.ts",
+  "types": "public-types.d.ts",
   "keywords": [
     "clone",
     "deep"

@@ -3,16 +3,16 @@ import cloneDeep from "./clone-deep.js";
 /**
  * Deeply clones the provided object and its prototype chain.
  * @param {any} value The object to clone.
- * @param {import("./types").CloneDeepFullyOptions|import("./types").Customizer} 
+ * @param {import("./public-types.js").CloneDeepFullyOptions|import("./public-types.js").Customizer} 
  * [options] If a function, it is used as the customizer for the clone. 
  * @param {object} [options] If an object, it is used as a configuration object.
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.force If `true`, prototypes with methods will be 
  * cloned. Normally, this function stops if it reaches any prototype with 
  * methods.
- * @param {import("./types").Customizer} options.customizer See the 
+ * @param {import("./public-types.js").Customizer} options.customizer See the 
  * documentation for `cloneDeep`.
- * @param {import("./types").Log} options.log See the documentation for 
+ * @param {import("./public-types.js").Log} options.log See the documentation for 
  * `cloneDeep`.
  * @param {string} options.logMode See the documentation for `cloneDeep`.
  * @param {boolean} options.letCustomizerThrow See the documentation for 
@@ -74,8 +74,10 @@ export function cloneDeepFully(value, options) {
  * Creates a customizer which composes other customizers.
  * The customizers are executed in order. The first to return an object is used 
  * as the result. If no customizer returns an object, undefined is returned.
- * @param {Function[]} customizers An array of customizer functions.
- * @returns {Function} A new customizer which composes the provided customizers.
+ * @param {import("./public-types").Customizer[]} customizers An array of 
+ * customizer functions.
+ * @returns {import("./public-types").Customizer} A new customizer which 
+ * composes the provided customizers.
  */
 export function useCustomizers(customizers) {
     if (!Array.isArray(customizers)
