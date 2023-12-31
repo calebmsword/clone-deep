@@ -3,32 +3,34 @@
  * @type {Object<string, string>}
  */
 export const Tag = Object.freeze({
-    ARGUMENTS: '[object Arguments]',
-    ARRAY: '[object Array]',
-    BOOLEAN: '[object Boolean]',
-    DATE: '[object Date]',
-    ERROR: '[object Error]',
+    ARGUMENTS: "[object Arguments]",
+    ARRAY: "[object Array]",
+    BIGINT: "[object BigInt]",
+    BOOLEAN: "[object Boolean]",
+    DATE: "[object Date]",
+    ERROR: "[object Error]",
     FUNCTION: "[object Function]",
-    MAP: '[object Map]',
-    NUMBER: '[object Number]',
-    OBJECT: '[object Object]',
-    REGEXP: '[object RegExp]',
-    SET: '[object Set]',
-    STRING: '[object String]',
-    SYMBOL: '[object Symbol]',
-    WEAKMAP: '[object WeakMap]',
+    MAP: "[object Map]",
+    NUMBER: "[object Number]",
+    OBJECT: "[object Object]",
+    PROMISE: "[object Promise]",
+    REGEXP: "[object RegExp]",
+    SET: "[object Set]",
+    STRING: "[object String]",
+    SYMBOL: "[object Symbol]",
+    WEAKMAP: "[object WeakMap]",
     WEAKSET: "[object WeakSet]",
-    ARRAYBUFFER: '[object ArrayBuffer]',
-    DATAVIEW: '[object DataView]',
-    FLOAT32: '[object Float32Array]',
-    FLOAT64: '[object Float64Array]',
-    INT8: '[object Int8Array]',
-    INT16: '[object Int16Array]',
-    INT32: '[object Int32Array]',
-    UINT8: '[object Uint8Array]',
-    UINT8CLAMPED: '[object Uint8ClampedArray]',
-    UINT16: '[object Uint16Array]',
-    UINT32: '[object Uint32Array]',
+    ARRAYBUFFER: "[object ArrayBuffer]",
+    DATAVIEW: "[object DataView]",
+    FLOAT32: "[object Float32Array]",
+    FLOAT64: "[object Float64Array]",
+    INT8: "[object Int8Array]",
+    INT16: "[object Int16Array]",
+    INT32: "[object Int32Array]",
+    UINT8: "[object Uint8Array]",
+    UINT8CLAMPED: "[object Uint8ClampedArray]",
+    UINT16: "[object Uint16Array]",
+    UINT32: "[object Uint32Array]",
     BIGINT64: "[object BigInt64Array]",
     BIGUINT64: "[object BigUint64Array]"
 });
@@ -45,6 +47,7 @@ export const supportedPrototypes = Object.freeze([
     Map.prototype,
     Number.prototype,
     Object.prototype,
+    Promise.prototype,
     RegExp.prototype,
     Set.prototype,
     String.prototype,
@@ -101,7 +104,7 @@ export const forbiddenProps = Object.freeze({
 class CloneDeepWarning extends Error {
     /**
      * @param {string} message 
-     * @param {any} [cause] 
+     * @param {ErrorOptions} [cause] 
      * @param {string} [stack]
      */
     constructor(message, cause, stack) {
@@ -114,8 +117,8 @@ class CloneDeepWarning extends Error {
 /**
  * Creates a {@link CloneDeepWarning} instance.
  * @param {String} message The error message.
- * @param {Object} [cause] If an object with a `cause` property, it will add a 
- * cause to the error when logged.
+ * @param {ErrorOptions} [cause] If an object with a `cause` property, it will 
+ * add a cause to the error when logged.
  * @param {string} [stack] If provided, determines the stack associated with the
  * error object.
  * @returns {CloneDeepWarning} 
@@ -136,13 +139,17 @@ const Warning = {
         "properties will not be cloned. Also, native methods cannot be " + 
         "cloned so all methods in Function.prototype will copied directly."),
     IMPROPER_ADDITIONAL_VALUES: getWarning(
-        "The additionalValue property must be an array of objects.")
+        "The additionalValue property must be an array of objects."),
+    PROMISE: getWarning(
+        "Attempted to clone a Promise. The cloned promise will settle when " + 
+        "original Promise settles. It will fulfill or reject with the same " + 
+        "value as the original Promise.")
 }
 
 /** 
  * This symbol is used to indicate that the cloned value is the top-level object 
  * that will be returned by {@link cloneDeep}.
- * @type {Symbol}
+ * @type {symbol}
  */ 
 const TOP_LEVEL = Symbol("TOP_LEVEL");
 
@@ -205,26 +212,28 @@ function isTypedArray(tag) {
 /**
  * Clones the provided value.
  * @param {any} _value The value to clone.
- * @param {Function|undefined} customizer A customizer function.
- * @param {Function} log Receives an error object for logging.
- * @param {boolean|undefined} doThrow Whether errors in the customizer should 
+ * @param {import("./types").Customizer|undefined} customizer A customizer 
+ * function.
+ * @param {import("./types").Log} log Receives an error object for logging.
+ * @param {boolean} doThrow Whether errors in the customizer should 
  * cause the function to throw.
  * @returns {any}
  */
 function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
     /**
+     * @type {import("./types").Assign<any>}
      * Handles the assignment of the cloned value to some persistent place.
      * @param {any} cloned The cloned value.
-     * @param {Object|Function|Symbol|undefined} parentOrAssigner Either the 
-     * parent object that the cloned value will be assigned to, or a function 
-     * which assigns the value itself. If equal to TOP_LEVEL, then it is the 
-     * value that will be returned by the algorithm. 
-     * @param {PropertyKey|undefined} prop If `parentOrAssigner` is a parent 
+     * @param {Object|import("./types").assigner|Symbol|Object} 
+     * [parentOrAssigner] Either the parent object that the cloned value will 
+     * be assigned to, or a function which assigns the value itself. If equal to 
+     * `TOP_LEVEL`, then it is the value that will be returned by the algorithm. 
+     * @param {PropertyKey} [prop] If `parentOrAssigner` is a parent 
      * object, then `parentOrAssigner[prop]` will be assigned `cloned`.
-     * @param {PropertyDescriptor|undefined} metadata The property descriptor 
+     * @param {PropertyDescriptor} [metadata] The property descriptor 
      * for the object. If not an object, then this is ignored.
-     * @returns The cloned value.
+     * @returns {any} The cloned value.
      */
     function assign(cloned, parentOrAssigner, prop, metadata) {
         if (parentOrAssigner === TOP_LEVEL) 
@@ -334,13 +343,13 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
         /**
          * If true, do not not clone the properties of value.
-         * @type {boolean}
+         * @type {boolean|undefined}
          */
         let ignoreProps = false;
 
         /**
          * If true, do not have `cloned` share the prototype of `value`.
-         * @type {boolean}
+         * @type {boolean|undefined}
          */
         let ignoreProto = false;
         
@@ -359,7 +368,14 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
         // Perform user-injected logic if applicable.
         if (typeof customizer === "function") {
 
-            let clone, additionalValues, ignore;
+            /** @type {any} */
+            let clone;
+
+            /** @type {import("./types").AdditionalValues|undefined} */
+            let additionalValues; 
+
+            /** @typo {boolean|undefined} */
+            let ignore;
 
             try {
                 const customResult = customizer(value);
@@ -407,9 +423,11 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
                 if (error instanceof Error) {
                     error.message = `${msg}Error encountered: ${error.message}`;
+                    
                     const cause = error.cause 
                         ? { cause: error.cause } 
                         : undefined;
+                    
                     const stack = error.stack ? error.stack : undefined;
                     log(getWarning(error.message, cause, stack));
                 }
@@ -486,51 +504,79 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
             // values that will be called using contructor
             else {
-                const Value = value.constructor;
 
-                // Booleans, Number, String or Symbols which used `new` syntax 
-                // so JavaScript thinks they are objects
+                // Boolean, Number, String, BigInt or Symbol created with `new` 
+                // syntax so JavaScript treats them as objects
                 // We also handle Date here because it is convenient
-                if ([Tag.BOOLEAN, Tag.DATE].includes(tag))
-                    cloned = assign(new Value(Number(value)), 
+                if ([Tag.BOOLEAN, Tag.DATE].includes(tag)) {
+                    /** @type {BooleanConstructor|DateConstructor} */
+                    const BooleanOrDateConstructor = value.constructor;
+
+                    cloned = assign(new BooleanOrDateConstructor(Number(value)), 
                                     parentOrAssigner, 
                                     prop,
                                     metadata);
-                else if ([Tag.NUMBER, Tag.STRING].includes(tag))
-                    cloned = assign(new Value(value), 
+                }
+                else if ([Tag.NUMBER, Tag.STRING].includes(tag)) {
+                    /** @type {NumberConstructor|StringConstructor} */
+                    const NumberOrStringConstructor = value.constructor;
+
+                    cloned = assign(new NumberOrStringConstructor(value), 
                                     parentOrAssigner, 
                                     prop, 
                                     metadata);
+                }
+                // `typeof Object(Symbol("foo"))` is `"object"
                 else if (Tag.SYMBOL === tag) {
+                    /** @type {Symbol} */
+                    const symbol = value;
+
                     cloned = assign(
-                        Object(Symbol.prototype.valueOf.call(value)), 
+                        Object(Symbol.prototype.valueOf.call(symbol)), 
+                        parentOrAssigner, 
+                        prop,
+                        metadata);
+                }
+                // `typeof Object(BigInt(3))` is `"object"
+                else if (Tag.BIGINT === tag) {
+                    /** @type {BigInt} */
+                    const bigint = value;
+
+                    cloned = assign(
+                        Object(BigInt.prototype.valueOf.call(bigint)), 
                         parentOrAssigner, 
                         prop,
                         metadata);
                 }
 
                 else if (Tag.REGEXP === tag) {
-                    const regExp = new Value(value.source, /\w*$/.exec(value));
-                    regExp.lastIndex = value.lastIndex;
-                    cloned = assign(regExp, parentOrAssigner, prop, metadata);
+                    /** @type {RegExp} */
+                    const regExp = value;
+
+                    cloned = new RegExp(regExp.source, regExp.flags);
+                    cloned.lastIndex = regExp.lastIndex;
+                    assign(cloned, parentOrAssigner, prop, metadata);
                     propsToIgnore.push("lastIndex");
                 }
 
                 else if (Tag.ERROR === tag) {
-                    const cause = value.cause;
-                    const clonedError = cause === undefined
-                        ? new Value(value.message)
-                        : new Value(value.message, { cause });
+                    /** @type {Error} */
+                    const error = value;
 
-                    const descriptor = Object.getOwnPropertyDescriptor(
+                    const cause = error.cause;
+                    const clonedError = cause === undefined
+                        ? new Error(error.message)
+                        : new Error(error.message, { cause });
+
+                    const defaultDescriptor = Object.getOwnPropertyDescriptor(
                         new Error, "stack");
-                    const set = typeof descriptor === "object" 
-                        ? descriptor.set
+                    const set = typeof defaultDescriptor === "object" 
+                        ? defaultDescriptor.set
                         : undefined;
 
                     Object.defineProperty(clonedError, "stack", {
                         enumerable: false,
-                        get: () => value.stack,
+                        get: () => error.stack,
                         set
                     });
 
@@ -543,8 +589,8 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                 }
 
                 else if (Tag.ARRAYBUFFER === tag) {
-                    // copy data over to clone
-                    const arrayBuffer = new Value(value.byteLength);
+                    const arrayBuffer = new ArrayBuffer(
+                        value.byteLength);
                     new Uint8Array(arrayBuffer).set(new Uint8Array(value));
                     
                     cloned = assign(arrayBuffer, 
@@ -554,13 +600,19 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                 }
                 
                 else if (isTypedArray(tag)) {
+                    /** @type {import("./types").TypedArrayConstructor} */
+                    const TypedArray = value.constructor;
+
+                    /** @type {ArrayBufferConstructor} */
+                    const ArrayBufferConstructor = value.buffer.constructor;
+
                     // copy data over to clone
-                    const buffer = new value.buffer.constructor(
+                    const buffer = new ArrayBufferConstructor(
                         value.buffer.byteLength);
                     new Uint8Array(buffer).set(new Uint8Array(value.buffer));
                     
                     cloned = assign(
-                        new Value(buffer, value.byteOffset, value.length),
+                        new TypedArray(buffer, value.byteOffset, value.length),
                         parentOrAssigner,
                         prop,
                         metadata);
@@ -570,20 +622,21 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                 }
 
                 else if (Tag.MAP === tag) {
-                    /**
-                     * @type {Map<any, any>}
-                     */
+                    /** @type {Map<any, any>} */
                     const originalMap = value;
-                    const cloneMap = new Value;
+
+                    /** @type {MapConstructor} */
+                    const MapConstructor = value.constructor;
+
+                    const cloneMap = new MapConstructor;
 
                     cloned = assign(cloneMap, parentOrAssigner, prop, metadata);
 
                     originalMap.forEach((subValue, key) => {
                         queue.push({ 
                             value: subValue,
-                            /**
-                             * @param {any} cloned 
-                             */ 
+
+                            /** @param {any} cloned */ 
                             parentOrAssigner(cloned) {
                                 isExtensibleSealFrozen.push([subValue, cloned]);
                                 cloneMap.set(key, cloned)
@@ -593,26 +646,40 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                 }
 
                 else if (Tag.SET === tag) {
-                    /**
-                     * @type {Set<any>}
-                     */
+                    /** @type {Set<any>} */
                     const originalSet = value;
-                    const cloneSet = new Value;
+
+                    /** @type {SetConstructor} */
+                    const SetConstructor = value.constructor;
+
+                    const cloneSet = new SetConstructor;
 
                     cloned = assign(cloneSet, parentOrAssigner, prop, metadata);
 
                     originalSet.forEach(subValue => {
                         queue.push({ 
                             value: subValue,
-                            /**
-                             * @param {any} cloned 
-                             */
+
+                            /** @param {any} cloned */
                             parentOrAssigner(cloned) {
                                 isExtensibleSealFrozen.push([subValue, cloned]);
                                 cloneSet.add(cloned)
                             }
                         });
                     });
+                }
+
+                else if (Tag.PROMISE === tag) {
+                    /** @type {Promise<any>} */
+                    const promise = value;
+
+                    cloned = new Promise((resolve, reject) => {
+                        promise.then(resolve).catch(reject);
+                    });
+
+                    assign(cloned, parentOrAssigner, prop, metadata);
+
+                    log(Warning.PROMISE);
                 }
 
                 else throw getWarning("Attempted to clone unsupported type.");
@@ -638,7 +705,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             ignoreProto = true;
         }
 
-        // If the customizer returned a primitive, skip the following.
+        // If customizer returned a primitive, do not clone its properties.
         if (useCustomizerClone && cloned === null || typeof cloned !== "object")
             continue;
 
@@ -687,14 +754,15 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
 /**
  * @param {any} value The value to deeply copy.
- * @param {import("./types").CloneDeepOptionsOrCustomizer} [optionsOrCustomizer] 
- * If a function, this argument is used as the customizer.
+ * @param {import("./types").CloneDeepOptions|import("./types").Customizer} 
+ * [optionsOrCustomizer] If a function, this argument is used as the customizer.
  * @param {object} [optionsOrCustomizer] If an object, this argument is used as 
  * a configuration object.
  * @param {import("./types").Customizer} optionsOrCustomizer.customizer Allows 
  * the user to inject custom logic. The function is given the value to copy. If 
- * the function returns an object, the value of the `clone` property on that object will be used as the clone. 
- * See the documentation for `cloneDeep` for more information.
+ * the function returns an object, the value of the `clone` property on that 
+ * object will be used as the clone. See the documentation for `cloneDeep` for 
+ * more information.
  * @param {import("./types").Log} optionsOrCustomizer.log Any errors which occur 
  * during the algorithm can optionally be passed to a log function. `log` should 
  * take one argument which will be the error encountered. Use this to the log 
@@ -719,7 +787,7 @@ function cloneDeep(value, optionsOrCustomizer) {
     let logMode;
 
     /** @type {boolean|undefined} */
-    let letCustomizerThrow;
+    let letCustomizerThrow = false;
 
     if (typeof optionsOrCustomizer === "function")
         customizer = optionsOrCustomizer;
@@ -738,7 +806,10 @@ function cloneDeep(value, optionsOrCustomizer) {
             /** @type {(error: Error) => void} */
             log = error => console.warn(error.message);
     
-    return cloneInternalNoRecursion(value, customizer, log, letCustomizerThrow);
+    return cloneInternalNoRecursion(value, 
+                                    customizer, 
+                                    log, 
+                                    letCustomizerThrow || false);
 }
  
 export default cloneDeep;

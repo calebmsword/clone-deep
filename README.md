@@ -16,6 +16,8 @@ console.log(cloned[0] === object[0]);  // false
 console.log(cloned[1] === object[1]);  // false
 ```
 
+This module is compatible with TypeScript. See [this section](#cms-clone-deep-and-typescript) for more information.
+
 ## installation
 
 First, install [node.js](https://nodejs.org/en) on your machine. At the time of this writing, the current stable version is **20.10.0**.
@@ -163,7 +165,18 @@ There are many properties that will be observed in the object returned by the cu
  1) `cloneDeepFully` This function will clone an object as well as each object in its prototype chain. The API is exactly the same as `cloneDeep` except that the options object can take the additional property `force`. If `force` is `true`, `cloneDeepFully` will clone prototypes with methods. Otherwise, it stops once it reaches any prototype with methods.
  2) `useCustomizers` This function takes an array of customizer functions and returns a new customizer. The new customizer calls each customizer one at a time, in order, and returns an object if once any of the customizers returns an object. Use this to avoid code reuse when creating multiple useful customizers.
 
-## cloneDeep vs structuredClone
+## cms-clone-deep and TypeScript
+
+Type information is provided for every function which can be imported from this package. In addition, the following types can be imported from `"cms-clone-deep"`:
+
+ - `CloneDeepOptions` : The type of the object which can be passed as the second argument to `cloneDeep`.
+ - `CloneDeepFullyOptions` : The type of the object which can be passed as the second argument to `cloneDeepFully`.
+ - `Customizer`: The type of the functions which can be used as customizers.
+ - `Log`: The type of the optional logging function.
+ - `ValueTransform`: `Customizer`s can return this type or `void`.
+ - `AdditionalValues`: The type of the `additionalValues` property in `ValueTransform`.
+
+## `cloneDeep` vs `structuredClone`
 
 JavaScript has a native function `structuredClone` which deeply clones objects. Differences between `structuredClone` and `cloneDeep` include:
  - `structuredClone` cannot clone objects which have symbols or properties that are symbols. `cloneDeep` can.
@@ -171,7 +184,7 @@ JavaScript has a native function `structuredClone` which deeply clones objects. 
  - `structuredClone` does not preserve the extensible, sealed, or frozen property of an object or any of its nested objects. `cloneDeep` does.
  - `structuredClone` does not clone the property descriptor associated with any value in an object. `cloneDeep` does.
  - `structuredClone` supports all of the types listed [here](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types). `cloneDeep` only supports the types listed under "JavaScript types" (and `Symbol`).
- - `structuredClone` is implemented with recursion is some runtimes meaning deeply nested objects blow up the call stack. `cloneDeep` uses no recursion.
+ - `structuredClone` is implemented with recursion in some runtimes meaning deeply nested objects blow up the call stack. `cloneDeep` uses no recursion.
  - `structuredClone` throws an error if the user attempts to clone an object with methods. `cloneDeep` will copy the methods *by value* and noisily log a warning.
  - `structuredClone` throws an error when provided an object of an unsupported type. On the other hand, `cloneDeep` will copy the type as an empty object and noisily log a warning.
  - `structuredClone` will identify if an object was created by a native JavaScript constructor function even if the object's prototype is changed or if the `Symbol.toStringTag` property is changed; furthermore, the cloned object will have the prototype from the native constructor function from even if the original object changed its prototype. On the other hand, `deepClone` uses `Object.prototype.toString.call` to identify the type of an object and the cloned object will share the original object's prototype no matter the result of `Object.prototype.toString.call`.
@@ -181,8 +194,9 @@ JavaScript has a native function `structuredClone` which deeply clones objects. 
 
 There are some features which are only accessible by cloning the repository. This is done by installing [git](https://git-scm.com/downloads). Once you have `git`, execute `git clone https://github.com/calebmsword/clone-deep.git` and a directory *clone-deep/* will be made containing the source code. Then execute `npm install`.
 
-### typescript & jsdoc
-This repository uses type annotations in [JSDoc](https://jsdoc.app/) to add type-checking to JavaScript. While this requires the `typescript` module, there is no compilation step. The codebase is entirely JavaScript. VSCode will still highlight errors like it would for TypeScript files.
+### TypeScript & JSDoc
+
+This repository uses type annotations in [JSDoc](https://jsdoc.app/) to add type-checking to JavaScript. While this requires the `typescript` module, there is no compilation step. The codebase is entirely JavaScript, but VSCode will still highlight errors like it would for TypeScript files. If you are using an IDE which cannot conveniently highlight TypeScript errors, then you can use the TypeScript compiler to check typing (`npm i -g typescript`, then run `npx tsc` in the repository).
 
 ### testing
 
@@ -192,9 +206,22 @@ The file `clone-deep.test.js` contains all unit tests. Execute `node --test` to 
 
 Some rudimentary benchmarking can be done within the repository. In the directory containing the source code, execute `node serve.js <PORT>`, where the `PORT` command line option is optional and defaults to `8787`, and visit `http://localhost:<PORT>` to see the benchmarking UI. `benchmark.js` and `benchmark.css` contain the JavaScript and styling, respectively, for the hosted web page. You can use your favorite browser's dev tools to profile the result.
 
+### contribution guidelines
+
+  - If you notice a bug or have a feature request, please raise an issue. Follow the default template provided for bug reports or feature requests, respectively.
+  - If you would like to implement a bug fix or feature request from an issue, please create a branch from the `dev` branch with a descriptive name relevant to the issue title. Once you are finished with the implementation, create a pull request to the `dev` branch.
+
 ## acknowledgements
 
- - This algorithm is a heavily modified version of the the [cloneDeep](https://lodash.com/docs/4.17.15#cloneDeep) utility from Lodash. If anyone knows who specifically implemented the algorithm, I will thank them directly.
+ - This algorithm is a heavily modified version of the the [cloneDeep](https://lodash.com/docs/4.17.15#cloneDeep) utility from Lodash. Infinite thanks goes out to following GitHub users I could find who contributed to that algorithm:
+   - [jdalton](https://github.com/jdalton)
+   - [falsyvalues](https://github.com/falsyvalues)
+   - [greenberga](https://github.com/greenberga)
+   - [rssteffey](https://github.com/rssteffey)
+   - [drabinowitz](https://github.com/drabinowitz)
+   - [twolfson](https://github.com/twolfson)
+   - [blikblum](https://github.com/blikblum)
  - Thanks to Tiago Bertolo, the author of [this article](https://medium.com/@tiagobertolo/which-is-the-best-method-for-deep-cloning-in-javascript-are-they-all-bad-101f32d620c5). It reminded me to clone the metadata of objects.
  - Thanks to MDN and its documentation on the [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm).
  - Thanks to StackExchange user Jonathan Tran for his `http.createServer` example.
+ - Thanks to (clone)[https://www.npmjs.com/package/clone] for its implementation of cloning Promises.
