@@ -1,5 +1,3 @@
-// Public Types ==============
-
 export interface AdditionalValues {
     value: any,
     assigner: (clone: any) => void
@@ -27,43 +25,6 @@ export interface CloneDeepOptions {
 export interface CloneDeepFullyOptions extends CloneDeepOptions {
     force?: boolean
 }
-
-
-// Private Types ==============
-
-type assigner = (
-    value: any,
-    prop: PropertyKey | undefined,
-    metadata: PropertyDescriptor | undefined
-) => void;
-
-type Assign<T> = (
-    value: T,
-    parentOrAssigner: assigner | symbol | Object | undefined,
-    prop: PropertyKey | undefined,
-    metadata: PropertyDescriptor | undefined
-) => T
-
-interface QueueElement {
-    value: any,
-    parentOrAssigner?: Symbol|Object|assigner,
-    prop?: string | symbol,
-    metadata?: PropertyDescriptor
-}
-
-type TypedArrayConstructor =
-    DataViewConstructor |
-    Float32ArrayConstructor |
-    Float64ArrayConstructor |
-    Int8ArrayConstructor |
-    Int16ArrayConstructor |
-    Int32ArrayConstructor |
-    Uint8ArrayConstructor |
-    Uint8ClampedArrayConstructor |
-    Uint16ArrayConstructor |
-    Uint32ArrayConstructor |
-    BigInt64ArrayConstructor |
-    BigUint64ArrayConstructor;
 
 
 declare module "cms-clone-deep" {
