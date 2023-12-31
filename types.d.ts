@@ -1,13 +1,19 @@
-export interface QueueElement {
+// Public Types ==============
+
+export interface AdditionalValues {
     value: any,
-    parentOrAssigner?: Symbol|Object|Function,
-    prop?: string | symbol,
-    metadata?: PropertyDescriptor
+    assigner: (clone: any) => void
 }
 
-export type Empty = {};
+export interface ValueTransform {
+    clone?: any,
+    additionalValues?: AdditionalValues,
+    ignore?: boolean,
+    ignoreProps?: boolean,
+    ignoreProto?: boolean
+}
 
-export type Customizer = (value: any) => any|void;
+export type Customizer = (value: any) => ValueTransform|void;
 
 export type Log = (error: Error) => any;
 
@@ -18,14 +24,47 @@ export interface CloneDeepOptions {
     letCustomizerThrow?: boolean
 }
 
-export type CloneDeepOptionsOrCustomizer = CloneDeepOptions | Customizer;
-
 export interface CloneDeepFullyOptions extends CloneDeepOptions {
     force?: boolean
 }
 
-export type CloneDeepFullyOptionsOrCustomizer = 
-    CloneDeepFullyOptions | Customizer;
+
+// Private Types ==============
+
+type assigner = (
+    value: any,
+    prop: PropertyKey | undefined,
+    metadata: PropertyDescriptor | undefined
+) => void;
+
+type Assign<T> = (
+    value: T,
+    parentOrAssigner: assigner | symbol | Object | undefined,
+    prop: PropertyKey | undefined,
+    metadata: PropertyDescriptor | undefined
+) => T
+
+interface QueueElement {
+    value: any,
+    parentOrAssigner?: Symbol|Object|assigner,
+    prop?: string | symbol,
+    metadata?: PropertyDescriptor
+}
+
+type TypedArrayConstructor =
+    DataViewConstructor |
+    Float32ArrayConstructor |
+    Float64ArrayConstructor |
+    Int8ArrayConstructor |
+    Int16ArrayConstructor |
+    Int32ArrayConstructor |
+    Uint8ArrayConstructor |
+    Uint8ClampedArrayConstructor |
+    Uint16ArrayConstructor |
+    Uint32ArrayConstructor |
+    BigInt64ArrayConstructor |
+    BigUint64ArrayConstructor;
+
 
 declare module "cms-clone-deep" {
 
@@ -60,11 +99,15 @@ declare module "cms-clone-deep" {
  * created). A warning is logged if this occurs.
  * 
  * This method will clone many of JavaScripts native classes. These include 
- * `Date`, `RegExp`, `ArrayBuffer`, all the `TypedArray` subclasses, `Map`, `
- * Set`, `Number`, `Boolean`, `String`, and `Symbol`. The algorithm type-checks 
- * for these classes using `Object.prototype.toString.call`, so if you utilize 
- * `Symbol.toStringTag` irresponsibly, the algorithm may not correctly identify 
- * types.
+ * `Date`, `RegExp`, `ArrayBuffer`, all `TypedArray` subclasses, `Map`, `Set`, 
+ * `Number`, `Boolean`, `String`, `BigInt`, and `Symbol`. The algorithm 
+ * type-checks for these classes using `Object.prototype.toString.call`, so if 
+ * you use `Symbol.toStringTag` irresponsibly, the algorithm may not correctly 
+ * identify types.
+ * 
+ * `Promise`s are supported. The returned object will settle when the original 
+ * promise settles, and it will resolve or reject with the same value as the 
+ * original `Promise`.
  * 
  * An optional `customizer` can be provided to inject additional logic. The 
  * customizer has the responsibility of determining what object a value should 
@@ -190,17 +233,17 @@ declare module "cms-clone-deep" {
  */
 export default function cloneDeep(
     value: any, 
-    customizerOrOptions: CloneDeepOptionsOrCustomizer
+    optionsOrCustomizer: CloneDeepOptions|Customizer|undefined
 ) : any;
     
     /**
  * Deeply clones the provided object and its prototype chain.
  * @param {any} value The object to clone.
- * @param {import("./types").CloneDeepFullyOptionsOrCustomizer} [options] 
- * Configures the clone. If a function, it is used as the customizer for the 
+ * @param {import("./types").CloneDeepFullyOptionsOrCustomizer} 
+ * [optionsOrCustomizer] If a function, it is used as the customizer for the 
  * clone. 
- * @param {object} [options] If an object, it is used as a configuration object.
- * See the documentation for `cloneDeep`.
+ * @param {object} [optionsOrCustomizer] If an object, it is used as a 
+ * configuration object. See the documentation for `cloneDeep`.
  * @param {boolean} options.force If `true`, prototypes with methods will be 
  * cloned. Normally, this function stops if it reaches any prototype with 
  * methods.
@@ -215,7 +258,7 @@ export default function cloneDeep(
  */
 export function cloneDeepFully(
     value: any,
-    customizerOrOptions: CloneDeepFullyOptionsOrCustomizer
+    optionsOrCustomizer: CloneDeepFullyOptions|Customizer|undefined
 ) : any;
 
 /**

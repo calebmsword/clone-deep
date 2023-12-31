@@ -127,12 +127,14 @@ describe("cloneDeep without customizer", () => {
                     Tag.ARGUMENTS
             ],
             array: [[], Tag.ARRAY],
+            bigint: [new Object(BigInt(0)), Tag.BIGINT],
             boolean: [new Boolean(), Tag.BOOLEAN],
             date: [new Date(), Tag.DATE],
             error: [new Error(), Tag.ERROR],
             map: [new Map(), Tag.MAP],
             number: [new Number(), Tag.NUMBER],
             object: [new Object(), Tag.OBJECT],
+            promise: [new Promise(r => r()), Tag.PROMISE],
             regexp: [/i/, Tag.REGEXP],
             set: [new Set(), Tag.SET],
             string: [new String(), Tag.STRING],
@@ -247,6 +249,10 @@ describe("cloneDeep without customizer", () => {
         const calls = log.mock.calls;
         assert.strictEqual(calls.length, 1);
         assert.strictEqual(calls[0].arguments[0] instanceof Error, true);
+        assert.strictEqual(
+            calls[0].arguments[0].message.includes(
+                "Attempted to clone function"), 
+            true);
     });
 
     test("A warning is logged if weakmap or weakset is cloned", () => {
@@ -260,6 +266,14 @@ describe("cloneDeep without customizer", () => {
         assert.strictEqual(calls.length, 2);
         assert.strictEqual(calls[0].arguments[0] instanceof Error, true);
         assert.strictEqual(calls[1].arguments[0] instanceof Error, true);
+        assert.strictEqual(
+            calls[0].arguments[0].message.includes(
+                "Attempted to clone unsupported type WeakMap."), 
+            true);
+        assert.strictEqual(
+            calls[1].arguments[0].message.includes(
+                "Attempted to clone unsupported type WeakSet."), 
+            true);
     });
 
     test("A warning is logged if property with accessor is cloned", () => {
@@ -278,6 +292,10 @@ describe("cloneDeep without customizer", () => {
         assert.strictEqual(calls[0].arguments[0] instanceof Error, true);
         assert.strictEqual(calls[1].arguments[0] instanceof Error, true);
         assert.strictEqual(calls[2].arguments[0] instanceof Error, true);
+        calls.forEach(call => {
+            const message = call.arguments[0].message;
+            assert.strictEqual(message.includes("get or set accessor"), true);
+        })
     });
 
     test("A warning is logged if unsupported type is cloned", () => {
@@ -290,6 +308,10 @@ describe("cloneDeep without customizer", () => {
         const calls = log.mock.calls;
         assert.strictEqual(calls.length, 1);
         assert.strictEqual(calls[0].arguments[0] instanceof Error, true);
+        assert.strictEqual(
+            calls[0].arguments[0].message.includes(
+                "Attempted to clone unsupported type."), 
+            true);
     });
 
     test("A warning is logged if proto w/ forbidden props is cloned", () => {
@@ -308,6 +330,22 @@ describe("cloneDeep without customizer", () => {
                     "properties"),
                 true);
         });
+    });
+
+    test("A warning is logged if a promise is cloned", () => {
+        const log = mock.fn(() => {});
+
+        const promise = new Promise(resolve => resolve());
+
+        cloneDeep(promise, { log });
+
+        const calls = log.mock.calls;
+        const error = calls[0].arguments[0];
+        assert.strictEqual(calls.length, 1);
+        assert.strictEqual(error instanceof Error, true);
+        assert.strictEqual(
+            error.message.includes("Attempted to clone a Promise."), 
+            true);
     });
 
     test("A cloned map has cloned content of the original map", () => {

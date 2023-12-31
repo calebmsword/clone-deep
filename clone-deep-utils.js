@@ -3,9 +3,8 @@ import cloneDeep from "./clone-deep.js";
 /**
  * Deeply clones the provided object and its prototype chain.
  * @param {any} value The object to clone.
- * @param {import("./types").CloneDeepFullyOptionsOrCustomizer} [options] 
- * Configures the clone. If a function, it is used as the customizer for the 
- * clone. 
+ * @param {import("./types").CloneDeepFullyOptions|import("./types").Customizer} 
+ * [options] If a function, it is used as the customizer for the clone. 
  * @param {object} [options] If an object, it is used as a configuration object.
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.force If `true`, prototypes with methods will be 
