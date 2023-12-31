@@ -40,6 +40,7 @@ export const Tag = Object.freeze({
  */
 export const supportedPrototypes = Object.freeze([
     Array.prototype,
+    BigInt.prototype,
     Boolean.prototype,
     Date.prototype,
     Error.prototype,
@@ -139,7 +140,9 @@ const Warning = {
         "properties will not be cloned. Also, native methods cannot be " + 
         "cloned so all methods in Function.prototype will copied directly."),
     IMPROPER_ADDITIONAL_VALUES: getWarning(
-        "The additionalValue property must be an array of objects."),
+        "The additionalValue property must be an array of objects. The " + 
+        "objects must have a `value` property and an `assigner` property " + 
+        "that is a function."),
     PROMISE: getWarning(
         "Attempted to clone a Promise. The cloned promise will settle when " + 
         "original Promise settles. It will fulfill or reject with the same " + 
@@ -222,7 +225,6 @@ function isTypedArray(tag) {
 function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
     /**
-     * @type {import("./private-types").Assign<any>}
      * Handles the assignment of the cloned value to some persistent place.
      * @param {any} cloned The cloned value.
      * @param {Object|import("./private-types").assigner|Symbol|Object} 
@@ -241,9 +243,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
         else if (typeof parentOrAssigner === "function") 
             parentOrAssigner(cloned, prop, metadata);
         else if (typeof prop !== "undefined" && typeof metadata === "object") {
-            /**
-             * @type {PropertyDescriptor}
-             */
+            /** @type {PropertyDescriptor} */
             const clonedMetadata = { 
                 configurable: metadata.configurable,
                 enumerable: metadata.enumerable
@@ -297,7 +297,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
      * We will do a second pass through everything to check Object.isExtensible,
      * Object.isSealed and Object.isFrozen. We do it last so we don't run into 
      * issues where we append properties on a frozen object, etc.
-     * @type {Array<[any, any]>[]}
+     * @type {Array<[any, any]>}
      */ 
     const isExtensibleSealFrozen = [];
 
@@ -371,10 +371,10 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             /** @type {any} */
             let clone;
 
-            /** @type {import("./public-types").AdditionalValues|undefined} */
+            /** @type {import("./public-types").AdditionalValue[]|undefined} */
             let additionalValues; 
 
-            /** @typo {boolean|undefined} */
+            /** @type {boolean|undefined} */
             let ignore;
 
             try {
@@ -400,7 +400,8 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
                     if (Array.isArray(additionalValues))
                         additionalValues.forEach(object => {
-                            if (typeof object === "object")
+                            if (typeof object === "object" 
+                                && typeof object.assigner === "function")
                                 queue.push({
                                     value: object.value,
                                     parentOrAssigner: object.assigner
