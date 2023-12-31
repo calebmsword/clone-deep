@@ -224,4 +224,4 @@ Some rudimentary benchmarking can be done within the repository. In the director
  - Thanks to Tiago Bertolo, the author of [this article](https://medium.com/@tiagobertolo/which-is-the-best-method-for-deep-cloning-in-javascript-are-they-all-bad-101f32d620c5). It reminded me to clone the metadata of objects.
  - Thanks to MDN and its documentation on the [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm).
  - Thanks to StackExchange user Jonathan Tran for his `http.createServer` example.
- - Thanks to (clone)[https://www.npmjs.com/package/clone] for its implementation of cloning Promises.
+ - Thanks to [clone](https://www.npmjs.com/package/clone) for its implementation of cloning Promises.
