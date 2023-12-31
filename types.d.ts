@@ -210,14 +210,15 @@ declare module "cms-clone-deep" {
  * `WeakMaps`, or `WeakSets`).
  * 
  * @param {any} value The value to deeply copy.
- * @param {import("./types").CloneDeepOptionsOrCustomizer} [optionsOrCustomizer] 
- * If a function, this argument is used as the customizer.
+ * @param {CloneDeepOptions|Customizer} [optionsOrCustomizer] If a function, 
+ * this argument is used as the customizer.
  * @param {object} [optionsOrCustomizer] If an object, this argument is used as 
  * a configuration object.
  * @param {import("./types").Customizer} optionsOrCustomizer.customizer Allows 
  * the user to inject custom logic. The function is given the value to copy. If 
- * the function returns an object, the value of the `clone` property on that object will be used as the clone. 
- * See the documentation for `cloneDeep` for more information.
+ * the function returns an object, the value of the `clone` property on that 
+ * object will be used as the clone. See the documentation for `cloneDeep` for 
+ * more information.
  * @param {import("./types").Log} optionsOrCustomizer.log Any errors which occur 
  * during the algorithm can optionally be passed to a log function. `log` should 
  * take one argument which will be the error encountered. Use this to the log 
@@ -239,9 +240,8 @@ export default function cloneDeep(
     /**
  * Deeply clones the provided object and its prototype chain.
  * @param {any} value The object to clone.
- * @param {import("./types").CloneDeepFullyOptionsOrCustomizer} 
- * [optionsOrCustomizer] If a function, it is used as the customizer for the 
- * clone. 
+ * @param {CloneDeepFullyOptions|Customizer} [optionsOrCustomizer] If a 
+ * function, it is used as the customizer for the clone. 
  * @param {object} [optionsOrCustomizer] If an object, it is used as a 
  * configuration object. See the documentation for `cloneDeep`.
  * @param {boolean} options.force If `true`, prototypes with methods will be 
