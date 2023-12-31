@@ -4,13 +4,6 @@ export type assigner = (
     metadata: PropertyDescriptor | undefined
 ) => void;
 
-export type Assign<T> = (
-    value: T,
-    parentOrAssigner: assigner | symbol | Object | undefined,
-    prop: PropertyKey | undefined,
-    metadata: PropertyDescriptor | undefined
-) => T
-
 export interface QueueElement {
     value: any,
     parentOrAssigner?: symbol|Object|assigner,

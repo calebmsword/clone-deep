@@ -1,11 +1,11 @@
-export interface AdditionalValues {
+export interface AdditionalValue {
     value: any,
     assigner: (clone: any) => void
 }
 
 export interface ValueTransform {
     clone?: any,
-    additionalValues?: AdditionalValues,
+    additionalValues?: AdditionalValue[],
     ignore?: boolean,
     ignoreProps?: boolean,
     ignoreProto?: boolean

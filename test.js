@@ -688,16 +688,20 @@ describe("cloneDeep customizer", () => {
         
         const a = "a";
         const b = "b";
+        const c = "c";
 
         const newValue1 = "newValue1";
         const newValue2 = "newValue2";
+        const newValue3 = "newValue3";
 
-        const cloned = cloneDeep({ a, b }, {
+        const cloned = cloneDeep({ a, b, c }, {
             customizer: value => {
                 const clone = {};
                 if (value === a)
                     return {
                         clone,
+
+                        // additionalValues must be an array
                         additionalValues: {
                             value: newValue1,
                             assigner: cloned => {
@@ -710,7 +714,18 @@ describe("cloneDeep customizer", () => {
                 if (value === b)
                     return {
                         clone,
+
+                        // additionalValues must be an array of objects
                         additionalValues: [newValue2],
+                        ignoreProto: true,
+                        ignoreProps: true
+                    };
+                if (value === c)
+                    return {
+                        clone,
+
+                        // The objects must have an `assigner` function
+                        additionalValues: [{ clone: newValue3 }],
                         ignoreProto: true,
                         ignoreProps: true
                     };
@@ -719,13 +734,14 @@ describe("cloneDeep customizer", () => {
         });
 
         const calls = log.mock.calls;
-        assert.strictEqual(calls.length, 2);
+        assert.strictEqual(calls.length, 3);
         calls.forEach(call => {
             assert.strictEqual(call.arguments[0] instanceof Error, true);
         });
 
         assert.notStrictEqual(cloned[0], newValue1);
         assert.notStrictEqual(cloned[1], newValue2);
+        assert.notStrictEqual(cloned[2], newValue2);
     });
 
     test("Customizer can cause value to be ignored", () => {
