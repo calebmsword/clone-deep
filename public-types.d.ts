@@ -175,15 +175,15 @@ declare module "cms-clone-deep" {
  * this argument is used as the customizer.
  * @param {object} [optionsOrCustomizer] If an object, this argument is used as 
  * a configuration object.
- * @param {import("./types").Customizer} optionsOrCustomizer.customizer Allows 
- * the user to inject custom logic. The function is given the value to copy. If 
- * the function returns an object, the value of the `clone` property on that 
- * object will be used as the clone. See the documentation for `cloneDeep` for 
- * more information.
- * @param {import("./types").Log} optionsOrCustomizer.log Any errors which occur 
- * during the algorithm can optionally be passed to a log function. `log` should 
- * take one argument which will be the error encountered. Use this to the log 
- * the error to a custom logger.
+ * @param {Customizer} optionsOrCustomizer.customizer Allows the user to inject 
+ * custom logic. The function is given the value to copy. If the function 
+ * returns an object, the value of the `clone` property on that object will be 
+ * used as the clone. See the documentation for `cloneDeep` for more 
+ * information.
+ * @param {Log} optionsOrCustomizer.log Any errors which occur during the 
+ * algorithm can optionally be passed to a log function. `log` should take one 
+ * argument which will be the error encountered. Use this to the log the error 
+ * to a custom logger.
  * @param {string} optionsOrCustomizer.logMode Case-insensitive. If "silent", no 
  * warnings will be logged. Use with caution, as failures to perform true clones 
  * are logged as warnings. If "quiet", the stack trace of the warning is 
@@ -208,10 +208,8 @@ export default function cloneDeep(
  * @param {boolean} options.force If `true`, prototypes with methods will be 
  * cloned. Normally, this function stops if it reaches any prototype with 
  * methods.
- * @param {import("./types").Customizer} options.customizer See the 
- * documentation for `cloneDeep`.
- * @param {import("./types").Log} options.log See the documentation for 
- * `cloneDeep`.
+ * @param {Customizer} options.customizer See the documentation for `cloneDeep`.
+ * @param {Log} options.log See the documentation for `cloneDeep`.
  * @param {string} options.logMode See the documentation for `cloneDeep`.
  * @param {boolean} options.letCustomizerThrow See the documentation for 
  * `cloneDeep`.
