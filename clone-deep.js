@@ -214,12 +214,14 @@ function isTypedArray(tag) {
 
 /**
  * Clones the provided value.
- * @param {any} _value The value to clone.
- * @param {import("./public-types").Customizer|undefined} customizer A customizer 
- * function.
- * @param {import("./public-types").Log} log Receives an error object for logging.
- * @param {boolean} doThrow Whether errors in the customizer should 
- * cause the function to throw.
+ * @param {any} _value 
+ * The value to clone.
+ * @param {import("./public-types").Customizer|undefined} customizer 
+ * A customizer function.
+ * @param {import("./public-types").Log} log 
+ * Receives an error object for logging.
+ * @param {boolean} doThrow 
+ * Whether errors in the customizer should cause the function to throw.
  * @returns {any}
  */
 function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
@@ -393,10 +395,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
                     if (ignore === true) continue;
 
-                    cloned = assign(clone, 
-                                    parentOrAssigner, 
-                                    prop, 
-                                    metadata);
+                    cloned = assign(clone, parentOrAssigner, prop, metadata);
 
                     if (Array.isArray(additionalValues))
                         additionalValues.forEach(object => {
@@ -503,188 +502,177 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                                 prop, 
                                 metadata);
 
-            // values that will be called using contructor
-            else {
+            else if ([Tag.BOOLEAN, Tag.DATE].includes(tag)) {
+                /** @type {BooleanConstructor|DateConstructor} */
+                const BooleanOrDateConstructor = value.constructor;
 
-                // Boolean, Number, String, BigInt or Symbol created with `new` 
-                // syntax so JavaScript treats them as objects
-                // We also handle Date here because it is convenient
-                if ([Tag.BOOLEAN, Tag.DATE].includes(tag)) {
-                    /** @type {BooleanConstructor|DateConstructor} */
-                    const BooleanOrDateConstructor = value.constructor;
-
-                    cloned = assign(new BooleanOrDateConstructor(Number(value)), 
-                                    parentOrAssigner, 
-                                    prop,
-                                    metadata);
-                }
-                else if ([Tag.NUMBER, Tag.STRING].includes(tag)) {
-                    /** @type {NumberConstructor|StringConstructor} */
-                    const NumberOrStringConstructor = value.constructor;
-
-                    cloned = assign(new NumberOrStringConstructor(value), 
-                                    parentOrAssigner, 
-                                    prop, 
-                                    metadata);
-                }
-                // `typeof Object(Symbol("foo"))` is `"object"
-                else if (Tag.SYMBOL === tag) {
-                    /** @type {Symbol} */
-                    const symbol = value;
-
-                    cloned = assign(
-                        Object(Symbol.prototype.valueOf.call(symbol)), 
-                        parentOrAssigner, 
-                        prop,
-                        metadata);
-                }
-                // `typeof Object(BigInt(3))` is `"object"
-                else if (Tag.BIGINT === tag) {
-                    /** @type {BigInt} */
-                    const bigint = value;
-
-                    cloned = assign(
-                        Object(BigInt.prototype.valueOf.call(bigint)), 
-                        parentOrAssigner, 
-                        prop,
-                        metadata);
-                }
-
-                else if (Tag.REGEXP === tag) {
-                    /** @type {RegExp} */
-                    const regExp = value;
-
-                    cloned = new RegExp(regExp.source, regExp.flags);
-                    cloned.lastIndex = regExp.lastIndex;
-                    assign(cloned, parentOrAssigner, prop, metadata);
-                    propsToIgnore.push("lastIndex");
-                }
-
-                else if (Tag.ERROR === tag) {
-                    /** @type {Error} */
-                    const error = value;
-
-                    const cause = error.cause;
-                    const clonedError = cause === undefined
-                        ? new Error(error.message)
-                        : new Error(error.message, { cause });
-
-                    const defaultDescriptor = Object.getOwnPropertyDescriptor(
-                        new Error, "stack");
-                    const set = typeof defaultDescriptor === "object" 
-                        ? defaultDescriptor.set
-                        : undefined;
-
-                    Object.defineProperty(clonedError, "stack", {
-                        enumerable: false,
-                        get: () => error.stack,
-                        set
-                    });
-
-                    cloned = assign(clonedError,
-                                    parentOrAssigner,
-                                    prop,
-                                    metadata);
-
-                    propsToIgnore.push("cause", "stack");
-                }
-
-                else if (Tag.ARRAYBUFFER === tag) {
-                    const arrayBuffer = new ArrayBuffer(
-                        value.byteLength);
-                    new Uint8Array(arrayBuffer).set(new Uint8Array(value));
-                    
-                    cloned = assign(arrayBuffer, 
-                                    parentOrAssigner, 
-                                    prop, 
-                                    metadata);
-                }
-                
-                else if (isTypedArray(tag)) {
-                    /** @type {import("./private-types").TypedArrayConstructor} */
-                    const TypedArray = value.constructor;
-
-                    /** @type {ArrayBufferConstructor} */
-                    const ArrayBufferConstructor = value.buffer.constructor;
-
-                    // copy data over to clone
-                    const buffer = new ArrayBufferConstructor(
-                        value.buffer.byteLength);
-                    new Uint8Array(buffer).set(new Uint8Array(value.buffer));
-                    
-                    cloned = assign(
-                        new TypedArray(buffer, value.byteOffset, value.length),
-                        parentOrAssigner,
-                        prop,
-                        metadata);
-
-                    for (let n = 0; n < cloned.length; n++)
-                        propsToIgnore.push(String(n));
-                }
-
-                else if (Tag.MAP === tag) {
-                    /** @type {Map<any, any>} */
-                    const originalMap = value;
-
-                    /** @type {MapConstructor} */
-                    const MapConstructor = value.constructor;
-
-                    const cloneMap = new MapConstructor;
-
-                    cloned = assign(cloneMap, parentOrAssigner, prop, metadata);
-
-                    originalMap.forEach((subValue, key) => {
-                        queue.push({ 
-                            value: subValue,
-
-                            /** @param {any} cloned */ 
-                            parentOrAssigner(cloned) {
-                                isExtensibleSealFrozen.push([subValue, cloned]);
-                                cloneMap.set(key, cloned)
-                            }
-                        });
-                    });
-                }
-
-                else if (Tag.SET === tag) {
-                    /** @type {Set<any>} */
-                    const originalSet = value;
-
-                    /** @type {SetConstructor} */
-                    const SetConstructor = value.constructor;
-
-                    const cloneSet = new SetConstructor;
-
-                    cloned = assign(cloneSet, parentOrAssigner, prop, metadata);
-
-                    originalSet.forEach(subValue => {
-                        queue.push({ 
-                            value: subValue,
-
-                            /** @param {any} cloned */
-                            parentOrAssigner(cloned) {
-                                isExtensibleSealFrozen.push([subValue, cloned]);
-                                cloneSet.add(cloned)
-                            }
-                        });
-                    });
-                }
-
-                else if (Tag.PROMISE === tag) {
-                    /** @type {Promise<any>} */
-                    const promise = value;
-
-                    cloned = new Promise((resolve, reject) => {
-                        promise.then(resolve).catch(reject);
-                    });
-
-                    assign(cloned, parentOrAssigner, prop, metadata);
-
-                    log(Warning.PROMISE);
-                }
-
-                else throw getWarning("Attempted to clone unsupported type.");
+                cloned = assign(new BooleanOrDateConstructor(Number(value)), 
+                                parentOrAssigner, 
+                                prop,
+                                metadata);
             }
+            else if ([Tag.NUMBER, Tag.STRING].includes(tag)) {
+                /** @type {NumberConstructor|StringConstructor} */
+                const NumberOrStringConstructor = value.constructor;
+
+                cloned = assign(new NumberOrStringConstructor(value), 
+                                parentOrAssigner, 
+                                prop, 
+                                metadata);
+            }
+            // `typeof Object(Symbol("foo"))` is `"object"
+            else if (Tag.SYMBOL === tag) {
+                /** @type {Symbol} */
+                const symbol = value;
+
+                cloned = assign(
+                    Object(Symbol.prototype.valueOf.call(symbol)), 
+                    parentOrAssigner, 
+                    prop,
+                    metadata);
+            }
+            // `typeof Object(BigInt(3))` is `"object"
+            else if (Tag.BIGINT === tag) {
+                /** @type {BigInt} */
+                const bigint = value;
+
+                cloned = assign(
+                    Object(BigInt.prototype.valueOf.call(bigint)), 
+                    parentOrAssigner, 
+                    prop,
+                    metadata);
+            }
+
+            else if (Tag.REGEXP === tag) {
+                /** @type {RegExp} */
+                const regExp = value;
+
+                cloned = new RegExp(regExp.source, regExp.flags);
+                cloned.lastIndex = regExp.lastIndex;
+                assign(cloned, parentOrAssigner, prop, metadata);
+                propsToIgnore.push("lastIndex");
+            }
+
+            else if (Tag.ERROR === tag) {
+                /** @type {Error} */
+                const error = value;
+
+                /** @type {ErrorConstructor} */
+                const ErrorConstructor = value.constructor;
+
+                const cause = error.cause;
+                const clonedError = cause === undefined
+                    ? new ErrorConstructor(error.message)
+                    : new ErrorConstructor(error.message, { cause });
+
+                const defaultDescriptor = Object.getOwnPropertyDescriptor(
+                    new Error, "stack");
+                const set = typeof defaultDescriptor === "object" 
+                    ? defaultDescriptor.set
+                    : undefined;
+
+                Object.defineProperty(clonedError, "stack", {
+                    enumerable: false,
+                    get: () => error.stack,
+                    set
+                });
+
+                cloned = assign(clonedError, parentOrAssigner, prop, metadata);
+
+                propsToIgnore.push("cause", "stack");
+            }
+
+            else if (Tag.ARRAYBUFFER === tag) {
+                const arrayBuffer = new ArrayBuffer(value.byteLength);
+                new Uint8Array(arrayBuffer).set(new Uint8Array(value));
+                
+                cloned = assign(arrayBuffer, parentOrAssigner, prop, metadata);
+            }
+            
+            else if (isTypedArray(tag)) {
+                /** @type {import("./private-types").TypedArrayConstructor} */
+                const TypedArray = value.constructor;
+
+                /** @type {ArrayBufferConstructor} */
+                const ArrayBufferConstructor = value.buffer.constructor;
+
+                // copy data over to clone
+                const buffer = new ArrayBufferConstructor(
+                    value.buffer.byteLength);
+                new Uint8Array(buffer).set(new Uint8Array(value.buffer));
+                
+                cloned = assign(
+                    new TypedArray(buffer, value.byteOffset, value.length),
+                    parentOrAssigner,
+                    prop,
+                    metadata);
+                
+                for (let n = 0; n < cloned.length; n++)
+                    propsToIgnore.push(String(n));
+            }
+
+            else if (Tag.MAP === tag) {
+                /** @type {Map<any, any>} */
+                const originalMap = value;
+
+                /** @type {MapConstructor} */
+                const MapConstructor = value.constructor;
+
+                const cloneMap = new MapConstructor;
+
+                cloned = assign(cloneMap, parentOrAssigner, prop, metadata);
+
+                originalMap.forEach((subValue, key) => {
+                    queue.push({ 
+                        value: subValue,
+
+                        /** @param {any} cloned */ 
+                        parentOrAssigner(cloned) {
+                            isExtensibleSealFrozen.push([subValue, cloned]);
+                            cloneMap.set(key, cloned);
+                        }
+                    });
+                });
+            }
+
+            else if (Tag.SET === tag) {
+                /** @type {Set<any>} */
+                const originalSet = value;
+
+                /** @type {SetConstructor} */
+                const SetConstructor = value.constructor;
+
+                const cloneSet = new SetConstructor;
+
+                cloned = assign(cloneSet, parentOrAssigner, prop, metadata);
+
+                originalSet.forEach(subValue => {
+                    queue.push({ 
+                        value: subValue,
+
+                        /** @param {any} cloned */
+                        parentOrAssigner(cloned) {
+                            isExtensibleSealFrozen.push([subValue, cloned]);
+                            cloneSet.add(cloned);
+                        }
+                    });
+                });
+            }
+
+            else if (Tag.PROMISE === tag) {
+                /** @type {Promise<any>} */
+                const promise = value;
+
+                cloned = new Promise((resolve, reject) => {
+                    promise.then(resolve).catch(reject);
+                });
+
+                assign(cloned, parentOrAssigner, prop, metadata);
+
+                log(Warning.PROMISE);
+            }
+
+            else throw getWarning("Attempted to clone unsupported type.");
         }
         catch(error) {
             const msg = "Encountered error while attempting to clone " + 
