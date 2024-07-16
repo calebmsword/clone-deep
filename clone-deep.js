@@ -1,54 +1,13 @@
-import { getTag, getConstructor, Tag, supportedPrototypes, forbiddenProps } from "./clone-deep-helpers.js";
-
-/**
- * Used to log warnings.
- */
-class CloneDeepWarning extends Error {
-    /**
-     * @param {string} message 
-     * @param {ErrorOptions} [cause] 
-     * @param {string} [stack]
-     */
-    constructor(message, cause, stack) {
-        super(message, cause);
-        this.name = CloneDeepWarning.name;
-        if (typeof stack === "string") this.stack = stack;
-    }
-}
-
-/**
- * Creates a {@link CloneDeepWarning} instance.
- * @param {String} message The error message.
- * @param {ErrorOptions} [cause] If an object with a `cause` property, it will 
- * add a cause to the error when logged.
- * @param {string} [stack] If provided, determines the stack associated with the
- * error object.
- * @returns {CloneDeepWarning} 
- */
-function getWarning(message, cause, stack) {
-    return new CloneDeepWarning(message, cause, stack);
-}
-
-/**
- * Commonly-used {@link CloneDeepWarning} instances.
- */
-const Warning = {
-    WEAKMAP: getWarning("Attempted to clone unsupported type WeakMap."),
-    WEAKSET: getWarning("Attempted to clone unsupported type WeakSet."),
-    FUNCTION_DOT_PROTOTYPE: getWarning(
-        "Attempted to clone Function.prototype. strict mode does not allow " + 
-        "the caller, callee or arguments properties to be accessed so those " +
-        "properties will not be cloned. Also, native methods cannot be " + 
-        "cloned so all methods in Function.prototype will copied directly."),
-    IMPROPER_ADDITIONAL_VALUES: getWarning(
-        "The additionalValue property must be an array of objects. The " + 
-        "objects must have a `value` property and an `assigner` property " + 
-        "that is a function."),
-    PROMISE: getWarning(
-        "Attempted to clone a Promise. The cloned promise will settle when " + 
-        "original Promise settles. It will fulfill or reject with the same " + 
-        "value as the original Promise.")
-}
+import { 
+    getTag, 
+    getConstructor, 
+    Tag, 
+    supportedPrototypes, 
+    forbiddenProps,
+    getWarning,
+    Warning,
+    isTypedArray
+} from "./clone-deep-helpers.js";
 
 /** 
  * This symbol is used to indicate that the cloned value is the top-level object 
@@ -56,28 +15,6 @@ const Warning = {
  * @type {symbol}
  */ 
 const TOP_LEVEL = Symbol("TOP_LEVEL");
-
-/**
- * Returns `true` if tag is that of a TypedArray subclass, `false` otherwise.
- * @param {string} tag A tag. See {@link tagOf}.
- * @returns {boolean}
- */
-function isTypedArray(tag) {
-    return [   
-        Tag.DATAVIEW, 
-        Tag.FLOAT32,
-        Tag.FLOAT64,
-        Tag.INT8,
-        Tag.INT16,
-        Tag.INT32,
-        Tag.UINT8,
-        Tag.UINT8CLAMPED,
-        Tag.UINT16,
-        Tag.UINT32,
-        Tag.BIGINT64,
-        Tag.BIGUINT64
-    ].includes(tag);
-}
 
 /**
  * Clones the provided value.
@@ -371,7 +308,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
             else if ([Tag.BOOLEAN, Tag.DATE].includes(tag)) {
                 /** @type {BooleanConstructor|DateConstructor} */
-                const BooleanOrDateConstructor = getConstructor(value);
+                const BooleanOrDateConstructor = getConstructor(tag);
 
                 cloned = assign(new BooleanOrDateConstructor(Number(value)), 
                                 parentOrAssigner, 
@@ -380,7 +317,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             }
             else if ([Tag.NUMBER, Tag.STRING].includes(tag)) {
                 /** @type {NumberConstructor|StringConstructor} */
-                const NumberOrStringConstructor = getConstructor(value);
+                const NumberOrStringConstructor = getConstructor(tag);
 
                 cloned = assign(new NumberOrStringConstructor(value), 
                                 parentOrAssigner, 
@@ -458,7 +395,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             
             else if (isTypedArray(tag)) {
                 /** @type {import("./private-types").TypedArrayConstructor} */
-                const TypedArray = getConstructor(value);
+                const TypedArray = getConstructor(tag);
 
                 // copy data over to clone
                 const buffer = new ArrayBuffer(
@@ -480,7 +417,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                 const originalMap = value;
 
                 /** @type {MapConstructor} */
-                const MapConstructor = getConstructor(value);
+                const MapConstructor = getConstructor(tag);
 
                 const cloneMap = new MapConstructor;
 
@@ -504,7 +441,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                 const originalSet = value;
 
                 /** @type {SetConstructor} */
-                const SetConstructor = getConstructor(value);
+                const SetConstructor = getConstructor(tag);
 
                 const cloneSet = new SetConstructor;
 

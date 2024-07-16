@@ -101,14 +101,14 @@ export const forbiddenProps = Object.freeze({
 
 /** 
  * Convenience array used for `getTag`.
- * @type {Array<[any, string, string]>} 
+ * @type {Array<[Function, string]>} 
  */
 const prototypes = [
-    [Date.prototype, "getDay", Tag.DATE],
-    [Function.prototype, "bind", Tag.FUNCTION],
-    [Map.prototype, "has", Tag.MAP],
-    [RegExp.prototype, "exec", Tag.REGEXP],
-    [Set.prototype, "has", Tag.SET]
+    [Date.prototype.getUTCMilliseconds, Tag.DATE],
+    [Function.prototype.bind, Tag.FUNCTION],
+    [Map.prototype.has, Tag.MAP],
+    [RegExp.prototype.exec, Tag.REGEXP],
+    [Set.prototype.has, Tag.SET]
 ]
 
 /**
@@ -165,10 +165,10 @@ export function getTag(value) {
     /** @type {undefined|string} */
     let tag;
 
-    prototypes.some(([prototype, method, proposedTag]) => {
+    prototypes.some(([method, proposedTag]) => {
         if (method !== undefined) {
             try {
-                prototype[method].call(value);
+                method.call(value);
                 tag = proposedTag;
                 return true; // stop iterating
             }
@@ -218,9 +218,81 @@ const prototypeMap = Object.freeze({
  * classes.**
  * 
  * I could not find a way to type this without using `any`. Forgive me. 
- * @param {any} value
+ * @param {string} tag
  * @returns {any}
  */
-export function getConstructor(value) {
-    return prototypeMap[getTag(value)];
+export function getConstructor(tag) {
+    return prototypeMap[tag];
+}
+
+/**
+ * Used to log warnings.
+ */
+class CloneDeepWarning extends Error {
+    /**
+     * @param {string} message 
+     * @param {ErrorOptions} [cause] 
+     * @param {string} [stack]
+     */
+    constructor(message, cause, stack) {
+        super(message, cause);
+        this.name = CloneDeepWarning.name;
+        if (typeof stack === "string") this.stack = stack;
+    }
+}
+
+/**
+ * Creates a {@link CloneDeepWarning} instance.
+ * @param {String} message The error message.
+ * @param {ErrorOptions} [cause] If an object with a `cause` property, it will 
+ * add a cause to the error when logged.
+ * @param {string} [stack] If provided, determines the stack associated with the
+ * error object.
+ * @returns {CloneDeepWarning} 
+ */
+export function getWarning(message, cause, stack) {
+    return new CloneDeepWarning(message, cause, stack);
+}
+
+/**
+ * Commonly-used {@link CloneDeepWarning} instances.
+ */
+export const Warning = {
+    WEAKMAP: getWarning("Attempted to clone unsupported type WeakMap."),
+    WEAKSET: getWarning("Attempted to clone unsupported type WeakSet."),
+    FUNCTION_DOT_PROTOTYPE: getWarning(
+        "Attempted to clone Function.prototype. strict mode does not allow " + 
+        "the caller, callee or arguments properties to be accessed so those " +
+        "properties will not be cloned. Also, native methods cannot be " + 
+        "cloned so all methods in Function.prototype will copied directly."),
+    IMPROPER_ADDITIONAL_VALUES: getWarning(
+        "The additionalValue property must be an array of objects. The " + 
+        "objects must have a `value` property and an `assigner` property " + 
+        "that is a function."),
+    PROMISE: getWarning(
+        "Attempted to clone a Promise. The cloned promise will settle when " + 
+        "original Promise settles. It will fulfill or reject with the same " + 
+        "value as the original Promise.")
+}
+
+/**
+ * Returns `true` if tag is that of a TypedArray subclass, `false` otherwise.
+ * @param {string} tag A tag. See {@link tagOf}.
+ * @returns {boolean}
+ */
+export function isTypedArray(tag) {
+    return [   
+        Tag.DATAVIEW, 
+        Tag.FLOAT32,
+        Tag.FLOAT64,
+        Tag.INT8,
+        Tag.INT16,
+        Tag.INT32,
+        Tag.UINT8,
+        Tag.UINT8CLAMPED,
+        Tag.UINT16,
+        Tag.UINT32,
+        Tag.BIGINT64,
+        Tag.BIGUINT64
+    ].includes(tag);
 }
