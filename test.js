@@ -1,11 +1,12 @@
 import assert from "node:assert";
 import { describe, mock, test } from "node:test";
 
-import cloneDeep, { 
+import { 
     Tag, 
     supportedPrototypes, 
     forbiddenProps 
-} from "./clone-deep.js";
+} from "./clone-deep-helpers.js";
+import cloneDeep from "./clone-deep.js";
 import { cloneDeepFully, useCustomizers } from "./clone-deep-utils.js";
 
 const consoleDotWarn = console.warn;
