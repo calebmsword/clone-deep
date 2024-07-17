@@ -502,6 +502,24 @@ try {
             assert.strictEqual(cloned.property, error.property);
         });
 
+        test("Error subclasses are correctly cloned", () => {
+            [
+                AggregateError, 
+                EvalError,
+                RangeError, 
+                ReferenceError, 
+                SyntaxError, 
+                TypeError, 
+                URIError
+            ].forEach(ErrorClass => {
+                const error = new ErrorClass("error");
+
+                const cloned = cloneDeep(error);
+
+                assert.strictEqual(getProto(cloned), ErrorClass.prototype);
+            });
+        });
+
         test('Function.prototype is "cloned" with allowed properties', () => {
             const expectedProperties = [
                 "length",

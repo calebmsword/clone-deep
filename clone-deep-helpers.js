@@ -216,16 +216,43 @@ const prototypeMap = Object.freeze({
 });
 
 /**
- * Gets the appropriate supported constructor for the given object.
+ * Gets the appropriate supported constructor for the given object tag.
  * 
  * **This function assumes the provided object is one of the supported 
  * classes.**
  * 
  * I could not find a way to type this without using `any`. Forgive me. 
  * @param {string} tag
+ * The tag for the object.
+ * @param {any} [value]
+ * The object itself. This is necessary to correctly find constructors for 
+ * various Error subclasses.
  * @returns {any}
  */
-export function getConstructor(tag) {
+export function getConstructor(tag, value) {
+    if (tag === Tag.ERROR) {
+        const name = Object.getPrototypeOf(value).name;
+        switch (name) {
+            case "AggregateError":
+                return AggregateError;
+            case "EvalError":
+                return EvalError;
+            case "RangeError":
+                return RangeError;
+            case "ReferenceError":
+                return ReferenceError;
+            case "SyntaxError":
+                return SyntaxError;
+            case "TypeError":
+                return TypeError;
+            case "URIError":
+                return URIError;
+            default:
+                getWarning(`Cloning error with unrecognized name ${name}!` + 
+                           "It will be cloned into an ordinary Error object.")
+                return Error;
+        }
+    }
     return prototypeMap[tag];
 }
 
