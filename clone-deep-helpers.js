@@ -157,19 +157,27 @@ const prototypes = [
  * }
  * ```
  * 
- * @param {any} value The value to get the tag of.
- * @returns {string} tag A string indicating the value's type.
+ * This second approach to type-checking is referred to as "experimental 
+ * type-checking".
+ * 
+ * @param {any} value 
+ * The value to get the tag of.
+ * @param {boolean} useExperimentalTypeChecking 
+ * Whether to use experimental type-checking; see documentation for this 
+ * function.
+ * @returns {string} tag 
+ * A string indicating the value's type.
  */
-export function getTag(value) {
+export function getTag(value, useExperimentalTypeChecking) {
 
     /** @type {undefined|string} */
     let tag;
 
-    prototypes.some(([method, proposedTag]) => {
+    if (useExperimentalTypeChecking) prototypes.some(([method, currentTag]) => {
         if (method !== undefined) {
             try {
                 method.call(value);
-                tag = proposedTag;
+                tag = currentTag;
                 return true; // stop iterating
             }
             catch {/*carry on*/}

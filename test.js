@@ -6,8 +6,11 @@ import {
     supportedPrototypes, 
     forbiddenProps 
 } from "./clone-deep-helpers.js";
-import cloneDeep from "./clone-deep.js";
-import { cloneDeepFully, useCustomizers } from "./clone-deep-utils.js";
+import { default as cloneDeepOriginal } from "./clone-deep.js";
+import { 
+    cloneDeepFully as cloneDeepFullyOriginal, 
+    useCustomizers 
+} from "./clone-deep-utils.js";
 
 const consoleDotWarn = console.warn;
 
@@ -16,6 +19,8 @@ try {
 console.warn = () => {};
 
 const getProto = object => Object.getPrototypeOf(object);
+
+const testSuite = () => {
 
 describe("cloneDeep without customizer", () => {
 
@@ -1041,6 +1046,34 @@ describe("useCustomizers", () => {
         assert.strictEqual(customizer02.mock.calls.length, 1);
         assert.deepEqual(result, [1, 2]);
     });
+});
+
+}
+
+let useExperimentalTypeChecking = false;
+
+function cloneDeep(value, optionsOrCustomizer) {
+    return cloneDeepOriginal(value, typeof optionsOrCustomizer === "object" 
+        ? { useExperimentalTypeChecking, ...optionsOrCustomizer }
+        : optionsOrCustomizer
+    );
+}
+
+function cloneDeepFully(value, optionsOrCustomizer) {
+    return cloneDeepFullyOriginal(value, typeof optionsOrCustomizer === "object" 
+        ? { useExperimentalTypeChecking, ...optionsOrCustomizer }
+        : optionsOrCustomizer
+    );
+}
+
+describe("default type-checking mode", () => {
+    useExperimentalTypeChecking = false;
+    testSuite();
+});
+
+describe("experimental type-checking mode", () => {
+    useExperimentalTypeChecking = true;
+    testSuite();
 });
 
 }
