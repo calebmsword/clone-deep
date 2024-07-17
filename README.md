@@ -95,29 +95,56 @@ Please see [these notes](https://github.com/calebmsword/javascript-notes/blob/ma
 
 Here is how we can use `cloneDeep` to clone objects containing custom classes with a [private property](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_properties). 
 
-```javascript
-import cloneDeep from "./clone-deep.js";
+Suppose we had a class called `Wrapper` which encapsulates a single value and has a static method which checks if a provided object is a `Wrapper` instance.
 
+```javascript
+const wrapper = new Wrapper("some value");
+console.log(wrapper.get()); // 'some value'
+
+wrapper.set("updated value");
+console.log(wrapper.get());  // 'updated value'
+
+Wrapper.isWrapper(wrapper);  // true
+Wrapper.isWrapper({});  // false
+```
+
+Here is one way we could implement `Wrapper`:
+
+```javascript
 class Wrapper {
-    let #value;
-    get() {
-        return value;
+    #value;
+
+    static #registry = new WeakSet();
+
+    constructor(value) {
+        Wrapper.#registry.add(this);
+        this.#value = value;
     }
+    
+    get() {
+        return this.#value;
+    }
+    
     set(value) {
         this.#value = value;
     }
+    
+    static isWrapper(value) {
+        return Wrapper.#registry.has(value);
+    }
 }
+```
 
-const wrapper = new Wrapper();
-wrapper.set({ spam: "eggs" });
+Here is how we could create and use a customizer to properly clone `Wrapper` instances.
 
-const obj = { foo: wrapper };
+```javascript
+import cloneDeep from "./clone-deep.js";
 
 // The customizer gets one argument: the value to clone
-function myCustomizer(value) {
+function wrapperCustomizer(value) {
 
     // If the customizer does not return an object, cloneDeep performs default behavior
-    if (Object.getPrototypeOf(value) !== Wrapper.prototype) {
+    if (!Wrapper.isWrapper(value)) {
         return;
     }
 
@@ -129,7 +156,7 @@ function myCustomizer(value) {
 
         // Let's clone the private property as well
         additionalValues: [{
-            value: value.get();
+            value: value.get(),
 
             // `assigner` decides where the clone of `value.get` will be stored
             assigner(cloned) {
@@ -139,10 +166,14 @@ function myCustomizer(value) {
     };
 }
 
-const clonedObj = cloneDeep(obj, myCustomizer);
+// create an object containing a wrapper instance and clone it
+const wrapper = new Wrapper({ spam: "eggs" });
+const obj = { foo: wrapper };
+const clonedObj = cloneDeep(obj, wrapperCustomizer);
 
-
+// check that it works
 console.log(clonedObj === obj);  // false
+console.log(Wrapper.isWrapper(clonedObj.foo));  // true
 console.log(clonedObj.foo.get());  // {spam: 'eggs'}
 console.log(clonedObj.foo.get() === obj.foo.get());  // false
 ```
@@ -194,19 +225,19 @@ JavaScript has a native function `structuredClone` which deeply clones objects. 
 
 There are some features which are only accessible by cloning the repository. This is done by installing [git](https://git-scm.com/downloads). Once you have `git`, execute `git clone https://github.com/calebmsword/clone-deep.git` and a directory *clone-deep/* will be made containing the source code. Then execute `npm install`.
 
-### TypeScript & JSDoc
+## TypeScript & JSDoc
 
 This repository uses type annotations in [JSDoc](https://jsdoc.app/) to add type-checking to JavaScript. While this requires the `typescript` module, there is no compilation step. The codebase is entirely JavaScript, but VSCode will still highlight errors like it would for TypeScript files. If you are using an IDE which cannot conveniently highlight TypeScript errors, then you can use the TypeScript compiler to check typing (`npm i -g typescript`, then run `npx tsc` in the repository).
 
-### testing
+## testing
 
-The file `clone-deep.test.js` contains all unit tests. Execute `node --test` to run them. If you are using node v20.1.0 or higher, execute `node --test --experimental-test-coverage` to see coverage results.
+The file `clone-deep.test.js` contains all unit tests. Execute `npm test` to run them. If you are using node v20.1.0 or higher, execute `node run test-coverage` to see coverage results.
 
-### benchmarking
+## benchmarking
 
 Some rudimentary benchmarking can be done within the repository. In the directory containing the source code, execute `node serve.js <PORT>`, where the `PORT` command line option is optional and defaults to `8787`, and visit `http://localhost:<PORT>` to see the benchmarking UI. `benchmark.js` and `benchmark.css` contain the JavaScript and styling, respectively, for the hosted web page. You can use your favorite browser's dev tools to profile the result.
 
-### contribution guidelines
+## contribution guidelines
 
   - If you notice a bug or have a feature request, please raise an issue. Follow the default template provided for bug reports or feature requests, respectively.
   - If you would like to implement a bug fix or feature request from an issue, please create a branch from the `dev` branch with a descriptive name relevant to the issue title. Once you are finished with the implementation, create a pull request to the `dev` branch.

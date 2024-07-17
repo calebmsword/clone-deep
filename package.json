@@ -2,7 +2,7 @@
   "name": "cms-clone-deep",
   "repository": "https://github.com/calebmsword/clone-deep",
   "type": "module",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "A dependency-free utility for deeply cloning JavaScript objects.",
   "main": "index.js",
   "types": "public-types.d.ts",
@@ -10,6 +10,10 @@
     "clone",
     "deep"
   ],
+  "scripts": {
+    "test": "node --test",
+    "test-coverage": "node --test --experimental-test-coverage"
+  },
   "author": "Caleb Sword",
   "license": "MIT",
   "devDependencies": {
