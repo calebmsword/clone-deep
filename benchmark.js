@@ -6,12 +6,12 @@ import cloneDeep from "./clone-deep.js";
  * containing index.html and the UI will be hosted at http://localhost:8787.
  */
 
-let numIterations = 100;
+let numIterations = 1000;
 const textinput = document.querySelector(".iterations");
 
 
 textinput.addEventListener("input", e => {
-    numIterations = e.target.value || 100;
+    numIterations = e.target.value || 1000;
 });
 
 function getPrimitivesOnlyObject() {

@@ -101,14 +101,14 @@ export const forbiddenProps = Object.freeze({
 
 /** 
  * Convenience array used for `getTag`.
- * @type {Array<[Function, string]>} 
+ * @type {Array<[any, string, string]>} 
  */
 const prototypes = [
-    [Date.prototype.getUTCMilliseconds, Tag.DATE],
-    [Function.prototype.bind, Tag.FUNCTION],
-    [Map.prototype.has, Tag.MAP],
-    [RegExp.prototype.exec, Tag.REGEXP],
-    [Set.prototype.has, Tag.SET]
+    [Date, "getUTCMilliseconds", Tag.DATE],
+    [Function, "bind", Tag.FUNCTION],
+    [Map, "has", Tag.MAP],
+    [RegExp, "exec", Tag.REGEXP],
+    [Set, "has", Tag.SET]
 ]
 
 /**
@@ -162,29 +162,25 @@ const prototypes = [
  * 
  * @param {any} value 
  * The value to get the tag of.
- * @param {boolean} useExperimentalTypeChecking 
- * Whether to use experimental type-checking; see documentation for this 
- * function.
  * @returns {string} tag 
  * A string indicating the value's type.
  */
-export function getTag(value, useExperimentalTypeChecking) {
+export function getTag(value) {
 
     /** @type {undefined|string} */
-    let tag;
+    let result;
 
-    if (useExperimentalTypeChecking) prototypes.some(([method, currentTag]) => {
-        if (method !== undefined) {
-            try {
-                method.call(value);
-                tag = currentTag;
-                return true; // stop iterating
-            }
-            catch {/*carry on*/}
+    prototypes.some(([Class, method, tag]) => {
+        if (!(value instanceof Class)) return;
+        try {
+            Class.prototype[method].call(value);
+            result = tag;
+            return true; // stop iterating
         }
+        catch {/*carry on*/}
     });
 
-    return tag || Object.prototype.toString.call(value);
+    return result || Object.prototype.toString.call(value);
 }
 
 /**

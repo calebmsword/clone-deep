@@ -18,8 +18,7 @@ export type Log = (error: Error) => any;
 export interface CloneDeepOptions {
     customizer?: Customizer
     log?: Log,
-    logMode?: string,
-    useExperimentalTypeChecking?: boolean,
+    logMode?: string
     letCustomizerThrow?: boolean
 }
 
@@ -189,11 +188,6 @@ declare module "cms-clone-deep" {
  * Case-insensitive. If "silent", no warnings will be logged. Use with caution, 
  * as failures to perform true clones are logged as warnings. If "quiet", the 
  * stack trace of the warning is ignored.
- * @param {boolean} optionsOrCustomizer.useExperimentalTypeChecking
- * If true, opt-in to an experimental approach to type checking. See the 
- * documentation in `getTag` in clone-deep-helpers.js for more information. By 
- * default, this feature is opted out of because it is a significant performance 
- * throttle.
  * @param {boolean} optionsOrCustomizer.letCustomizerThrow 
  * If `true`, errors 
  * thrown by the customizer will be thrown by `cloneDeep`. By default, the error 
@@ -223,8 +217,6 @@ export default function cloneDeep(
  * @param {Log} options.log 
  * See the documentation for `cloneDeep`.
  * @param {string} options.logMode 
- * See the documentation for `cloneDeep`.
- * @param {boolean} options.useExperimentalTypeChecking 
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.letCustomizerThrow 
  * See the documentation for `cloneDeep`.
