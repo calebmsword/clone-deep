@@ -67,6 +67,11 @@ cloned = cloneDeep(originalObject, {
     // (warnings are less verbose) and "silent" (no warnings are logged to the 
     // console--use with caution!).
     logMode: "quiet"
+
+    // Use with caution. If true, a more robust mechanism for checking if 
+    // objects are native JavaScript classes will be used. Note that this 
+    // approach is a significant performance throttle
+    useExperimentalTypeChecking: true
 });
 ```
 

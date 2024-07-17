@@ -172,32 +172,34 @@ declare module "cms-clone-deep" {
  * `WeakMaps`, or `WeakSets`).
  * 
  * @param {any} value The value to deeply copy.
- * @param {CloneDeepOptions|Customizer} [optionsOrCustomizer] If a function, 
- * this argument is used as the customizer.
- * @param {object} [optionsOrCustomizer] If an object, this argument is used as 
- * a configuration object.
- * @param {Customizer} optionsOrCustomizer.customizer Allows the user to inject 
- * custom logic. The function is given the value to copy. If the function 
- * returns an object, the value of the `clone` property on that object will be 
- * used as the clone. See the documentation for `cloneDeep` for more 
- * information.
- * @param {Log} optionsOrCustomizer.log Any errors which occur during the 
- * algorithm can optionally be passed to a log function. `log` should take one 
- * argument which will be the error encountered. Use this to the log the error 
- * to a custom logger.
- * @param {string} optionsOrCustomizer.logMode Case-insensitive. If "silent", no 
- * warnings will be logged. Use with caution, as failures to perform true clones 
- * are logged as warnings. If "quiet", the stack trace of the warning is 
- * ignored.
+ * @param {CloneDeepOptions|Customizer} [optionsOrCustomizer] 
+ * If a function, this argument is used as the customizer.
+ * @param {object} [optionsOrCustomizer] 
+ * If an object, this argument is used as a configuration object.
+ * @param {Customizer} optionsOrCustomizer.customizer 
+ * Allows the user to inject custom logic. The function is given the value to 
+ * copy. If the function returns an object, the value of the `clone` property on 
+ * that object will be used as the clone. See the documentation for `cloneDeep` 
+ * for more information.
+ * @param {Log} optionsOrCustomizer.log 
+ * Any errors which occur during the algorithm can optionally be passed to a log 
+ * function. `log` should take one argument which will be the error encountered. 
+ * Use this to the log the error to a custom logger.
+ * @param {string} optionsOrCustomizer.logMode 
+ * Case-insensitive. If "silent", no warnings will be logged. Use with caution, 
+ * as failures to perform true clones are logged as warnings. If "quiet", the 
+ * stack trace of the warning is ignored.
  * @param {boolean} optionsOrCustomizer.useExperimentalTypeChecking
  * If true, opt-in to an experimental approach to type checking. See the 
  * documentation in `getTag` in clone-deep-helpers.js for more information. By 
  * default, this feature is opted out of because it is a significant performance 
  * throttle.
- * @param {boolean} optionsOrCustomizer.letCustomizerThrow If `true`, errors 
+ * @param {boolean} optionsOrCustomizer.letCustomizerThrow 
+ * If `true`, errors 
  * thrown by the customizer will be thrown by `cloneDeep`. By default, the error 
  * is logged and the algorithm proceeds with default behavior.
- * @returns {Object} The deep copy.
+ * @returns {Object} 
+ * The deep copy.
  */
 export default function cloneDeep(
     value: any, 
@@ -206,20 +208,28 @@ export default function cloneDeep(
     
     /**
  * Deeply clones the provided object and its prototype chain.
- * @param {any} value The object to clone.
- * @param {CloneDeepFullyOptions|Customizer} [optionsOrCustomizer] If a 
- * function, it is used as the customizer for the clone. 
- * @param {object} [optionsOrCustomizer] If an object, it is used as a 
- * configuration object. See the documentation for `cloneDeep`.
- * @param {boolean} options.force If `true`, prototypes with methods will be 
- * cloned. Normally, this function stops if it reaches any prototype with 
- * methods.
- * @param {Customizer} options.customizer See the documentation for `cloneDeep`.
- * @param {Log} options.log See the documentation for `cloneDeep`.
- * @param {string} options.logMode See the documentation for `cloneDeep`.
- * @param {boolean} options.letCustomizerThrow See the documentation for 
+ * @param {any} value 
+ * The object to clone.
+ * @param {CloneDeepFullyOptions|Customizer} [optionsOrCustomizer] 
+ * If a function, it is used as the customizer for the clone. 
+ * @param {object} [optionsOrCustomizer] 
+ * If an object, it is used as a configuration object. See the documentation for 
  * `cloneDeep`.
- * @returns {any} The deep copy.
+ * @param {boolean} options.force 
+ * If `true`, prototypes with methods will be cloned. Normally, this function 
+ * stops if it reaches any prototype with methods.
+ * @param {Customizer} options.customizer 
+ * See the documentation for `cloneDeep`.
+ * @param {Log} options.log 
+ * See the documentation for `cloneDeep`.
+ * @param {string} options.logMode 
+ * See the documentation for `cloneDeep`.
+ * @param {boolean} options.useExperimentalTypeChecking 
+ * See the documentation for `cloneDeep`.
+ * @param {boolean} options.letCustomizerThrow 
+ * See the documentation for `cloneDeep`.
+ * @returns {any} 
+ * The deep copy.
  */
 export function cloneDeepFully(
     value: any,
@@ -230,8 +240,10 @@ export function cloneDeepFully(
  * Creates a customizer which composes other customizers.
  * The customizers are executed in order. The first to return an object is used 
  * as the result. If no customizer returns an object, undefined is returned.
- * @param {Function[]} customizers An array of customizer functions.
- * @returns {Function} A new customizer which composes the provided customizers.
+ * @param {Function[]} customizers 
+ * An array of customizer functions.
+ * @returns {Function} 
+ * A new customizer which composes the provided customizers.
  */
 export function useCustomizer(customizers: Customizer[]) : Customizer;
 }
