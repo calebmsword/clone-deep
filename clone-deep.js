@@ -1,153 +1,13 @@
-/**
- * Contains the tag for various types.
- * @type {Object<string, string>}
- */
-export const Tag = Object.freeze({
-    ARGUMENTS: "[object Arguments]",
-    ARRAY: "[object Array]",
-    BIGINT: "[object BigInt]",
-    BOOLEAN: "[object Boolean]",
-    DATE: "[object Date]",
-    ERROR: "[object Error]",
-    FUNCTION: "[object Function]",
-    MAP: "[object Map]",
-    NUMBER: "[object Number]",
-    OBJECT: "[object Object]",
-    PROMISE: "[object Promise]",
-    REGEXP: "[object RegExp]",
-    SET: "[object Set]",
-    STRING: "[object String]",
-    SYMBOL: "[object Symbol]",
-    WEAKMAP: "[object WeakMap]",
-    WEAKSET: "[object WeakSet]",
-    ARRAYBUFFER: "[object ArrayBuffer]",
-    DATAVIEW: "[object DataView]",
-    FLOAT32: "[object Float32Array]",
-    FLOAT64: "[object Float64Array]",
-    INT8: "[object Int8Array]",
-    INT16: "[object Int16Array]",
-    INT32: "[object Int32Array]",
-    UINT8: "[object Uint8Array]",
-    UINT8CLAMPED: "[object Uint8ClampedArray]",
-    UINT16: "[object Uint16Array]",
-    UINT32: "[object Uint32Array]",
-    BIGINT64: "[object BigInt64Array]",
-    BIGUINT64: "[object BigUint64Array]"
-});
-
-/**
- * All prototypes of supported types.
- */
-export const supportedPrototypes = Object.freeze([
-    Array.prototype,
-    BigInt.prototype,
-    Boolean.prototype,
-    Date.prototype,
-    Error.prototype,
-    Function.prototype,
-    Map.prototype,
-    Number.prototype,
-    Object.prototype,
-    Promise.prototype,
-    RegExp.prototype,
-    Set.prototype,
-    String.prototype,
-    Symbol.prototype,
-    ArrayBuffer.prototype,
-    DataView.prototype,
-    Float32Array.prototype,
-    Float64Array.prototype,
-    Int8Array.prototype,
-    Int16Array.prototype,
-    Int32Array.prototype,
-    Uint8Array.prototype,
-    Uint8ClampedArray.prototype,
-    Uint16Array.prototype,
-    Uint32Array.prototype,
-    BigInt64Array.prototype,
-    BigUint64Array.prototype
-]);
-
-/**
- * Some native prototypes have properties that cannot be accessed or reassigned.
- * All such properties are stored here.
- */
-export const forbiddenProps = Object.freeze({
-    [Tag.FUNCTION]: { 
-        prototype: Function.prototype,
-        properties: ["caller", "callee", "arguments"]
-    },
-    [Tag.MAP]: {
-        prototype: Map.prototype,
-        properties: ["size"]
-    },
-    [Tag.SET]: {
-        prototype: Set.prototype,
-        properties: ["size"]
-    },
-    [Tag.SYMBOL]: {
-        prototype: Symbol.prototype,
-        properties: ["description"]
-    },
-    [Tag.ARRAYBUFFER]: {
-        prototype: ArrayBuffer.prototype,
-        properties: ["byteLength", "maxByteLength", "resizable", "detached"]
-    },
-    [Tag.DATAVIEW]: {
-        prototype: DataView.prototype,
-        properties: ["buffer", "byteLength", "byteOffset"]
-    }
-});
-
-/**
- * Used to log warnings.
- */
-class CloneDeepWarning extends Error {
-    /**
-     * @param {string} message 
-     * @param {ErrorOptions} [cause] 
-     * @param {string} [stack]
-     */
-    constructor(message, cause, stack) {
-        super(message, cause);
-        this.name = CloneDeepWarning.name;
-        if (typeof stack === "string") this.stack = stack;
-    }
-}
-
-/**
- * Creates a {@link CloneDeepWarning} instance.
- * @param {String} message The error message.
- * @param {ErrorOptions} [cause] If an object with a `cause` property, it will 
- * add a cause to the error when logged.
- * @param {string} [stack] If provided, determines the stack associated with the
- * error object.
- * @returns {CloneDeepWarning} 
- */
-function getWarning(message, cause, stack) {
-    return new CloneDeepWarning(message, cause, stack);
-}
-
-/**
- * Commonly-used {@link CloneDeepWarning} instances.
- */
-const Warning = {
-    WEAKMAP: getWarning("Attempted to clone unsupported type WeakMap."),
-    WEAKSET: getWarning("Attempted to clone unsupported type WeakSet."),
-    FUNCTION_DOT_PROTOTYPE: getWarning(
-        "Attempted to clone Function.prototype. strict mode does not allow " + 
-        "the caller, callee or arguments properties to be accessed so those " +
-        "properties will not be cloned. Also, native methods cannot be " + 
-        "cloned so all methods in Function.prototype will copied directly."),
-    IMPROPER_ADDITIONAL_VALUES: getWarning(
-        "The additionalValue property must be an array of objects. The " + 
-        "objects must have a `value` property and an `assigner` property " + 
-        "that is a function."),
-    PROMISE: getWarning(
-        "Attempted to clone a Promise. The cloned promise will settle when " + 
-        "original Promise settles. It will fulfill or reject with the same " + 
-        "value as the original Promise.")
-}
+import { 
+    getTag, 
+    getConstructor, 
+    Tag, 
+    supportedPrototypes, 
+    forbiddenProps,
+    getWarning,
+    Warning,
+    isTypedArray
+} from "./clone-deep-helpers.js";
 
 /** 
  * This symbol is used to indicate that the cloned value is the top-level object 
@@ -155,62 +15,6 @@ const Warning = {
  * @type {symbol}
  */ 
 const TOP_LEVEL = Symbol("TOP_LEVEL");
-
-/**
- * Gets a "tag", which is an string which identifies the type of a value.
- * `Object.prototype.toString` returns a string like `"[object <Type>]"`,  where 
- * type is the type of the object. We refer this return value as the **tag**. 
- * Normally, the tag is determined by what `this[Symbol.toStringTag]` is, but 
- * the JavaScript specification for `Object.prototype.toString` requires that 
- * many native JavaScript objects return a specific tag if the object does not 
- * have the `Symbol.toStringTag` property. Also, classes introduced after ES6 
- * typically have their own non-writable `Symbol.toStringTag` property. This 
- * makes `Object.prototype.toString.call` a stronger type-check that 
- * `instanceof`.
- * 
- * @example
- * ```
- * const date = new Date();
- * console.log(date instanceof Date);  // true
- * console.log(tagOf(date));  // "[object Date]"
- * 
- * const dateSubclass = Object.create(Date.prototype);
- * console.log(dateSubclass instance Date);  // true;
- * console.log(tagOf(dateSubClass));  // "[object Object]"
- * 
- * // This is not a perfect type check because we can do:
- * dateSubclass[Symbol.toStringTag] = "Date"
- * console.log(tagOf(dateSubClass));  // "[object Date]"
- * ```
- * 
- * @param {any} value The value to get the tag of.
- * @returns {string} tag A string indicating the value's type.
- */
-function tagOf(value) {
-    return Object.prototype.toString.call(value);
-}
-
-/**
- * Returns `true` if tag is that of a TypedArray subclass, `false` otherwise.
- * @param {string} tag A tag. See {@link tagOf}.
- * @returns {boolean}
- */
-function isTypedArray(tag) {
-    return [   
-        Tag.DATAVIEW, 
-        Tag.FLOAT32,
-        Tag.FLOAT64,
-        Tag.INT8,
-        Tag.INT16,
-        Tag.INT32,
-        Tag.UINT8,
-        Tag.UINT8CLAMPED,
-        Tag.UINT16,
-        Tag.UINT32,
-        Tag.BIGINT64,
-        Tag.BIGUINT64
-    ].includes(tag);
-}
 
 /**
  * Clones the provided value.
@@ -224,7 +28,10 @@ function isTypedArray(tag) {
  * Whether errors in the customizer should cause the function to throw.
  * @returns {any}
  */
-function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
+function cloneInternalNoRecursion(_value, 
+                                  customizer, 
+                                  log, 
+                                  doThrow) {
 
     /**
      * Handles the assignment of the cloned value to some persistent place.
@@ -440,7 +247,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
          * Identifies the type of the value.
          * @type {String}
          */
-        const tag = tagOf(value);
+        const tag = getTag(value);
 
         if (forbiddenProps[tag] !== undefined
             && forbiddenProps[tag].prototype === value)
@@ -504,7 +311,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
             else if ([Tag.BOOLEAN, Tag.DATE].includes(tag)) {
                 /** @type {BooleanConstructor|DateConstructor} */
-                const BooleanOrDateConstructor = value.constructor;
+                const BooleanOrDateConstructor = getConstructor(tag);
 
                 cloned = assign(new BooleanOrDateConstructor(Number(value)), 
                                 parentOrAssigner, 
@@ -513,7 +320,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             }
             else if ([Tag.NUMBER, Tag.STRING].includes(tag)) {
                 /** @type {NumberConstructor|StringConstructor} */
-                const NumberOrStringConstructor = value.constructor;
+                const NumberOrStringConstructor = getConstructor(tag);
 
                 cloned = assign(new NumberOrStringConstructor(value), 
                                 parentOrAssigner, 
@@ -591,13 +398,10 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
             
             else if (isTypedArray(tag)) {
                 /** @type {import("./private-types").TypedArrayConstructor} */
-                const TypedArray = value.constructor;
-
-                /** @type {ArrayBufferConstructor} */
-                const ArrayBufferConstructor = value.buffer.constructor;
+                const TypedArray = getConstructor(tag);
 
                 // copy data over to clone
-                const buffer = new ArrayBufferConstructor(
+                const buffer = new ArrayBuffer(
                     value.buffer.byteLength);
                 new Uint8Array(buffer).set(new Uint8Array(value.buffer));
                 
@@ -616,7 +420,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                 const originalMap = value;
 
                 /** @type {MapConstructor} */
-                const MapConstructor = value.constructor;
+                const MapConstructor = getConstructor(tag);
 
                 const cloneMap = new MapConstructor;
 
@@ -640,7 +444,7 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
                 const originalSet = value;
 
                 /** @type {SetConstructor} */
-                const SetConstructor = value.constructor;
+                const SetConstructor = getConstructor(tag);
 
                 const cloneSet = new SetConstructor;
 
@@ -743,25 +547,26 @@ function cloneInternalNoRecursion(_value, customizer, log, doThrow) {
 
 /**
  * @param {any} value The value to deeply copy.
- * @param {import("./public-types").CloneDeepOptions|import("./public-types").Customizer} 
- * [optionsOrCustomizer] If a function, this argument is used as the customizer.
- * @param {object} [optionsOrCustomizer] If an object, this argument is used as 
- * a configuration object.
+ * @param {import("./public-types").CloneDeepOptions|import("./public-types").Customizer} [optionsOrCustomizer] 
+ * If a function, this argument is used as the customizer.
+ * @param {object} [optionsOrCustomizer] 
+ * If an object, this argument is used as a configuration object.
  * @param {import("./public-types").Customizer} optionsOrCustomizer.customizer 
  * Allows the user to inject custom logic. The function is given the value to 
  * copy. If the function returns an object, the value of the `clone` property on 
  * that object will be used as the clone.
- * @param {import("./public-types").Log} optionsOrCustomizer.log Any errors 
- * which occur during the algorithm can optionally be passed to a log function. 
- * `log` should take one argument which will be the error encountered. Use this 
- * to log the error to a custom logger.
- * @param {string} optionsOrCustomizer.logMode Case-insensitive. If "silent", no 
- * warnings will be logged. Use with caution, as failures to perform true clones 
- * are logged as warnings. If "quiet", the stack trace of the warning is 
- * ignored.
- * @param {boolean} optionsOrCustomizer.letCustomizerThrow If `true`, errors 
- * thrown by the customizer will be thrown by `cloneDeep`. By default, the error 
- * is logged and the algorithm proceeds with default behavior.
+ * @param {import("./public-types").Log} optionsOrCustomizer.log 
+ * Any errors which occur during the algorithm can optionally be passed to a log 
+ * function. `log` should take one argument which will be the error encountered. 
+ * Use this to log the error to a custom logger.
+ * @param {string} optionsOrCustomizer.logMode 
+ * Case-insensitive. If "silent", no warnings will be logged. Use with caution, 
+ * as failures to perform true clones are logged as warnings. If "quiet", the 
+ * stack trace of the warning is ignored.
+ * @param {boolean} optionsOrCustomizer.letCustomizerThrow 
+ * If `true`, errors thrown by the customizer will be thrown by `cloneDeep`. By 
+ * default, the error is logged and the algorithm proceeds with default 
+ * behavior.
  * @returns {Object} The deep copy.
  */
 function cloneDeep(value, optionsOrCustomizer) {
@@ -780,7 +585,11 @@ function cloneDeep(value, optionsOrCustomizer) {
     if (typeof optionsOrCustomizer === "function")
         customizer = optionsOrCustomizer;
     else if (typeof optionsOrCustomizer === "object") {
-        ({ log, logMode, letCustomizerThrow } = optionsOrCustomizer);
+        ({ 
+            log, 
+            logMode,
+            letCustomizerThrow 
+        } = optionsOrCustomizer);
         
         customizer = optionsOrCustomizer.customizer;
     }
@@ -796,7 +605,7 @@ function cloneDeep(value, optionsOrCustomizer) {
     
     return cloneInternalNoRecursion(value, 
                                     customizer, 
-                                    log, 
+                                    log,
                                     letCustomizerThrow || false);
 }
  
