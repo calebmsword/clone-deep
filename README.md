@@ -231,7 +231,7 @@ This repository uses type annotations in [JSDoc](https://jsdoc.app/) to add type
 
 ## testing
 
-The file `clone-deep.test.js` contains all unit tests. Execute `node --test` to run them. If you are using node v20.1.0 or higher, execute `node --test --experimental-test-coverage` to see coverage results.
+The file `clone-deep.test.js` contains all unit tests. Execute `npm test` to run them. If you are using node v20.1.0 or higher, execute `node run test-coverage` to see coverage results.
 
 ## benchmarking
 
