@@ -365,7 +365,7 @@ function cloneInternalNoRecursion(_value,
                 const error = value;
 
                 /** @type {ErrorConstructor} */
-                const ErrorConstructor = value.constructor;
+                const ErrorConstructor = getConstructor(tag, error, log);
 
                 const cause = error.cause;
                 const clonedError = cause === undefined

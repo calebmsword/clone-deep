@@ -502,6 +502,64 @@ try {
             assert.strictEqual(cloned.property, error.property);
         });
 
+        test("Error subclasses are correctly cloned", () => {
+            [
+                AggregateError, 
+                EvalError,
+                RangeError, 
+                ReferenceError, 
+                SyntaxError, 
+                TypeError, 
+                URIError
+            ].forEach(ErrorClass => {
+                const error = new ErrorClass("error");
+
+                const cloned = cloneDeep(error);
+
+                assert.strictEqual(getProto(cloned), ErrorClass.prototype);
+            });
+        });
+
+        test("Unrecognized error cloned w/ Error constructor + warning", () => {
+            const ErrorOriginal = Error;
+
+            try {
+                // -- arrange
+                class TestError extends Error {};
+                Object.defineProperty(TestError.prototype, "name", {
+                    value: "TestError"
+                });
+
+                const log = mock.fn(() => {});
+                
+                // monkeypatch Error so we can track if it was called
+                let errorOriginalCount = 0;
+                Error = function(...args) {
+                    errorOriginalCount++;
+                    return ErrorOriginal(...args);
+                }
+                Error.prototype = ErrorOriginal.prototype;
+                
+                // -- act
+                cloneDeep(new ArbitraryError("error"), { log: undefined });
+                cloneDeep(new ArbitraryError("error"), { log });
+                
+                // -- assert
+                assert.strictEqual(2, errorOriginalCount);
+                assert.strictEqual(true, 
+                                   log
+                                    .mock
+                                    .calls[0]
+                                    .arguments[0]
+                                    .message
+                                    .includes("Cloning error with " + 
+                                              "unrecognized name TestError!"));
+            }
+            catch(_error) {
+                Error = ErrorOriginal;
+            }
+        });
+
         test('Function.prototype is "cloned" with allowed properties', () => {
             const expectedProperties = [
                 "length",
