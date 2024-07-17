@@ -231,7 +231,6 @@ const prototypeMap = Object.freeze({
 export function getConstructor(tag, value, log) {
     if (tag === Tag.ERROR) {
         const name = Object.getPrototypeOf(value).name;
-        console.log(name);
         switch (name) {
             case "AggregateError":
                 return AggregateError;
