@@ -157,9 +157,6 @@ const prototypes = [
  * }
  * ```
  * 
- * This second approach to type-checking is referred to as "experimental 
- * type-checking".
- * 
  * @param {any} value 
  * The value to get the tag of.
  * @returns {string} tag 
@@ -227,11 +224,14 @@ const prototypeMap = Object.freeze({
  * @param {any} [value]
  * The object itself. This is necessary to correctly find constructors for 
  * various Error subclasses.
+ * @param {(error: Error) => any} [log]
+ * An optional logging function.
  * @returns {any}
  */
-export function getConstructor(tag, value) {
+export function getConstructor(tag, value, log) {
     if (tag === Tag.ERROR) {
         const name = Object.getPrototypeOf(value).name;
+        console.log(name);
         switch (name) {
             case "AggregateError":
                 return AggregateError;
@@ -248,8 +248,10 @@ export function getConstructor(tag, value) {
             case "URIError":
                 return URIError;
             default:
-                getWarning(`Cloning error with unrecognized name ${name}!` + 
-                           "It will be cloned into an ordinary Error object.")
+                if (log !== undefined)
+                    log(getWarning("Cloning error with unrecognized name " + 
+                                   `${name}! It will be cloned into an ` + 
+                                   "ordinary Error object."))
                 return Error;
         }
     }
