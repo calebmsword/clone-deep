@@ -173,6 +173,7 @@ try {
                 const cloned = cloneDeep(value);
 
                 // -- assert
+                assert.strictEqual(typeof cloned, "object");
                 assert.strictEqual(tagOf(cloned), tag);
             }
         });
