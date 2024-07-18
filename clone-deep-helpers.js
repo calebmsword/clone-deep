@@ -104,12 +104,20 @@ export const forbiddenProps = Object.freeze({
  * @type {Array<[any, string, string]>} 
  */
 const prototypes = [
+    [ArrayBuffer, "slice", Tag.ARRAYBUFFER],
+    [BigInt, "valueOf", Tag.BIGINT],
+    [Boolean, "valueOf", Tag.BOOLEAN],
     [Date, "getUTCMilliseconds", Tag.DATE],
     [Function, "bind", Tag.FUNCTION],
     [Map, "has", Tag.MAP],
+    [Number, "valueOf", Tag.NUMBER],
+    [Promise, "then", Tag.PROMISE],
     [RegExp, "exec", Tag.REGEXP],
-    [Set, "has", Tag.SET]
-]
+    [Set, "has", Tag.SET],
+    [String, "valueOf", Tag.STRING],
+    [Symbol, "valueOf", Tag.SYMBOL],
+    [DataView, "getInt8", Tag.DATAVIEW]
+];
 
 /**
  * Gets a "tag", which is an string which identifies the type of a value.
@@ -136,7 +144,7 @@ const prototypes = [
  * 
  * // Note this is not a perfect type check because we can do:
  * arraySubclass[Symbol.toStringTag] = "Array"
- * console.log(Object.prototype.toString.call(dateSubClass));  // "[object Array]"
+ * console.log(Object.prototype.toString.call(arraySubclass));  // "[object Array]"
  * ```
  * 
  * However, some native classes will throw if their prototype methods are called 
