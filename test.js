@@ -4,7 +4,9 @@ import { describe, mock, test } from "node:test";
 import { 
     Tag, 
     supportedPrototypes, 
-    forbiddenProps 
+    forbiddenProps, 
+    getTypedArrayConstructor,
+    isIterable
 } from "./clone-deep-helpers.js";
 import  cloneDeep from "./clone-deep.js";
 import { cloneDeepFully, useCustomizers } from "./clone-deep-utils.js";
@@ -535,13 +537,14 @@ try {
 
         test("Error clones get stack and cause", () => {
             // -- arrange
-            const error = new Error("error", { cause: "cause" });
+            const error = new Error("error", { cause: {} });
 
             // -- act
             const cloned = cloneDeep(error);
 
             // -- assert
-            assert.strictEqual(cloned.cause, error.cause);
+            assert.deepEqual(cloned.cause, error.cause);
+            assert.notStrictEqual(cloned.cause, error.cause);
             assert.strictEqual(cloned.stack, error.stack);
         });
 
@@ -650,6 +653,66 @@ try {
                 Error = ErrorOriginal;
                 throw error;
             }
+        });
+
+        describe("AggregateError", () => {
+
+            test("AggregateError is cloned correctly", () => {
+                // -- arrange 
+                const error = new AggregateError(
+                    [new Error("a", { cause: "cause" }), new Error("b")]);
+
+                // -- act
+                const cloned = cloneDeep(error);
+
+                // -- assert
+                assert.strictEqual(cloned !== error, true);
+                assert.strictEqual(cloned.errors !== error.errors, true);
+                assert.deepEqual(cloned, error);
+            });
+
+            test("AggregateError with cause is handled", () => {
+                // -- arrange 
+                const error = new AggregateError(
+                    [new Error("a", { cause: "cause" }), new Error("b")], 
+                    "",
+                    { cause: {} });
+
+                // -- act
+                const cloned = cloneDeep(error);
+
+                // -- assert
+                assert.strictEqual(cloned !== error, true);
+                assert.strictEqual(cloned.errors !== error.errors, true);
+                assert.deepEqual(cloned, error);
+                assert.notStrictEqual(cloned.cause, error.cause);
+                
+            });
+
+            test("AggregateError with non-iterable errors is handled with " + 
+                 "warning", () => {
+                // -- arrange
+                const log = mock.fn(() => {});
+
+                const error = new AggregateError([]);
+                error.errors = {};
+
+                // -- act
+                const cloned = cloneDeep(error, { log });
+
+                // -- assert
+                assert.deepEqual(cloned, error);
+                assert.deepEqual({}, cloned.errors);
+                assert.notStrictEqual(cloned.errors, error.errors);
+                assert.deepEqual(error.errors, cloned.errors);
+                assert.strictEqual(log
+                                    .mock
+                                    .calls[0]
+                                    .arguments[0]
+                                    .message
+                                    .includes("non-iterable"), 
+                                   true);
+            });
         });
 
         test('Function.prototype is "cloned" with allowed properties', () => {
@@ -1272,7 +1335,32 @@ try {
         });
     });
 
+    describe("misc", () => {
 
+        test("getTypedArrayConstructor returns DataView constructor if " + 
+             "non-TypedArray tag is provided", () => {
+            // -- arrange/act
+            const constructor = getTypedArrayConstructor("");
+
+            // -- assert
+            assert.strictEqual(DataView, constructor);
+        });
+
+        test("isIterable", () => {
+            // -- act/assert
+            assert.strictEqual(true, isIterable([]));
+            assert.strictEqual(true, isIterable(""));
+            assert.strictEqual(true, isIterable({
+                [Symbol.iterator]: () => ({
+                    next: () => {
+                        done: true
+                    }
+                })
+            }));
+            assert.strictEqual(false, isIterable({}));
+            assert.strictEqual(false, isIterable(null));
+        });
+    });
 }
 catch(error) {
     console.warn = consoleDotWarn;
