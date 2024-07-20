@@ -117,6 +117,7 @@ function cloneInternalNoRecursion(_value,
     const isExtensibleSealFrozen = [];
 
     for (let obj = queue.shift(); obj !== undefined; obj = queue.shift()) {
+
         /**
          * The value to deeply clone.
          */ 
@@ -363,9 +364,7 @@ function cloneInternalNoRecursion(_value,
                 const regExp = value;
 
                 cloned = new RegExp(regExp.source, regExp.flags);
-                cloned.lastIndex = regExp.lastIndex;
                 assign(cloned, parentOrAssigner, prop, metadata);
-                propsToIgnore.push("lastIndex");
             }
 
             else if (Tag.ERROR === tag) {
@@ -385,8 +384,7 @@ function cloneInternalNoRecursion(_value,
                                        "will be cloned into an " + 
                                        "AggregateError instance with an " + 
                                        "empty aggregation."));
-                    else propsToIgnore.push("errors");
-
+                    
                     const cause = error.cause;
                     clonedError = cause === undefined
                         ? new AggregateError(errors, error.message)
@@ -409,10 +407,18 @@ function cloneInternalNoRecursion(_value,
                     ? defaultDescriptor.set
                     : undefined;
 
-                Object.defineProperty(clonedError, "stack", {
-                    enumerable: false,
-                    get: () => error.stack,
-                    set
+                queue.push({ 
+                    value: error.stack,
+
+                    /** @param {any} cloned */ 
+                    parentOrAssigner(cloned) {
+                        isExtensibleSealFrozen.push([error.stack, cloned]);
+                        Object.defineProperty(clonedError, "stack", {
+                            enumerable: false,
+                            get: () => cloned,
+                            set
+                        });
+                    }
                 });
 
                 cloned = assign(clonedError, parentOrAssigner, prop, metadata);

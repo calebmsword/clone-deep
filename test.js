@@ -548,6 +548,26 @@ try {
             assert.strictEqual(cloned.stack, error.stack);
         });
 
+        test("Error stacks are cloned correctly", () => {
+            // -- arrange
+            const error = new Error("");
+            const errorStackReassigned = new Error("");
+            errorStackReassigned.stack = Object.preventExtensions({});
+
+            // -- act
+            const cloned = cloneDeep(error);
+            const clonedStackReassigned = cloneDeep(errorStackReassigned);
+
+            // -- assert
+            assert.strictEqual(cloned.stack, error.stack);
+            assert.notStrictEqual(clonedStackReassigned.stack, 
+                                  errorStackReassigned.stack);
+            assert.deepEqual(clonedStackReassigned.stack, 
+                             errorStackReassigned.stack);
+            assert.strictEqual(Object.isExtensible(clonedStackReassigned.stack), 
+                               false);
+        })
+
         test("Errors are cloned correctly even if monkeypatched", () => {
             let doMonkeypatch = true;
             try {
@@ -666,9 +686,14 @@ try {
                 const cloned = cloneDeep(error);
 
                 // -- assert
-                assert.strictEqual(cloned !== error, true);
-                assert.strictEqual(cloned.errors !== error.errors, true);
+                assert.notStrictEqual(cloned, error);
+                assert.notStrictEqual(cloned.errors, error.errors);
                 assert.deepEqual(cloned, error);
+                cloned.errors.forEach((clonedError, i) => {
+                    const originalError = error.errors[i];
+                    assert.notStrictEqual(clonedError, originalError);
+                    assert.deepEqual(clonedError, originalError);
+                });
             });
 
             test("AggregateError with cause is handled", () => {
