@@ -318,8 +318,9 @@ function cloneInternalNoRecursion(_value,
 
             else if ([Tag.BOOLEAN, Tag.DATE].includes(tag)) {
                 /** @type {BooleanConstructor|DateConstructor} */
-                const BooleanOrDateConstructor = tag === Tag.DATE ?
-                    Date : Boolean;
+                const BooleanOrDateConstructor = tag === Tag.DATE 
+                    ? Date 
+                    : Boolean;
 
                 cloned = assign(new BooleanOrDateConstructor(Number(value)), 
                                 parentOrAssigner, 
@@ -328,8 +329,9 @@ function cloneInternalNoRecursion(_value,
             }
             else if ([Tag.NUMBER, Tag.STRING].includes(tag)) {
                 /** @type {NumberConstructor|StringConstructor} */
-                const NumberOrStringConstructor = tag === Tag.NUMBER ?
-                    Number : String;
+                const NumberOrStringConstructor = tag === Tag.NUMBER 
+                    ? Number 
+                    : String;
 
                 cloned = assign(new NumberOrStringConstructor(value), 
                                 parentOrAssigner, 
@@ -374,21 +376,26 @@ function cloneInternalNoRecursion(_value,
                 /** @type {Error} */
                 let clonedError;
 
-                if (value.name === "AggregateError") {
+                if (error.name === "AggregateError") {
+                    /** @type {AggregateError} */
+                    const aggregateError = value;
 
-                    const errors = isIterable(value.errors) ? value.errors : [];
+                    const errors = isIterable(aggregateError.errors) 
+                        ? aggregateError.errors 
+                        : [];
 
-                    if (!isIterable(value.errors))
+                    if (!isIterable(aggregateError.errors))
                         log(getWarning("Cloning AggregateError with" + 
                                        "non-iterable errors property. It " +
                                        "will be cloned into an " + 
                                        "AggregateError instance with an " + 
                                        "empty aggregation."));
                     
-                    const cause = error.cause;
+                    const cause = aggregateError.cause;
+                    const message = aggregateError.message;
                     clonedError = cause === undefined
-                        ? new AggregateError(errors, error.message)
-                        : new AggregateError(errors, error.message, { cause });
+                        ? new AggregateError(errors, message)
+                        : new AggregateError(errors, message, { cause });
                 }
                 else {
                     /** @type {import("./private-types.js").AtomicErrorConstructor} */

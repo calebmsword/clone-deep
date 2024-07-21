@@ -637,10 +637,7 @@ try {
             try {
                 // -- arrange
                 class TestError extends Error {
-                    constructor(...args) {
-                        super(...args);
-                        getProto(this).name = "TestError";
-                    }
+                    name = "TestError";
                 };
 
                 const log = mock.fn(() => {});
@@ -767,7 +764,8 @@ try {
             });
         });
 
-        test('functions become empty objects inheriting Function.prototype', () => {
+        test("functions become empty objects inheriting " + 
+             "Function.prototype", () => {
             [function() {}, () => {}].forEach(func => {
                 // -- act
                 const cloned = cloneDeep(func);
@@ -872,6 +870,19 @@ try {
                 temporarilyMonkeypatch = false;
                 throw error;
             }
+        });
+
+        test("regExp.lastIndex is cloned properly", () => {
+            // -- arrange
+            const regExp = new RegExp("");
+            regExp.lastIndex = {};
+
+            // -- act
+            const cloned = cloneDeep(regExp);
+
+            // -- assert
+            assert.deepEqual(cloned.lastIndex, regExp.lastIndex);
+            assert.notStrictEqual(cloned.lastIndex, regExp.lastIndex);
         });
 
         test("Native prototypes can be cloned without errors", () => {
