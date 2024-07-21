@@ -10,7 +10,7 @@ import cloneDeep from "./clone-deep.js";
  * @param {import("./public-types.js").CloneDeepFullyOptions|import("./public-types.js").Customizer} [options] 
  * If a function, it is used as the customizer for the clone. 
  * @param {object} [options] 
- * If an object, it is used as a configuration object.See the documentation for 
+ * If an object, it is used as a configuration object. See the documentation for 
  * `cloneDeep`.
  * @param {boolean} options.force 
  * If `true`, prototypes with methods will be cloned. Normally, this function 

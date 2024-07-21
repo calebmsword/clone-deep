@@ -374,7 +374,7 @@ function cloneInternalNoRecursion(_value,
                 /** @type {Error} */
                 let clonedError;
 
-                if (Object.getPrototypeOf(value).name === "AggregateError") {
+                if (value.name === "AggregateError") {
 
                     const errors = isIterable(value.errors) ? value.errors : [];
 

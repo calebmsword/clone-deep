@@ -146,7 +146,7 @@ const prototypes = [
  * 
  * @example
  * ```
- * function isMap(value) {
+ * Map.isMap = value => { 
  *     try {
  *         Map.prototype.has.call(value);
  *         return true;
@@ -155,6 +155,10 @@ const prototypes = [
  *         return false;
  *     }
  * }
+ * 
+ * console.log(Map.isMap(new Map()));   // true
+ * console.log(Map.isMap(Object.create(Map.prototype)));  // false
+ * console.log(Map.isMap({ [Symbol.toStringTag]: "Map" }));  // false
  * ```
  * 
  * @param {any} value 
@@ -216,7 +220,7 @@ export function getTypedArrayConstructor(tag) {
         // TypeScript notices that this function would return `undefined` if 
         // none of the previous cases are hit. However, this function is only 
         // called if `isTypedArray` is true, so this default case will never 
-        // happen in practice. This is just to keep TypeSceript happy.
+        // happen in practice. We include it only to keep TypeScript happy.
         default:
             return DataView;
     }
@@ -230,16 +234,13 @@ export function getTypedArrayConstructor(tag) {
  * @returns {boolean}
  */
 export function isIterable(value) {
-    if (typeof value === "string") return true;
-    if (value === null || typeof value !== "object" ) return false;
+    if (value === null || value === undefined ) return false;
     return typeof value[Symbol.iterator] === "function";
 }
 
 /**
  * Gets the appropriate error constructor for the error name.
- * 
- * I could not find a way to type this without using `any`. Forgive me. 
- * @param {any} [value]
+ * @param {Error} value
  * The object itself. This is necessary to correctly find constructors for 
  * various Error subclasses.
  * @param {(error: Error) => any} [log]
@@ -247,7 +248,7 @@ export function isIterable(value) {
  * @returns {import("./private-types.js").AtomicErrorConstructor}
  */
 export function getAtomicErrorConstructor(value, log) {
-    const name = Object.getPrototypeOf(value).name;
+    const name = value.name;
     switch (name) {
         case "Error":
             return Error;
