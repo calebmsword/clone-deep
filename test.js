@@ -4,7 +4,8 @@ import { describe, mock, test } from "node:test";
 import { 
     Tag, 
     supportedPrototypes, 
-    forbiddenProps 
+    forbiddenProps, 
+    CLONE
 } from "./clone-deep-helpers.js";
 import  cloneDeep from "./clone-deep.js";
 import { cloneDeepFully, useCustomizers } from "./clone-deep-utils.js";
@@ -1273,6 +1274,23 @@ try {
         });
     });
 
+    describe("CLONE", () => {
+        test("CLONE can customize the clone", () => {
+            // -- arrange
+
+            // -- act
+
+            // -- assert
+        });
+
+        test("CLONE can ", () => {
+            // -- arrange
+
+            // -- act
+
+            // -- assert
+        });
+    });
 
 }
 catch(error) {

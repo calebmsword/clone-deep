@@ -89,26 +89,76 @@ Most objects have `Object.prototype` or some other native JavaScript prototype i
 
 Please see [these notes](https://github.com/calebmsword/javascript-notes/blob/main/deep-clone.md#deep-clone-and-functions) for an in-depth discussion on the challenge of cloning functions.
 
+## cloning custom classes
+
+When designing a deep clone algorithm, it is not possible to create a catch-all approach which clones all possible classes. This is because classes can have private data through private variables or closures. Therefore, it is the responsibility of the class itself to determine how it can be cloned.
+
+`cms-clone-deep` provides a symbol `CLONE`. If an object has a method associated with this symbol, then the return value of that method will be used as the clone.
+
+Suppose we had a class named `Wrapper` which encapsulates a single private variable:
+
+```javascript
+class Wrapper {
+    #value;
+
+    constructor(value) {
+        this.#value = value;
+    }
+    
+    get() {
+        return this.#value;
+    }
+    
+    set(value) {
+        this.#value = value;
+    }
+}
+```
+
+Here is how we could mend `Wrapper` so that it can be cloned properly by `cms-clone-deep`.
+
+```javascript
+import cloneDeep, { CLONE } from "cms-clone-deep";
+
+class Wrapper {
+    #value;
+
+    constructor(value) {
+        this.#value = value;
+    }
+    
+    get() {
+        return this.#value;
+    }
+    
+    set(value) {
+        this.#value = value;
+    }
+
+    [CLONE]() {
+        return {
+            clone: new Wrapper(this.get());
+        };
+    }
+}
+
+// create an object containing a wrapper instance and clone it
+const wrapper = new Wrapper({ spam: "eggs" });
+const obj = { foo: wrapper };
+const clonedObj = cloneDeep(obj);
+
+// check that it works
+console.log(clonedObj === obj);  // false
+console.log(Wrapper.isWrapper(clonedObj.foo));  // true
+console.log(clonedObj.foo.get());  // {spam: 'eggs'}
+console.log(clonedObj.foo.get() === obj.foo.get());  // false
+```
+
 ## customizers
 
 `cloneDeep` can take a customizer which allows the user to support custom types. This gives the user considerable power to extend or change `cloneDeep`'s functionality.
 
-Here is how we can use `cloneDeep` to clone objects containing custom classes with a [private property](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_properties). 
-
-Suppose we had a class called `Wrapper` which encapsulates a single value and has a static method which checks if a provided object is a `Wrapper` instance.
-
-```javascript
-const wrapper = new Wrapper("some value");
-console.log(wrapper.get()); // 'some value'
-
-wrapper.set("updated value");
-console.log(wrapper.get());  // 'updated value'
-
-Wrapper.isWrapper(wrapper);  // true
-Wrapper.isWrapper({});  // false
-```
-
-Here is one way we could implement `Wrapper`:
+For the sake of example, let us mend `Wrapper` so that it can be cloned with  a customizer instead of a custom method.
 
 ```javascript
 class Wrapper {

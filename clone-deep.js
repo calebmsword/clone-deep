@@ -6,7 +6,8 @@ import {
     forbiddenProps,
     getWarning,
     Warning,
-    isTypedArray
+    isTypedArray,
+    CLONE
 } from "./clone-deep-helpers.js";
 
 /** 
@@ -272,6 +273,31 @@ function cloneInternalNoRecursion(_value,
             // We won't clone weakmaps or weaksets (or their prototypes).
             else if ([Tag.WEAKMAP, Tag.WEAKSET].includes(tag))
                 throw tag === Tag.WEAKMAP ? Warning.WEAKMAP : Warning.WEAKSET;
+            
+            // If object defines its own means of getting cloned, use it
+            else if (typeof value[CLONE] === "function") {
+                const result = value[CLONE](propsToIgnore);
+
+                if (result.propsToIgnore !== undefined)
+                    if (Array.isArray(result.propsToIgnore) &&
+                        result
+                            .propsToIgnore
+                            .every(
+                                /** @param {any} s */
+                                s => ["string", "symbol"].includes(s))) 
+                        propsToIgnore.push(...result.propsToIgnore);
+                    else getWarning("return value of CLONE method is an " + 
+                                    "object whose propsToIgnore property, " + 
+                                    "if not undefined, is expected to be an " + 
+                                    "array of strings or symbols. The given " + 
+                                    "result is not this type of array so it " + 
+                                    "will have no effect.");
+
+                cloned = assign(result.clone, 
+                                parentOrAssigner, 
+                                prop, 
+                                metadata);
+            }
             
             // Ordinary objects, or the rare `arguments` clone.
             // Also, treat prototypes like ordinary objects. The tag wrongly 

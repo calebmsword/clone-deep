@@ -336,3 +336,6 @@ export function isTypedArray(tag) {
         Tag.BIGUINT64
     ].includes(tag);
 }
+
+/** Used to create methods for cloning objects.*/
+export const CLONE = Symbol("Clone");
