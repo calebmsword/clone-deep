@@ -35,13 +35,17 @@ const TOP_LEVEL = Symbol("TOP_LEVEL");
  * Whether cloning methods will be observed.
  * @param {boolean} doThrow 
  * Whether errors in the customizer should cause the function to throw.
+ * @param {Set<any>} [parentObjectRegistry]
+ * This is used by cloneDeepFully to check if an object with a cloning method is 
+ * in the prototype of an object that was cloned earlier in the chain.
  * @returns {U}
  */
-function cloneInternalNoRecursion(_value, 
+export function cloneInternalNoRecursion(_value, 
                                   customizer, 
                                   log,
                                   ignoreCloningMethods, 
-                                  doThrow) {
+                                  doThrow,
+                                  parentObjectRegistry) {
 
     /**
      * Handles the assignment of the cloned value to some persistent place.
@@ -185,6 +189,12 @@ function cloneInternalNoRecursion(_value,
          */
         let propsToIgnore = [];
 
+        /**
+         * Whether the cloning methods should be observed this loop.
+         * @type {boolean}
+         */
+        let ignoreCloningMethodsThisLoop = false;
+
         // Perform user-injected logic if applicable.
         if (typeof customizer === "function") {
 
@@ -260,6 +270,14 @@ function cloneInternalNoRecursion(_value,
          */
         const tag = getTag(value);
 
+        // Check if we should observe cloning methods on this loop
+        if (parentObjectRegistry !== undefined){
+            parentObjectRegistry.forEach(object => {
+                if (value === object?.constructor?.prototype)
+                    ignoreCloningMethodsThisLoop = true;
+            });
+        }
+
         if (forbiddenProps[tag] !== undefined
             && forbiddenProps[tag].prototype === value)
             log(getWarning(
@@ -286,7 +304,8 @@ function cloneInternalNoRecursion(_value,
             
             // If object defines its own means of getting cloned, use it
             else if (typeof value[CLONE] === "function" 
-                     && ignoreCloningMethods !== true) {
+                     && ignoreCloningMethods !== true
+                     && ignoreCloningMethodsThisLoop === false) {
                 
                 /** @type {import("./public-types").CloneMethodResult<any>} */
                 const result = value[CLONE]();

@@ -1,4 +1,30 @@
-import cloneDeep from "./clone-deep.js";
+import cloneDeep, { cloneInternalNoRecursion } from "./clone-deep.js";
+
+/**
+ * Creates a customizer which composes other customizers.
+ * The customizers are executed in order. The first to return an object is used 
+ * as the result. If no customizer returns an object, undefined is returned.
+ * @param {import("./public-types").Customizer[]} customizers 
+ * An array of customizer functions.
+ * @returns {import("./public-types").Customizer} 
+ * A new customizer which composes the provided customizers.
+ */
+export function useCustomizers(customizers) {
+    if (!Array.isArray(customizers)
+        || customizers.some(element => typeof element !== "function"))
+        throw new Error("useCustomizers must receive an array of functions");
+    
+    /**
+     * @param {any} value
+     * @returns {object|void}
+     */
+    return function combinedCustomizer(value) {
+        for (const customizer of customizers) {
+            const result = customizer(value);
+            if (typeof result === "object") return result;
+        }
+    }
+}
 
 /**
  * Deeply clones the provided object and its prototype chain.
@@ -28,11 +54,25 @@ import cloneDeep from "./clone-deep.js";
  * @returns {U} The deep copy.
  */
 export function cloneDeepFully(value, options) {
-    if (!["object", "function"].includes(typeof options)) 
+    if (typeof options !== "object" && typeof options !== "function") 
         options = {};
     if (typeof options === "object" 
         && typeof options.force !== "boolean") 
         options.force = false;
+    
+    /** @type {import("./public-types").Customizer|undefined} */
+    let customizer;
+    let log;
+    let ignoreCloningMethods;
+    let letCustomizerThrow;
+
+    if (typeof options === "function") customizer = options;
+    else ({
+        customizer,
+        log,
+        ignoreCloningMethods,
+        letCustomizerThrow
+    } = options);
     
     /**
      * Returns an array of all properties in the object.
@@ -66,12 +106,27 @@ export function cloneDeepFully(value, options) {
     /** @type {any} */
     let tempOrig = value;
     
+    let parentObjectRegistry = ignoreCloningMethods !== true 
+        ? new Set() 
+        : undefined;
+
     while (tempOrig !== null && ["object", "function"].includes(typeof tempOrig)
            && Object.getPrototypeOf(tempOrig) !== null 
            && (!hasMethods(Object.getPrototypeOf(tempOrig)) 
                || (typeof options === "object" && options.force))) {
         
-        const newProto = cloneDeep(Object.getPrototypeOf(tempOrig), options);
+        const defaultLog = console.warn;
+
+        if (ignoreCloningMethods !== true) 
+            parentObjectRegistry?.add(tempOrig);
+
+        const newProto = cloneInternalNoRecursion(
+            Object.getPrototypeOf(tempOrig), 
+            customizer, 
+            log || defaultLog, 
+            ignoreCloningMethods || false, 
+            letCustomizerThrow || false,
+            parentObjectRegistry);
 
         Object.setPrototypeOf(tempClone, newProto);
         
@@ -80,30 +135,4 @@ export function cloneDeepFully(value, options) {
     }
 
     return clone;
-}
-
-/**
- * Creates a customizer which composes other customizers.
- * The customizers are executed in order. The first to return an object is used 
- * as the result. If no customizer returns an object, undefined is returned.
- * @param {import("./public-types").Customizer[]} customizers 
- * An array of customizer functions.
- * @returns {import("./public-types").Customizer} 
- * A new customizer which composes the provided customizers.
- */
-export function useCustomizers(customizers) {
-    if (!Array.isArray(customizers)
-        || customizers.some(element => typeof element !== "function"))
-        throw new Error("useCustomizers must receive an array of functions");
-    
-    /**
-     * @param {any} value
-     * @returns {object|void}
-     */
-    return function combinedCustomizer(value) {
-        for (const customizer of customizers) {
-            const result = customizer(value);
-            if (typeof result === "object") return result;
-        }
-    }
 }

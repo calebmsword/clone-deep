@@ -8,7 +8,7 @@ export interface ValueTransform {
     additionalValues?: AdditionalValue[],
     ignore?: boolean,
     ignoreProps?: boolean,
-    ignoreProto?: boolean
+    ignoreProto?: boolean,
 }
 
 export type Customizer = (value: any) => ValueTransform|void;
