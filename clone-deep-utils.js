@@ -12,11 +12,11 @@ import cloneDeep from "./clone-deep.js";
  * stops if it reaches any prototype with methods.
  * @param {import("./public-types.js").Customizer} options.customizer 
  * See the documentation for `cloneDeep`.
+ * @param {boolean} options.ignoreCloningMethods
+ * See the documentation for `cloneDeep`.
  * @param {import("./public-types.js").Log} options.log 
  * See the documentation for `cloneDeep`.
  * @param {string} options.logMode 
- * See the documentation for `cloneDeep`.
- * @param {boolean} options.useExperimentalTypeChecking
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.letCustomizerThrow 
  * See the documentation for `cloneDeep`.

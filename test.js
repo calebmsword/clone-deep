@@ -1275,7 +1275,8 @@ try {
     });
 
     describe("CLONE", () => {
-        test("CLONE can customize the clone", () => {
+        test("classes can use the CLONE symbol to create a method " + 
+             "responsible for defining the clone of their instances", () => {
             // -- arrange
 
             // -- act
@@ -1283,7 +1284,35 @@ try {
             // -- assert
         });
 
-        test("CLONE can ", () => {
+        test("cloning methods can be ignored entirely if the correct option " + 
+             "is used", () => {
+            // -- arrange
+
+            // -- act
+
+            // -- assert
+        });
+
+        test("cloning methods can be ignored entirely if the correct option " + 
+             "is used", () => {
+            // -- arrange
+
+            // -- act
+
+            // -- assert
+        });
+        
+        test("cloning methods can cause the algorithm to not recurse on " + 
+             "specific properties on the clone", () => {
+            // -- arrange
+
+            // -- act
+
+            // -- assert
+        });
+
+        test("cloning methods can be fully responsible for cloning all " + 
+             "properties of the resultant clone", () => {
             // -- arrange
 
             // -- act

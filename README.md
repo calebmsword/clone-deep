@@ -56,6 +56,11 @@ cloned = cloneDeep(originalObject, {
     // proceed with default behavior.
     letCustomizerThrow: true,
 
+    // By default, this algorithm allows classes to define custom methods 
+    // which determine how the class will be cloned. But if this is `true`, then 
+    // the algorithm will ignore these methods.
+    ignoreCloningMethods: false,
+
     // Not every JavaScript object can be cloned. Warnings are, by default, 
     // logged to the console when failures to perform true clones occur. You can 
     // provide a custom logger which receives the error object containing the 
@@ -91,9 +96,10 @@ Please see [these notes](https://github.com/calebmsword/javascript-notes/blob/ma
 
 ## cloning custom classes
 
-When designing a deep clone algorithm, it is not possible to create a catch-all approach which clones all possible classes. This is because classes can have private data through private variables or closures. Therefore, it is the responsibility of the class itself to determine how it can be cloned.
+When designing a deep clone algorithm, it is not possible to create a catch-all approach which clones all possible classes. One of the many reasons for this is that an algorithm cannot know which arguments should be passed to the constructor for the class, if any at all. Therefore, it is the responsibility of the class itself to determine how it can be cloned.
 
-`cms-clone-deep` provides a symbol `CLONE`. If an object has a method associated with this symbol, then the return value of that method will be used as the clone.
+`cms-clone-deep` provides a symbol `CLONE`. If an object has a method associated with this symbol, then the return value of that method will be used as the clone. We will refer to this method as the "cloning method" for a class.
+
 
 Suppose we had a class named `Wrapper` which encapsulates a single private variable:
 
@@ -115,7 +121,7 @@ class Wrapper {
 }
 ```
 
-Here is how we could mend `Wrapper` so that it can be cloned properly by `cms-clone-deep`.
+Here is how we could add a cloning method to `Wrapper` so that it can be cloned properly by `cms-clone-deep`.
 
 ```javascript
 import cloneDeep, { CLONE } from "cms-clone-deep";
@@ -149,10 +155,15 @@ const clonedObj = cloneDeep(obj);
 
 // check that it works
 console.log(clonedObj === obj);  // false
-console.log(Wrapper.isWrapper(clonedObj.foo));  // true
 console.log(clonedObj.foo.get());  // {spam: 'eggs'}
 console.log(clonedObj.foo.get() === obj.foo.get());  // false
 ```
+
+The object returned by the clone method can have up to three properties.
+
+ - `clone` - Whatever is assigned here will be used as the clone for the given object. If this property is not present or returns undefined, then the cloning method will be ignored and the algorithm will proceed with default behavior.
+ - `propsToIgnore` - This should be an array where each element is a string or symbol. Normally, the algorithm will observe each property in an object to ensure that it is cloned. However, if an instance of a class with aclone method provides any properties in the `propsToIgnore` array, they will be cloned by the algorithm, giving you the opportunity to clone some properties with a cloning method instead.
+  - `ignoreProps` - This should be a boolean. If this is a boolean and is true, then the cloning method will have the full responsibility of cloning all properties on the instance. 
 
 ## customizers
 

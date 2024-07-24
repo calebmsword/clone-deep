@@ -25,13 +25,16 @@ const TOP_LEVEL = Symbol("TOP_LEVEL");
  * A customizer function.
  * @param {import("./public-types").Log} log 
  * Receives an error object for logging.
+ * @param {boolean} ignoreCloningMethods
+ * Whether cloning methods will be observed.
  * @param {boolean} doThrow 
  * Whether errors in the customizer should cause the function to throw.
  * @returns {any}
  */
 function cloneInternalNoRecursion(_value, 
                                   customizer, 
-                                  log, 
+                                  log,
+                                  ignoreCloningMethods, 
                                   doThrow) {
 
     /**
@@ -275,8 +278,9 @@ function cloneInternalNoRecursion(_value,
                 throw tag === Tag.WEAKMAP ? Warning.WEAKMAP : Warning.WEAKSET;
             
             // If object defines its own means of getting cloned, use it
-            else if (typeof value[CLONE] === "function") {
-                const result = value[CLONE](propsToIgnore);
+            else if (typeof value[CLONE] === "function" 
+                     && ignoreCloningMethods !== false) {
+                const result = value[CLONE]();
 
                 if (result.propsToIgnore !== undefined)
                     if (Array.isArray(result.propsToIgnore) &&
@@ -284,7 +288,7 @@ function cloneInternalNoRecursion(_value,
                             .propsToIgnore
                             .every(
                                 /** @param {any} s */
-                                s => ["string", "symbol"].includes(s))) 
+                                s => ["string", "symbol"].includes(typeof s))) 
                         propsToIgnore.push(...result.propsToIgnore);
                     else getWarning("return value of CLONE method is an " + 
                                     "object whose propsToIgnore property, " + 
@@ -292,6 +296,9 @@ function cloneInternalNoRecursion(_value,
                                     "array of strings or symbols. The given " + 
                                     "result is not this type of array so it " + 
                                     "will have no effect.");
+                
+                if (typeof result.ignoreProps === "boolean")
+                    ignoreProps === result.ignoreProps;
 
                 cloned = assign(result.clone, 
                                 parentOrAssigner, 
@@ -585,6 +592,8 @@ function cloneInternalNoRecursion(_value,
  * Any errors which occur during the algorithm can optionally be passed to a log 
  * function. `log` should take one argument which will be the error encountered. 
  * Use this to log the error to a custom logger.
+ * @param {boolean} optionsOrCustomizer.ignoreCloningMethods
+ * Whether cloning methods will be observed.
  * @param {string} optionsOrCustomizer.logMode 
  * Case-insensitive. If "silent", no warnings will be logged. Use with caution, 
  * as failures to perform true clones are logged as warnings. If "quiet", the 
@@ -608,12 +617,16 @@ function cloneDeep(value, optionsOrCustomizer) {
     /** @type {boolean|undefined} */
     let letCustomizerThrow = false;
 
+    /** @type {boolean|undefined} */
+    let ignoreCloningMethods = false;
+
     if (typeof optionsOrCustomizer === "function")
         customizer = optionsOrCustomizer;
     else if (typeof optionsOrCustomizer === "object") {
         ({ 
             log, 
             logMode,
+            ignoreCloningMethods,
             letCustomizerThrow 
         } = optionsOrCustomizer);
         
@@ -631,7 +644,8 @@ function cloneDeep(value, optionsOrCustomizer) {
     
     return cloneInternalNoRecursion(value, 
                                     customizer, 
-                                    log,
+                                    log, 
+                                    ignoreCloningMethods || false, 
                                     letCustomizerThrow || false);
 }
  
