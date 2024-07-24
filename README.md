@@ -81,7 +81,7 @@ cloned = cloneDeep(originalObject, {
 
 `cloneDeep` has none of these limitations. See [this section](#cloneDeep-vs-structuredClone) for more about the differences between `cloneDeep` and `structuredClone`.
 
-## What cannot be cloned
+## what cannot be cloned
 
 Functions cannot be reliably cloned in JavaScript. 
  - It is impossible to clone native JavaScript functions.
@@ -164,6 +164,9 @@ The object returned by the clone method can have up to three properties.
  - `clone` - Whatever is assigned here will be used as the clone for the given object. If this property is not present or returns undefined, then the cloning method will be ignored and the algorithm will proceed with default behavior.
  - `propsToIgnore` - This should be an array where each element is a string or symbol. Normally, the algorithm will observe each property in an object to ensure that it is cloned. However, if an instance of a class with aclone method provides any properties in the `propsToIgnore` array, they will be cloned by the algorithm, giving you the opportunity to clone some properties with a cloning method instead.
   - `ignoreProps` - This should be a boolean. If this is a boolean and is true, then the cloning method will have the full responsibility of cloning all properties on the instance. 
+  - `ignoreProto` - This should be a boolean. If this is a boolean and is true, 
+  then the cloning method will have the full responsibility of determining the 
+  prototype of the cloned value.
 
 ## customizers
 
@@ -292,7 +295,7 @@ This repository uses type annotations in [JSDoc](https://jsdoc.app/) to add type
 
 ## testing
 
-The file `clone-deep.test.js` contains all unit tests. Execute `npm test` to run them. If you are using node v20.1.0 or higher, execute `node run test-coverage` to see coverage results.
+The file `clone-deep.test.js` contains all unit tests. Execute `npm test` to run them. If you are using node v20.1.0 or higher, execute `npm run test-coverage` to see coverage results.
 
 ## benchmarking
 

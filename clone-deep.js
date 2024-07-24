@@ -268,7 +268,7 @@ function cloneInternalNoRecursion(_value,
                 `accessed: ${forbiddenProps[tag].properties.join(", ")}. The ` + 
                 "cloned object will not have any inaccessible properties."
             ));
-
+        
         try {
             // skip the following "else if" branches
             if (useCustomizerClone === true) {}
@@ -286,11 +286,11 @@ function cloneInternalNoRecursion(_value,
             
             // If object defines its own means of getting cloned, use it
             else if (typeof value[CLONE] === "function" 
-                     && ignoreCloningMethods !== false) {
-
+                     && ignoreCloningMethods !== true) {
+                
                 /** @type {import("./public-types").CloneMethodResult<any>} */
                 const result = value[CLONE]();
-
+                
                 if (result.propsToIgnore !== undefined)
                     if (Array.isArray(result.propsToIgnore) &&
                         result
@@ -299,15 +299,18 @@ function cloneInternalNoRecursion(_value,
                                 /** @param {any} s */
                                 s => ["string", "symbol"].includes(typeof s))) 
                         propsToIgnore.push(...result.propsToIgnore);
-                    else getWarning("return value of CLONE method is an " + 
+                    else log(getWarning("return value of CLONE method is an " + 
                                     "object whose propsToIgnore property, " + 
                                     "if not undefined, is expected to be an " + 
                                     "array of strings or symbols. The given " + 
                                     "result is not this type of array so it " + 
-                                    "will have no effect.");
-                
+                                    "will have no effect."));
+
                 if (typeof result.ignoreProps === "boolean")
-                    ignoreProps === result.ignoreProps;
+                    ignoreProps = result.ignoreProps;
+
+                if (typeof result.ignoreProto === "boolean")
+                    ignoreProto = result.ignoreProto;
 
                 cloned = assign(result.clone, 
                                 parentOrAssigner, 
@@ -475,9 +478,10 @@ function cloneInternalNoRecursion(_value,
                 cloned = assign(arrayBuffer, parentOrAssigner, prop, metadata);
             }
             
-            else if (isTypedArray(tag)) {
+            else if (isTypedArray(value) || Tag.DATAVIEW === tag) {
+
                 /** @type {import("./private-types").TypedArrayConstructor} */
-                const TypedArray = getTypedArrayConstructor(tag);
+                const TypedArray = getTypedArrayConstructor(tag, log);
 
                 // copy data over to clone
                 const buffer = new ArrayBuffer(

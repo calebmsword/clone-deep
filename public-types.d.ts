@@ -30,7 +30,8 @@ export interface CloneDeepFullyOptions extends CloneDeepOptions {
 export interface CloneMethodResult<T> {
     clone: T
     propsToIgnore?: (string|symbol)[]
-    ignoreProps?: boolean
+    ignoreProps?: boolean,
+    ignoreProto: true
 }
 
 declare module "cms-clone-deep" {
