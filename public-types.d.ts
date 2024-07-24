@@ -205,17 +205,10 @@ declare module "cms-clone-deep" {
  * If true, cloning methods asociated with an object will not be used to clone 
  * the object.
  * @param {boolean} optionsOrCustomizer.letCustomizerThrow 
-<<<<<<< HEAD
  * If `true`, errors thrown by the customizer will be thrown by `cloneDeep`. By 
  * default, the error is logged and the algorithm proceeds with default 
  * behavior.
- * @returns {Object} 
-=======
- * If `true`, errors 
- * thrown by the customizer will be thrown by `cloneDeep`. By default, the error 
- * is logged and the algorithm proceeds with default behavior.
  * @returns {U} 
->>>>>>> dev
  * The deep copy.
  */
 export default function cloneDeep<T, U = T>(
