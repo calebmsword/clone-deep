@@ -2,10 +2,15 @@ import cloneDeep from "./clone-deep.js";
 
 /**
  * Deeply clones the provided object and its prototype chain.
- * @param {any} value The object to clone.
- * @param {import("./public-types.js").CloneDeepFullyOptions|import("./public-types.js").Customizer} [options] If a function, it is used as the customizer for the clone. 
+ * @template T
+ * See the documentation for `cloneDeep`.
+ * @template [U = T]
+ * See the documentation for `cloneDeep`.
+ * @param {T} value The object to clone.
+ * @param {import("./public-types.js").CloneDeepFullyOptions|import("./public-types.js").Customizer} [options] 
+ * If a function, it is used as the customizer for the clone. 
  * @param {object} [options] 
- * If an object, it is used as a configuration object.See the documentation for 
+ * If an object, it is used as a configuration object. See the documentation for 
  * `cloneDeep`.
  * @param {boolean} options.force 
  * If `true`, prototypes with methods will be cloned. Normally, this function 
@@ -20,7 +25,7 @@ import cloneDeep from "./clone-deep.js";
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.letCustomizerThrow 
  * See the documentation for `cloneDeep`.
- * @returns {any} The deep copy.
+ * @returns {U} The deep copy.
  */
 export function cloneDeepFully(value, options) {
     if (!["object", "function"].includes(typeof options)) 
@@ -52,9 +57,13 @@ export function cloneDeepFully(value, options) {
         return getAllPropertiesOf(o).some(key => typeof o[key] === "function");
     }
 
+    /** @type {U} */
     const clone = cloneDeep(value, options);
     
+    /** @type {any} */
     let tempClone = clone;
+
+    /** @type {any} */
     let tempOrig = value;
     
     while (tempOrig !== null && ["object", "function"].includes(typeof tempOrig)

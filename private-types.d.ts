@@ -24,3 +24,12 @@ export type TypedArrayConstructor =
     Uint32ArrayConstructor |
     BigInt64ArrayConstructor |
     BigUint64ArrayConstructor;
+
+export type AtomicErrorConstructor = 
+    ErrorConstructor | 
+    EvalErrorConstructor | 
+    RangeErrorConstructor | 
+    ReferenceErrorConstructor | 
+    SyntaxErrorConstructor | 
+    TypeErrorConstructor | 
+    URIErrorConstructor;

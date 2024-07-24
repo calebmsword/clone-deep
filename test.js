@@ -5,7 +5,9 @@ import {
     Tag, 
     supportedPrototypes, 
     forbiddenProps, 
-    CLONE
+    getTypedArrayConstructor,
+    isIterable,
+    CLONE,
 } from "./clone-deep-helpers.js";
 import  cloneDeep from "./clone-deep.js";
 import { cloneDeepFully, useCustomizers } from "./clone-deep-utils.js";
@@ -537,15 +539,36 @@ try {
 
         test("Error clones get stack and cause", () => {
             // -- arrange
-            const error = new Error("error", { cause: "cause" });
+            const error = new Error("error", { cause: {} });
 
             // -- act
             const cloned = cloneDeep(error);
 
             // -- assert
-            assert.strictEqual(cloned.cause, error.cause);
+            assert.deepEqual(cloned.cause, error.cause);
+            assert.notStrictEqual(cloned.cause, error.cause);
             assert.strictEqual(cloned.stack, error.stack);
         });
+
+        test("Error stacks are cloned correctly", () => {
+            // -- arrange
+            const error = new Error("");
+            const errorStackReassigned = new Error("");
+            errorStackReassigned.stack = Object.preventExtensions({});
+
+            // -- act
+            const cloned = cloneDeep(error);
+            const clonedStackReassigned = cloneDeep(errorStackReassigned);
+
+            // -- assert
+            assert.strictEqual(cloned.stack, error.stack);
+            assert.notStrictEqual(clonedStackReassigned.stack, 
+                                  errorStackReassigned.stack);
+            assert.deepEqual(clonedStackReassigned.stack, 
+                             errorStackReassigned.stack);
+            assert.strictEqual(Object.isExtensible(clonedStackReassigned.stack), 
+                               false);
+        })
 
         test("Errors are cloned correctly even if monkeypatched", () => {
             let doMonkeypatch = true;
@@ -616,10 +639,7 @@ try {
             try {
                 // -- arrange
                 class TestError extends Error {
-                    constructor(...args) {
-                        super(...args);
-                        getProto(this).name = "TestError";
-                    }
+                    name = "TestError";
                 };
 
                 const log = mock.fn(() => {});
@@ -654,6 +674,71 @@ try {
             }
         });
 
+        describe("AggregateError", () => {
+
+            test("AggregateError is cloned correctly", () => {
+                // -- arrange 
+                const error = new AggregateError(
+                    [new Error("a", { cause: "cause" }), new Error("b")]);
+
+                // -- act
+                const cloned = cloneDeep(error);
+
+                // -- assert
+                assert.notStrictEqual(cloned, error);
+                assert.notStrictEqual(cloned.errors, error.errors);
+                assert.deepEqual(cloned, error);
+                cloned.errors.forEach((clonedError, i) => {
+                    const originalError = error.errors[i];
+                    assert.notStrictEqual(clonedError, originalError);
+                    assert.deepEqual(clonedError, originalError);
+                });
+            });
+
+            test("AggregateError with cause is handled", () => {
+                // -- arrange 
+                const error = new AggregateError(
+                    [new Error("a", { cause: "cause" }), new Error("b")], 
+                    "",
+                    { cause: {} });
+
+                // -- act
+                const cloned = cloneDeep(error);
+
+                // -- assert
+                assert.strictEqual(cloned !== error, true);
+                assert.strictEqual(cloned.errors !== error.errors, true);
+                assert.deepEqual(cloned, error);
+                assert.notStrictEqual(cloned.cause, error.cause);
+                
+            });
+
+            test("AggregateError with non-iterable errors is handled with " + 
+                 "warning", () => {
+                // -- arrange
+                const log = mock.fn(() => {});
+
+                const error = new AggregateError([]);
+                error.errors = {};
+
+                // -- act
+                const cloned = cloneDeep(error, { log });
+
+                // -- assert
+                assert.deepEqual(cloned, error);
+                assert.deepEqual({}, cloned.errors);
+                assert.notStrictEqual(cloned.errors, error.errors);
+                assert.deepEqual(error.errors, cloned.errors);
+                assert.strictEqual(log
+                                    .mock
+                                    .calls[0]
+                                    .arguments[0]
+                                    .message
+                                    .includes("non-iterable"), 
+                                   true);
+            });
+        });
+
         test('Function.prototype is "cloned" with allowed properties', () => {
             // -- arrange
             const expectedProperties = [
@@ -681,7 +766,8 @@ try {
             });
         });
 
-        test('functions become empty objects inheriting Function.prototype', () => {
+        test("functions become empty objects inheriting " + 
+             "Function.prototype", () => {
             [function() {}, () => {}].forEach(func => {
                 // -- act
                 const cloned = cloneDeep(func);
@@ -786,6 +872,19 @@ try {
                 temporarilyMonkeypatch = false;
                 throw error;
             }
+        });
+
+        test("regExp.lastIndex is cloned properly", () => {
+            // -- arrange
+            const regExp = new RegExp("");
+            regExp.lastIndex = {};
+
+            // -- act
+            const cloned = cloneDeep(regExp);
+
+            // -- assert
+            assert.deepEqual(cloned.lastIndex, regExp.lastIndex);
+            assert.notStrictEqual(cloned.lastIndex, regExp.lastIndex);
         });
 
         test("Native prototypes can be cloned without errors", () => {
@@ -1320,7 +1419,32 @@ try {
             // -- assert
         });
     });
+    describe("misc", () => {
 
+        test("getTypedArrayConstructor returns DataView constructor if " + 
+             "non-TypedArray tag is provided", () => {
+            // -- arrange/act
+            const constructor = getTypedArrayConstructor("");
+
+            // -- assert
+            assert.strictEqual(DataView, constructor);
+        });
+
+        test("isIterable", () => {
+            // -- act/assert
+            assert.strictEqual(true, isIterable([]));
+            assert.strictEqual(true, isIterable(""));
+            assert.strictEqual(true, isIterable({
+                [Symbol.iterator]: () => ({
+                    next: () => {
+                        done: true
+                    }
+                })
+            }));
+            assert.strictEqual(false, isIterable({}));
+            assert.strictEqual(false, isIterable(null));
+        });
+    });
 }
 catch(error) {
     console.warn = consoleDotWarn;

@@ -176,7 +176,14 @@ declare module "cms-clone-deep" {
  * for example, use it to throw if the user tries to clone functions, 
  * `WeakMaps`, or `WeakSets`).
  * 
- * @param {any} value The value to deeply copy.
+ * @template T
+ * The type of the input value.
+ * @template [U = T]
+ * The type of the return value. By default, it is the same as the input value. 
+ * Nefarious customizer usage could require the be distinct, however. Please do 
+ * not do this.
+ * 
+ * @param {T} value The value to deeply copy.
  * @param {CloneDeepOptions|Customizer} [optionsOrCustomizer] 
  * If a function, this argument is used as the customizer.
  * @param {object} [optionsOrCustomizer] 
@@ -197,19 +204,32 @@ declare module "cms-clone-deep" {
  * If true, cloning methods asociated with an object will not be used to clone 
  * the object.
  * @param {boolean} optionsOrCustomizer.letCustomizerThrow 
+<<<<<<< HEAD
  * If `true`, errors thrown by the customizer will be thrown by `cloneDeep`. By 
  * default, the error is logged and the algorithm proceeds with default 
  * behavior.
  * @returns {Object} 
+=======
+ * If `true`, errors 
+ * thrown by the customizer will be thrown by `cloneDeep`. By default, the error 
+ * is logged and the algorithm proceeds with default behavior.
+ * @returns {U} 
+>>>>>>> dev
  * The deep copy.
  */
-export default function cloneDeep(
-    value: any, 
+export default function cloneDeep<T, U = T>(
+    value: T, 
     optionsOrCustomizer: CloneDeepOptions|Customizer|undefined
-) : any;
+) : U;
     
 /**
  * Deeply clones the provided object and its prototype chain.
+ * @template T
+ * The type of the input value.
+ * @template [U = T]
+ * The type of the return value. By default, it is the same as the input value. 
+ * Nefarious customizer usage could require the be distinct, however. Please do 
+ * not do this.
  * @param {any} value 
  * The object to clone.
  * @param {CloneDeepFullyOptions|Customizer} [optionsOrCustomizer] 
@@ -233,10 +253,10 @@ export default function cloneDeep(
  * @returns {any} 
  * The deep copy.
  */
-export function cloneDeepFully(
-    value: any,
+export function cloneDeepFully<T, U = T>(
+    value: T,
     optionsOrCustomizer: CloneDeepFullyOptions|Customizer|undefined
-) : any;
+) : U;
 
 /**
  * Creates a customizer which composes other customizers.

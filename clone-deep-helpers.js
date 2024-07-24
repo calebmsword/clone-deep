@@ -154,7 +154,7 @@ const prototypes = [
  * 
  * @example
  * ```
- * function isMap(value) {
+ * Map.isMap = value => { 
  *     try {
  *         Map.prototype.has.call(value);
  *         return true;
@@ -163,6 +163,10 @@ const prototypes = [
  *         return false;
  *     }
  * }
+ * 
+ * console.log(Map.isMap(new Map()));   // true
+ * console.log(Map.isMap(Object.create(Map.prototype)));  // false
+ * console.log(Map.isMap({ [Symbol.toStringTag]: "Map" }));  // false
  * ```
  * 
  * @param {any} value 
@@ -189,80 +193,92 @@ export function getTag(value) {
 }
 
 /**
- * Convenience object used for getConstructor.
- */
-const prototypeMap = Object.freeze({
-    [Tag.ARRAY]: Array,
-    [Tag.BIGINT]: BigInt,
-    [Tag.BOOLEAN]: Boolean,
-    [Tag.DATE]: Date,
-    [Tag.ERROR]: Error,
-    [Tag.FUNCTION]: Function,
-    [Tag.MAP]: Map,
-    [Tag.NUMBER]: Number,
-    [Tag.PROMISE]: Promise,
-    [Tag.REGEXP]: RegExp,
-    [Tag.SET]: Set,
-    [Tag.STRING]: String,
-    [Tag.SYMBOL]: Symbol,
-    [Tag.ARRAYBUFFER]: ArrayBuffer,
-    [Tag.DATAVIEW]: DataView,
-    [Tag.FLOAT32]: Float32Array,
-    [Tag.FLOAT64]: Float64Array,
-    [Tag.INT8]: Int8Array,
-    [Tag.INT16]: Int16Array,
-    [Tag.INT32]: Int32Array,
-    [Tag.UINT8]: Uint8Array,
-    [Tag.UINT8CLAMPED]: Uint8ClampedArray,
-    [Tag.UINT16]: Uint16Array,
-    [Tag.UINT32]: Uint32Array,
-    [Tag.BIGINT64]: BigInt64Array,
-    [Tag.BIGUINT64]: BigUint64Array
-});
-
-/**
- * Gets the appropriate supported constructor for the given object tag.
- * 
- * **This function assumes the provided object is one of the supported 
- * classes.**
- * 
- * I could not find a way to type this without using `any`. Forgive me. 
+ * Gets the appropriate TypedArray constructor for the given object tag.
  * @param {string} tag
  * The tag for the object.
- * @param {any} [value]
+ * @returns {import("./private-types").TypedArrayConstructor}
+ */
+export function getTypedArrayConstructor(tag) {
+    switch (tag) {
+        case Tag.DATAVIEW:
+            return DataView;
+        case Tag.FLOAT32:
+            return Float32Array;
+        case Tag.FLOAT64:
+            return Float64Array;
+        case Tag.INT8:
+            return Int8Array;
+        case Tag.INT16:
+            return Int16Array;
+        case Tag.INT32:
+            return Int32Array;
+        case Tag.UINT8:
+            return Uint8Array;
+        case Tag.UINT8CLAMPED:
+            return Uint8ClampedArray;
+        case Tag.UINT16:
+            return Uint16Array;
+        case Tag.UINT32:
+            return Uint32Array;
+        case Tag.BIGINT64:
+            return BigInt64Array;
+        case Tag.BIGUINT64:
+            return BigUint64Array;
+
+        // TypeScript notices that this function would return `undefined` if 
+        // none of the previous cases are hit. However, this function is only 
+        // called if `isTypedArray` is true, so this default case will never 
+        // happen in practice. We include it only to keep TypeScript happy.
+        default:
+            return DataView;
+    }
+}
+
+/**
+ * Whether the provided value is iterable.
+ * See https://stackoverflow.com/a/32538867/22334683.
+ * @param {any} value 
+ * The value whose iterability will be checked.
+ * @returns {boolean}
+ */
+export function isIterable(value) {
+    if (value === null || value === undefined ) return false;
+    return typeof value[Symbol.iterator] === "function";
+}
+
+/**
+ * Gets the appropriate error constructor for the error name.
+ * @param {Error} value
  * The object itself. This is necessary to correctly find constructors for 
  * various Error subclasses.
  * @param {(error: Error) => any} [log]
  * An optional logging function.
- * @returns {any}
+ * @returns {import("./private-types.js").AtomicErrorConstructor}
  */
-export function getConstructor(tag, value, log) {
-    if (tag === Tag.ERROR) {
-        const name = Object.getPrototypeOf(value).name;
-        switch (name) {
-            case "AggregateError":
-                return AggregateError;
-            case "EvalError":
-                return EvalError;
-            case "RangeError":
-                return RangeError;
-            case "ReferenceError":
-                return ReferenceError;
-            case "SyntaxError":
-                return SyntaxError;
-            case "TypeError":
-                return TypeError;
-            case "URIError":
-                return URIError;
-            default:
-                if (log !== undefined)
-                    log(getWarning("Cloning error with unrecognized name " + 
-                                   `${name}! It will be cloned into an ` + 
-                                   "ordinary Error object."))
-                return Error;
-        }
+export function getAtomicErrorConstructor(value, log) {
+    const name = value.name;
+    switch (name) {
+        case "Error":
+            return Error;
+        case "EvalError":
+            return EvalError;
+        case "RangeError":
+            return RangeError;
+        case "ReferenceError":
+            return ReferenceError;
+        case "SyntaxError":
+            return SyntaxError;
+        case "TypeError":
+            return TypeError;
+        case "URIError":
+            return URIError;
+        default:
+            if (log !== undefined)
+                log(getWarning("Cloning error with unrecognized name " + 
+                                `${name}! It will be cloned into an ` + 
+                                "ordinary Error object."))
+            return Error;
     }
-    return prototypeMap[tag];
 }
 
 /**
