@@ -8,7 +8,7 @@ export interface ValueTransform {
     additionalValues?: AdditionalValue[],
     ignore?: boolean,
     ignoreProps?: boolean,
-    ignoreProto?: boolean
+    ignoreProto?: boolean,
 }
 
 export type Customizer = (value: any) => ValueTransform|void;
@@ -18,12 +18,20 @@ export type Log = (error: Error) => any;
 export interface CloneDeepOptions {
     customizer?: Customizer
     log?: Log,
+    ignoreCloningMethods?: boolean
     logMode?: string
     letCustomizerThrow?: boolean
 }
 
 export interface CloneDeepFullyOptions extends CloneDeepOptions {
     force?: boolean
+}
+
+export interface CloneMethodResult<T> {
+    clone: T
+    propsToIgnore?: (string|symbol)[]
+    ignoreProps?: boolean,
+    ignoreProto: true
 }
 
 declare module "cms-clone-deep" {
@@ -165,9 +173,8 @@ declare module "cms-clone-deep" {
  * the check for circular references. 
  * 
  * The best use of the customizer to support user-made types. You can also use 
- * it to override some of the design decisions made in the algorithm (you could, 
- * for example, use it to throw if the user tries to clone functions, 
- * `WeakMaps`, or `WeakSets`).
+ * it to override some of the design decisions made in the algorithm (say, 
+ * ignore all non-enumerable properties of an object).
  * 
  * @template T
  * The type of the input value.
@@ -184,8 +191,7 @@ declare module "cms-clone-deep" {
  * @param {Customizer} optionsOrCustomizer.customizer 
  * Allows the user to inject custom logic. The function is given the value to 
  * copy. If the function returns an object, the value of the `clone` property on 
- * that object will be used as the clone. See the documentation for `cloneDeep` 
- * for more information.
+ * that object will be used as the clone.
  * @param {Log} optionsOrCustomizer.log 
  * Any errors which occur during the algorithm can optionally be passed to a log 
  * function. `log` should take one argument which will be the error encountered. 
@@ -194,10 +200,13 @@ declare module "cms-clone-deep" {
  * Case-insensitive. If "silent", no warnings will be logged. Use with caution, 
  * as failures to perform true clones are logged as warnings. If "quiet", the 
  * stack trace of the warning is ignored.
+ * @param {boolean} optionsOrCustomizer.ignoreCloningMethods 
+ * If true, cloning methods asociated with an object will not be used to clone 
+ * the object.
  * @param {boolean} optionsOrCustomizer.letCustomizerThrow 
- * If `true`, errors 
- * thrown by the customizer will be thrown by `cloneDeep`. By default, the error 
- * is logged and the algorithm proceeds with default behavior.
+ * If `true`, errors thrown by the customizer will be thrown by `cloneDeep`. By 
+ * default, the error is logged and the algorithm proceeds with default 
+ * behavior.
  * @returns {U} 
  * The deep copy.
  */
@@ -206,7 +215,7 @@ export default function cloneDeep<T, U = T>(
     optionsOrCustomizer: CloneDeepOptions|Customizer|undefined
 ) : U;
     
-    /**
+/**
  * Deeply clones the provided object and its prototype chain.
  * @template T
  * The type of the input value.
@@ -229,6 +238,8 @@ export default function cloneDeep<T, U = T>(
  * @param {Log} options.log 
  * See the documentation for `cloneDeep`.
  * @param {string} options.logMode 
+ * See the documentation for `cloneDeep`.
+ * @param {boolean} optionsOrCustomizer.ignoreCloningMethods 
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.letCustomizerThrow 
  * See the documentation for `cloneDeep`.

@@ -6,7 +6,8 @@ import {
     supportedPrototypes, 
     forbiddenProps, 
     getTypedArrayConstructor,
-    isIterable
+    isIterable,
+    CLONE,
 } from "./clone-deep-helpers.js";
 import  cloneDeep from "./clone-deep.js";
 import { cloneDeepFully, useCustomizers } from "./clone-deep-utils.js";
@@ -175,6 +176,8 @@ try {
                 const cloned = cloneDeep(value);
 
                 // -- assert
+                assert.strictEqual(typeof cloned, "object");
+
                 assert.strictEqual(tagOf(cloned), tag);
             }
         });
@@ -507,6 +510,32 @@ try {
                                    _original.typedArray[i]);
 
             assert.strictEqual(cloned.typedArray.prop, "prop");
+        });
+
+        test("Unrecognized TypedArray instances are cloned into DataView " + 
+             "instances and a warning is logged", () => {
+            // -- arrange
+            const typedArray = new Uint8Array(new ArrayBuffer(8), 1, 4)
+            Object.defineProperty(typedArray, Symbol.toStringTag, {
+                value: "Float128Array"
+            });
+
+            const log = mock.fn(() => {});
+
+            // -- act
+            const cloned = cloneDeep(typedArray, { log });
+
+            // -- assert
+            assert.doesNotThrow(() => {
+                DataView.prototype.getInt8.call(cloned);
+            });
+            assert.strictEqual(true, 
+                               log
+                                .mock
+                                .calls[0]
+                                .arguments[0]
+                                .message
+                                .includes("Unrecognized TypedArray subclass"));
         });
 
         test("Extensibility, sealedness, and frozenness cloned", () => {
@@ -1212,7 +1241,7 @@ try {
             // -- assert
             assert.notStrictEqual(getProto(cloned), getProto(original));
             assert.notStrictEqual(getProto(getProto(cloned)), 
-                                getProto(getProto(original)));
+                                  getProto(getProto(original)));
         });
 
         test("Primitives are returned by value.",  () => {
@@ -1371,12 +1400,233 @@ try {
         });
     });
 
+    describe("CLONE", () => {
+        test("classes can use the CLONE symbol to create a method " + 
+             "responsible for defining the clone of their instances", () => {
+            // -- arrange
+            class Test {
+                [CLONE]() {
+                    return {
+                        clone: {
+                            test: "test"
+                        }
+                    }
+                }
+            }
+
+            // -- act
+            const cloned = cloneDeep(new Test());
+
+            // -- assert
+            assert.strictEqual("test", cloned.test);
+        });
+
+        test("cloning methods can be ignored entirely if the correct option " + 
+             "is used", () => {
+            // -- arrange
+            class Test {
+                [CLONE]() {
+                    return {
+                        clone: {
+                            test: "test"
+                        }
+                    }
+                }
+            }
+
+            // -- act
+            const cloned = cloneDeep(new Test(), { 
+                ignoreCloningMethods: true 
+            });
+            const cloned2 = cloneDeepFully(new Test(), {
+                ignoreCloningMethods: true
+            });
+
+            // -- assert
+            assert.notStrictEqual("test", cloned.test);
+            assert.notStrictEqual("test", cloned2.test);
+        });
+        
+        test("cloning methods can cause the algorithm to not recurse on " + 
+             "specific properties on the clone", () => {
+            // -- arrange
+            class Test {
+                a = "a";
+
+                b = "b";
+
+                [CLONE]() {
+                    return {
+                        clone: Object.assign(Object.create(Test.prototype), {
+                            a: "a"
+                        }),
+                        propsToIgnore: ["b"]
+                    };
+                }
+            }
+
+            // -- act
+            const cloned = cloneDeep(new Test());
+
+            // -- assert
+            assert.deepEqual(cloned, { a: "a" });
+        });
+
+        test("cloning methods can be fully responsible for cloning all " + 
+             "properties of the resultant clone", () => {
+            // -- arrange
+            class Test {
+                a = "a";
+
+                b = "b";
+
+                [CLONE]() {
+                    return {
+                        clone: Object.create(Test.prototype),
+                        ignoreProps: true
+                    };
+                }
+            }
+
+            // -- act
+            const cloned = cloneDeep(new Test());
+
+            // -- assert
+            assert.deepEqual(cloned, {});
+        });
+
+        test("cloning methods can be fully responsible for the prototype of " + 
+            "the resultant clone", () => {
+           // -- arrange
+           class Test {
+               [CLONE]() {
+                   return {
+                       clone: {},
+                       ignoreProto: true
+                   };
+               }
+           }
+
+           // -- act
+           const cloned = cloneDeep(new Test());
+
+           // -- assert
+           assert.notStrictEqual(getProto(cloned), Test.prototype);
+        });
+
+        test("an improper propsToIgnore causes a warning to be logged", () => {
+            // -- arrange
+            class Test1 {
+                [CLONE]() {
+                    return {
+                        clone: new Test1(),
+                        propsToIgnore: false
+                    };
+                }
+            }
+            const log1 = mock.fn(() => {});
+
+            class Test2 {
+                [CLONE]() {
+                    return {
+                        clone: new Test2(),
+                        propsToIgnore: [{}]
+                    };
+                }
+            }
+            const log2 = mock.fn(() => {});
+
+
+            // -- act
+            cloneDeep(new Test1(), { log: log1 });
+            cloneDeep(new Test2(), { log: log2 });
+
+            // -- assert
+            assert.strictEqual(true, 
+                               log1
+                                .mock
+                                .calls[0]
+                                .arguments[0]
+                                .message
+                                .includes("is expected to be an array of " + 
+                                          "strings or symbols"));
+            assert.strictEqual(true, 
+                               log2
+                                .mock
+                                .calls[0]
+                                .arguments[0]
+                                .message
+                                .includes("is expected to be an array of " + 
+                                          "strings or symbols"));
+        });
+
+        test("if using cloneDeepFully in force mode and observing cloning " + 
+             "methods, then any prototype containing a cloning method used " + 
+             "for an instance cloned previously in the chain will not be " + 
+             "cloned using its cloning method", () => {
+            // -- arrange
+            class Test {
+                [CLONE]() {
+                    return {
+                        clone: {
+                            test: "test"
+                        }
+                    }
+                }
+            }
+
+            Test.prototype.a = "a";
+
+            // -- act
+            const cloned1 = cloneDeepFully(new Test(), { force: true });
+            const cloned2 = cloneDeepFully(Object.create(Test.prototype), {
+                force: true
+            });
+
+            // -- assert
+            assert.strictEqual("test", cloned1.test);
+            assert.strictEqual(getProto(cloned1).a, "a");
+            assert.strictEqual(getProto(cloned1).test, undefined);
+            assert.strictEqual("test", cloned2.test);
+            assert.strictEqual(getProto(cloned2).a, "a");
+            assert.strictEqual(getProto(cloned2).test, undefined);
+        });
+
+        test("If using cloneDeepFully in force mode and observing cloning " + 
+             "methods, objects NOT instantiated as a class will have their " + 
+             "prototype use its cloning method", () => {
+            // -- arrange
+            const c = {
+                [CLONE]() {
+                    return {
+                        clone: {
+                            test: "test"
+                        }
+                    }
+                }
+            }
+            const b = {};
+            const a = {};
+
+            Object.setPrototypeOf(a, b);
+            Object.setPrototypeOf(b, c);
+            
+            // -- act
+            const cloned = cloneDeepFully(a, { force: true });
+
+            // -- assert
+            assert.strictEqual("test", cloned.test);
+            assert.strictEqual(getProto(cloned).test, "test");
+            assert.strictEqual(getProto(getProto(cloned)).test, "test");
+        });
+    });
+
     describe("misc", () => {
 
         test("getTypedArrayConstructor returns DataView constructor if " + 
              "non-TypedArray tag is provided", () => {
             // -- arrange/act
-            const constructor = getTypedArrayConstructor("");
+            const constructor = getTypedArrayConstructor("", () => {});
 
             // -- assert
             assert.strictEqual(DataView, constructor);

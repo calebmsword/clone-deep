@@ -8,6 +8,7 @@ import {
     getWarning,
     Warning,
     isTypedArray,
+    CLONE,
     isIterable
 } from "./clone-deep-helpers.js";
 
@@ -30,14 +31,21 @@ const TOP_LEVEL = Symbol("TOP_LEVEL");
  * A customizer function.
  * @param {import("./public-types").Log} log 
  * Receives an error object for logging.
+ * @param {boolean} ignoreCloningMethods
+ * Whether cloning methods will be observed.
  * @param {boolean} doThrow 
  * Whether errors in the customizer should cause the function to throw.
+ * @param {Set<any>} [parentObjectRegistry]
+ * This is used by cloneDeepFully to check if an object with a cloning method is 
+ * in the prototype of an object that was cloned earlier in the chain.
  * @returns {U}
  */
-function cloneInternalNoRecursion(_value, 
+export function cloneInternalNoRecursion(_value, 
                                   customizer, 
-                                  log, 
-                                  doThrow) {
+                                  log,
+                                  ignoreCloningMethods, 
+                                  doThrow,
+                                  parentObjectRegistry) {
 
     /**
      * Handles the assignment of the cloned value to some persistent place.
@@ -181,6 +189,12 @@ function cloneInternalNoRecursion(_value,
          */
         let propsToIgnore = [];
 
+        /**
+         * Whether the cloning methods should be observed this loop.
+         * @type {boolean}
+         */
+        let ignoreCloningMethodsThisLoop = false;
+
         // Perform user-injected logic if applicable.
         if (typeof customizer === "function") {
 
@@ -256,6 +270,14 @@ function cloneInternalNoRecursion(_value,
          */
         const tag = getTag(value);
 
+        // Check if we should observe cloning methods on this loop
+        if (parentObjectRegistry !== undefined){
+            parentObjectRegistry.forEach(object => {
+                if (value === object?.constructor?.prototype)
+                    ignoreCloningMethodsThisLoop = true;
+            });
+        }
+
         if (forbiddenProps[tag] !== undefined
             && forbiddenProps[tag].prototype === value)
             log(getWarning(
@@ -264,7 +286,7 @@ function cloneInternalNoRecursion(_value,
                 `accessed: ${forbiddenProps[tag].properties.join(", ")}. The ` + 
                 "cloned object will not have any inaccessible properties."
             ));
-
+        
         try {
             // skip the following "else if" branches
             if (useCustomizerClone === true) {}
@@ -279,6 +301,41 @@ function cloneInternalNoRecursion(_value,
             // We won't clone weakmaps or weaksets (or their prototypes).
             else if ([Tag.WEAKMAP, Tag.WEAKSET].includes(tag))
                 throw tag === Tag.WEAKMAP ? Warning.WEAKMAP : Warning.WEAKSET;
+            
+            // If object defines its own means of getting cloned, use it
+            else if (typeof value[CLONE] === "function" 
+                     && ignoreCloningMethods !== true
+                     && ignoreCloningMethodsThisLoop === false) {
+                
+                /** @type {import("./public-types").CloneMethodResult<any>} */
+                const result = value[CLONE]();
+                
+                if (result.propsToIgnore !== undefined)
+                    if (Array.isArray(result.propsToIgnore) &&
+                        result
+                            .propsToIgnore
+                            .every(
+                                /** @param {any} s */
+                                s => ["string", "symbol"].includes(typeof s))) 
+                        propsToIgnore.push(...result.propsToIgnore);
+                    else log(getWarning("return value of CLONE method is an " + 
+                                    "object whose propsToIgnore property, " + 
+                                    "if not undefined, is expected to be an " + 
+                                    "array of strings or symbols. The given " + 
+                                    "result is not this type of array so it " + 
+                                    "will have no effect."));
+
+                if (typeof result.ignoreProps === "boolean")
+                    ignoreProps = result.ignoreProps;
+
+                if (typeof result.ignoreProto === "boolean")
+                    ignoreProto = result.ignoreProto;
+
+                cloned = assign(result.clone, 
+                                parentOrAssigner, 
+                                prop, 
+                                metadata);
+            }
             
             // Ordinary objects, or the rare `arguments` clone.
             // Also, treat prototypes like ordinary objects. The tag wrongly 
@@ -440,9 +497,10 @@ function cloneInternalNoRecursion(_value,
                 cloned = assign(arrayBuffer, parentOrAssigner, prop, metadata);
             }
             
-            else if (isTypedArray(tag)) {
+            else if (isTypedArray(value) || Tag.DATAVIEW === tag) {
+
                 /** @type {import("./private-types").TypedArrayConstructor} */
-                const TypedArray = getTypedArrayConstructor(tag);
+                const TypedArray = getTypedArrayConstructor(tag, log);
 
                 // copy data over to clone
                 const buffer = new ArrayBuffer(
@@ -601,6 +659,8 @@ function cloneInternalNoRecursion(_value,
  * Any errors which occur during the algorithm can optionally be passed to a log 
  * function. `log` should take one argument which will be the error encountered. 
  * Use this to log the error to a custom logger.
+ * @param {boolean} optionsOrCustomizer.ignoreCloningMethods
+ * Whether cloning methods will be observed.
  * @param {string} optionsOrCustomizer.logMode 
  * Case-insensitive. If "silent", no warnings will be logged. Use with caution, 
  * as failures to perform true clones are logged as warnings. If "quiet", the 
@@ -624,12 +684,16 @@ function cloneDeep(value, optionsOrCustomizer) {
     /** @type {boolean|undefined} */
     let letCustomizerThrow = false;
 
+    /** @type {boolean|undefined} */
+    let ignoreCloningMethods = false;
+
     if (typeof optionsOrCustomizer === "function")
         customizer = optionsOrCustomizer;
     else if (typeof optionsOrCustomizer === "object") {
         ({ 
             log, 
             logMode,
+            ignoreCloningMethods,
             letCustomizerThrow 
         } = optionsOrCustomizer);
         
@@ -647,7 +711,8 @@ function cloneDeep(value, optionsOrCustomizer) {
     
     return cloneInternalNoRecursion(value, 
                                     customizer, 
-                                    log,
+                                    log, 
+                                    ignoreCloningMethods || false, 
                                     letCustomizerThrow || false);
 }
  

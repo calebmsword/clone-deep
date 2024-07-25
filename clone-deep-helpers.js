@@ -104,12 +104,20 @@ export const forbiddenProps = Object.freeze({
  * @type {Array<[any, string, string]>} 
  */
 const prototypes = [
+    [ArrayBuffer, "slice", Tag.ARRAYBUFFER],
+    [BigInt, "valueOf", Tag.BIGINT],
+    [Boolean, "valueOf", Tag.BOOLEAN],
     [Date, "getUTCMilliseconds", Tag.DATE],
     [Function, "bind", Tag.FUNCTION],
     [Map, "has", Tag.MAP],
+    [Number, "valueOf", Tag.NUMBER],
+    [Promise, "then", Tag.PROMISE],
     [RegExp, "exec", Tag.REGEXP],
-    [Set, "has", Tag.SET]
-]
+    [Set, "has", Tag.SET],
+    [String, "valueOf", Tag.STRING],
+    [Symbol, "valueOf", Tag.SYMBOL],
+    [DataView, "getInt8", Tag.DATAVIEW]
+];
 
 /**
  * Gets a "tag", which is an string which identifies the type of a value.
@@ -136,7 +144,7 @@ const prototypes = [
  * 
  * // Note this is not a perfect type check because we can do:
  * arraySubclass[Symbol.toStringTag] = "Array"
- * console.log(Object.prototype.toString.call(dateSubClass));  // "[object Array]"
+ * console.log(Object.prototype.toString.call(arraySubclass));  // "[object Array]"
  * ```
  * 
  * However, some native classes will throw if their prototype methods are called 
@@ -188,9 +196,11 @@ export function getTag(value) {
  * Gets the appropriate TypedArray constructor for the given object tag.
  * @param {string} tag
  * The tag for the object.
+ * @param {import("./public-types").Log} log
+ * A logging function.
  * @returns {import("./private-types").TypedArrayConstructor}
  */
-export function getTypedArrayConstructor(tag) {
+export function getTypedArrayConstructor(tag, log) {
     switch (tag) {
         case Tag.DATAVIEW:
             return DataView;
@@ -216,12 +226,9 @@ export function getTypedArrayConstructor(tag) {
             return BigInt64Array;
         case Tag.BIGUINT64:
             return BigUint64Array;
-
-        // TypeScript notices that this function would return `undefined` if 
-        // none of the previous cases are hit. However, this function is only 
-        // called if `isTypedArray` is true, so this default case will never 
-        // happen in practice. We include it only to keep TypeScript happy.
         default:
+            log(getWarning("Unrecognized TypedArray subclass. This object " + 
+                           "will be cloned into a DataView instance."));
             return DataView;
     }
 }
@@ -323,24 +330,25 @@ export const Warning = {
         "value as the original Promise.")
 }
 
+const TypedArrayProto = Object
+    .getPrototypeOf(Object
+        .getPrototypeOf(new Float32Array(new ArrayBuffer(0))));
+
 /**
- * Returns `true` if tag is that of a TypedArray subclass, `false` otherwise.
- * @param {string} tag A tag. See {@link tagOf}.
+ * Returns `true` if given value is a TypedArray instance, `false` otherwise.
+ * @param {string} value 
+ * Any arbitrary value
  * @returns {boolean}
  */
-export function isTypedArray(tag) {
-    return [   
-        Tag.DATAVIEW, 
-        Tag.FLOAT32,
-        Tag.FLOAT64,
-        Tag.INT8,
-        Tag.INT16,
-        Tag.INT32,
-        Tag.UINT8,
-        Tag.UINT8CLAMPED,
-        Tag.UINT16,
-        Tag.UINT32,
-        Tag.BIGINT64,
-        Tag.BIGUINT64
-    ].includes(tag);
+export function isTypedArray(value) {
+    try {
+        TypedArrayProto.lastIndexOf.call(value);
+        return true;
+    }
+    catch(_) {
+        return false;
+    }
 }
+
+/** Used to create methods for cloning objects.*/
+export const CLONE = Symbol("Clone");
