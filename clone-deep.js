@@ -41,11 +41,11 @@ const TOP_LEVEL = Symbol("TOP_LEVEL");
  * @returns {U}
  */
 export function cloneInternalNoRecursion(_value, 
-                                  customizer, 
-                                  log,
-                                  ignoreCloningMethods, 
-                                  doThrow,
-                                  parentObjectRegistry) {
+                                         customizer, 
+                                         log,
+                                         ignoreCloningMethods, 
+                                         doThrow,
+                                         parentObjectRegistry) {
 
     /**
      * Handles the assignment of the cloned value to some persistent place.
@@ -442,7 +442,7 @@ export function cloneInternalNoRecursion(_value,
                         : [];
 
                     if (!isIterable(aggregateError.errors))
-                        log(getWarning("Cloning AggregateError with" + 
+                        log(getWarning("Cloning AggregateError with " + 
                                        "non-iterable errors property. It " +
                                        "will be cloned into an " + 
                                        "AggregateError instance with an " + 
