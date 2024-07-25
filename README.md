@@ -163,10 +163,8 @@ The object returned by the clone method can have up to three properties.
 
  - `clone` - Whatever is assigned here will be used as the clone for the given object. If this property is not present or returns undefined, then the cloning method will be ignored and the algorithm will proceed with default behavior.
  - `propsToIgnore` - This should be an array where each element is a string or symbol. Normally, the algorithm will observe each property in an object to ensure that it is cloned. However, if an instance of a class with aclone method provides any properties in the `propsToIgnore` array, they will be cloned by the algorithm, giving you the opportunity to clone some properties with a cloning method instead.
-  - `ignoreProps` - This should be a boolean. If this is a boolean and is true, then the cloning method will have the full responsibility of cloning all properties on the instance. 
-  - `ignoreProto` - This should be a boolean. If this is a boolean and is true, 
-  then the cloning method will have the full responsibility of determining the 
-  prototype of the cloned value.
+ - `ignoreProps` - This should be a boolean. If this is a boolean and is true, then the cloning method will have the full responsibility of cloning all properties on the instance. 
+ - `ignoreProto` - This should be a boolean. If this is a boolean and is true, then the cloning method will have the full responsibility of determining the prototype of the cloned value.
 
 ## customizers
 

@@ -1560,10 +1560,10 @@ try {
                                           "strings or symbols"));
         });
 
-        test("if using cloneDeepFully and observing cloning methods, then " + 
-             "any prototype containing a cloning method used for an instance " + 
-             "cloned previously in the chain will not be cloned using its " + 
-             "cloning method", () => {
+        test("if using cloneDeepFully in force mode and observing cloning " + 
+             "methods, then any prototype containing a cloning method used " + 
+             "for an instance cloned previously in the chain will not be " + 
+             "cloned using its cloning method", () => {
             // -- arrange
             class Test {
                 [CLONE]() {
@@ -1592,9 +1592,9 @@ try {
             assert.strictEqual(getProto(cloned2).test, undefined);
         });
 
-        test("If using cloneDeepFully and observing cloning methods, objects " + 
-             "NOT instantiated as a class will have their prototype use its " + 
-             "cloning method", () => {
+        test("If using cloneDeepFully in force mode and observing cloning " + 
+             "methods, objects NOT instantiated as a class will have their " + 
+             "prototype use its cloning method", () => {
             // -- arrange
             const c = {
                 [CLONE]() {
