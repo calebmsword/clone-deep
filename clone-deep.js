@@ -1,12 +1,15 @@
 import { 
     getTag, 
-    getConstructor, 
+    getAtomicErrorConstructor, 
+    getTypedArrayConstructor,
     Tag, 
     supportedPrototypes, 
     forbiddenProps,
     getWarning,
     Warning,
-    isTypedArray
+    isTypedArray,
+    CLONE,
+    isIterable
 } from "./clone-deep-helpers.js";
 
 /** 
@@ -18,20 +21,31 @@ const TOP_LEVEL = Symbol("TOP_LEVEL");
 
 /**
  * Clones the provided value.
- * @param {any} _value 
+ * @template T
+ * See CloneDeep.
+ * @template [U = T]
+ * See CloneDeep.
+ * @param {T} _value 
  * The value to clone.
  * @param {import("./public-types").Customizer|undefined} customizer 
  * A customizer function.
  * @param {import("./public-types").Log} log 
  * Receives an error object for logging.
+ * @param {boolean} ignoreCloningMethods
+ * Whether cloning methods will be observed.
  * @param {boolean} doThrow 
  * Whether errors in the customizer should cause the function to throw.
- * @returns {any}
+ * @param {Set<any>} [parentObjectRegistry]
+ * This is used by cloneDeepFully to check if an object with a cloning method is 
+ * in the prototype of an object that was cloned earlier in the chain.
+ * @returns {U}
  */
-function cloneInternalNoRecursion(_value, 
-                                  customizer, 
-                                  log, 
-                                  doThrow) {
+export function cloneInternalNoRecursion(_value, 
+                                         customizer, 
+                                         log,
+                                         ignoreCloningMethods, 
+                                         doThrow,
+                                         parentObjectRegistry) {
 
     /**
      * Handles the assignment of the cloned value to some persistent place.
@@ -111,6 +125,7 @@ function cloneInternalNoRecursion(_value,
     const isExtensibleSealFrozen = [];
 
     for (let obj = queue.shift(); obj !== undefined; obj = queue.shift()) {
+
         /**
          * The value to deeply clone.
          */ 
@@ -173,6 +188,12 @@ function cloneInternalNoRecursion(_value,
          * @type {(string|symbol)[]}
          */
         let propsToIgnore = [];
+
+        /**
+         * Whether the cloning methods should be observed this loop.
+         * @type {boolean}
+         */
+        let ignoreCloningMethodsThisLoop = false;
 
         // Perform user-injected logic if applicable.
         if (typeof customizer === "function") {
@@ -249,6 +270,14 @@ function cloneInternalNoRecursion(_value,
          */
         const tag = getTag(value);
 
+        // Check if we should observe cloning methods on this loop
+        if (parentObjectRegistry !== undefined){
+            parentObjectRegistry.forEach(object => {
+                if (value === object?.constructor?.prototype)
+                    ignoreCloningMethodsThisLoop = true;
+            });
+        }
+
         if (forbiddenProps[tag] !== undefined
             && forbiddenProps[tag].prototype === value)
             log(getWarning(
@@ -257,7 +286,7 @@ function cloneInternalNoRecursion(_value,
                 `accessed: ${forbiddenProps[tag].properties.join(", ")}. The ` + 
                 "cloned object will not have any inaccessible properties."
             ));
-
+        
         try {
             // skip the following "else if" branches
             if (useCustomizerClone === true) {}
@@ -272,6 +301,41 @@ function cloneInternalNoRecursion(_value,
             // We won't clone weakmaps or weaksets (or their prototypes).
             else if ([Tag.WEAKMAP, Tag.WEAKSET].includes(tag))
                 throw tag === Tag.WEAKMAP ? Warning.WEAKMAP : Warning.WEAKSET;
+            
+            // If object defines its own means of getting cloned, use it
+            else if (typeof value[CLONE] === "function" 
+                     && ignoreCloningMethods !== true
+                     && ignoreCloningMethodsThisLoop === false) {
+                
+                /** @type {import("./public-types").CloneMethodResult<any>} */
+                const result = value[CLONE]();
+                
+                if (result.propsToIgnore !== undefined)
+                    if (Array.isArray(result.propsToIgnore) &&
+                        result
+                            .propsToIgnore
+                            .every(
+                                /** @param {any} s */
+                                s => ["string", "symbol"].includes(typeof s))) 
+                        propsToIgnore.push(...result.propsToIgnore);
+                    else log(getWarning("return value of CLONE method is an " + 
+                                    "object whose propsToIgnore property, " + 
+                                    "if not undefined, is expected to be an " + 
+                                    "array of strings or symbols. The given " + 
+                                    "result is not this type of array so it " + 
+                                    "will have no effect."));
+
+                if (typeof result.ignoreProps === "boolean")
+                    ignoreProps = result.ignoreProps;
+
+                if (typeof result.ignoreProto === "boolean")
+                    ignoreProto = result.ignoreProto;
+
+                cloned = assign(result.clone, 
+                                parentOrAssigner, 
+                                prop, 
+                                metadata);
+            }
             
             // Ordinary objects, or the rare `arguments` clone.
             // Also, treat prototypes like ordinary objects. The tag wrongly 
@@ -311,7 +375,9 @@ function cloneInternalNoRecursion(_value,
 
             else if ([Tag.BOOLEAN, Tag.DATE].includes(tag)) {
                 /** @type {BooleanConstructor|DateConstructor} */
-                const BooleanOrDateConstructor = getConstructor(tag);
+                const BooleanOrDateConstructor = tag === Tag.DATE 
+                    ? Date 
+                    : Boolean;
 
                 cloned = assign(new BooleanOrDateConstructor(Number(value)), 
                                 parentOrAssigner, 
@@ -320,7 +386,9 @@ function cloneInternalNoRecursion(_value,
             }
             else if ([Tag.NUMBER, Tag.STRING].includes(tag)) {
                 /** @type {NumberConstructor|StringConstructor} */
-                const NumberOrStringConstructor = getConstructor(tag);
+                const NumberOrStringConstructor = tag === Tag.NUMBER 
+                    ? Number 
+                    : String;
 
                 cloned = assign(new NumberOrStringConstructor(value), 
                                 parentOrAssigner, 
@@ -355,22 +423,47 @@ function cloneInternalNoRecursion(_value,
                 const regExp = value;
 
                 cloned = new RegExp(regExp.source, regExp.flags);
-                cloned.lastIndex = regExp.lastIndex;
                 assign(cloned, parentOrAssigner, prop, metadata);
-                propsToIgnore.push("lastIndex");
             }
 
             else if (Tag.ERROR === tag) {
                 /** @type {Error} */
                 const error = value;
 
-                /** @type {ErrorConstructor} */
-                const ErrorConstructor = getConstructor(tag, error, log);
+                /** @type {Error} */
+                let clonedError;
 
-                const cause = error.cause;
-                const clonedError = cause === undefined
-                    ? new ErrorConstructor(error.message)
-                    : new ErrorConstructor(error.message, { cause });
+                if (error.name === "AggregateError") {
+                    /** @type {AggregateError} */
+                    const aggregateError = value;
+
+                    const errors = isIterable(aggregateError.errors) 
+                        ? aggregateError.errors 
+                        : [];
+
+                    if (!isIterable(aggregateError.errors))
+                        log(getWarning("Cloning AggregateError with " + 
+                                       "non-iterable errors property. It " +
+                                       "will be cloned into an " + 
+                                       "AggregateError instance with an " + 
+                                       "empty aggregation."));
+                    
+                    const cause = aggregateError.cause;
+                    const message = aggregateError.message;
+                    clonedError = cause === undefined
+                        ? new AggregateError(errors, message)
+                        : new AggregateError(errors, message, { cause });
+                }
+                else {
+                    /** @type {import("./private-types.js").AtomicErrorConstructor} */
+                    const ErrorConstructor = getAtomicErrorConstructor(error, 
+                                                                       log);
+
+                    const cause = error.cause;
+                    clonedError = cause === undefined
+                        ? new ErrorConstructor(error.message)
+                        : new ErrorConstructor(error.message, { cause });
+                }
 
                 const defaultDescriptor = Object.getOwnPropertyDescriptor(
                     new Error, "stack");
@@ -378,15 +471,23 @@ function cloneInternalNoRecursion(_value,
                     ? defaultDescriptor.set
                     : undefined;
 
-                Object.defineProperty(clonedError, "stack", {
-                    enumerable: false,
-                    get: () => error.stack,
-                    set
+                queue.push({ 
+                    value: error.stack,
+
+                    /** @param {any} cloned */ 
+                    parentOrAssigner(cloned) {
+                        isExtensibleSealFrozen.push([error.stack, cloned]);
+                        Object.defineProperty(clonedError, "stack", {
+                            enumerable: false,
+                            get: () => cloned,
+                            set
+                        });
+                    }
                 });
 
                 cloned = assign(clonedError, parentOrAssigner, prop, metadata);
 
-                propsToIgnore.push("cause", "stack");
+                propsToIgnore.push("stack");
             }
 
             else if (Tag.ARRAYBUFFER === tag) {
@@ -396,9 +497,10 @@ function cloneInternalNoRecursion(_value,
                 cloned = assign(arrayBuffer, parentOrAssigner, prop, metadata);
             }
             
-            else if (isTypedArray(tag)) {
+            else if (isTypedArray(value) || Tag.DATAVIEW === tag) {
+
                 /** @type {import("./private-types").TypedArrayConstructor} */
-                const TypedArray = getConstructor(tag);
+                const TypedArray = getTypedArrayConstructor(tag, log);
 
                 // copy data over to clone
                 const buffer = new ArrayBuffer(
@@ -419,11 +521,7 @@ function cloneInternalNoRecursion(_value,
                 /** @type {Map<any, any>} */
                 const originalMap = value;
 
-                /** @type {MapConstructor} */
-                const MapConstructor = getConstructor(tag);
-
-                const cloneMap = new MapConstructor;
-
+                const cloneMap = new Map;
                 cloned = assign(cloneMap, parentOrAssigner, prop, metadata);
 
                 originalMap.forEach((subValue, key) => {
@@ -443,11 +541,7 @@ function cloneInternalNoRecursion(_value,
                 /** @type {Set<any>} */
                 const originalSet = value;
 
-                /** @type {SetConstructor} */
-                const SetConstructor = getConstructor(tag);
-
-                const cloneSet = new SetConstructor;
-
+                const cloneSet = new Set;
                 cloned = assign(cloneSet, parentOrAssigner, prop, metadata);
 
                 originalSet.forEach(subValue => {
@@ -546,7 +640,13 @@ function cloneInternalNoRecursion(_value,
 }
 
 /**
- * @param {any} value The value to deeply copy.
+ * @template T
+ * The type of the input value.
+ * @template [U = T]
+ * The type of the return value. By default, it is the same as the input value. 
+ * Nefarious customizer usage could require them be distinct, however. Please do 
+ * not do this.
+ * @param {T} value The value to deeply copy.
  * @param {import("./public-types").CloneDeepOptions|import("./public-types").Customizer} [optionsOrCustomizer] 
  * If a function, this argument is used as the customizer.
  * @param {object} [optionsOrCustomizer] 
@@ -559,6 +659,8 @@ function cloneInternalNoRecursion(_value,
  * Any errors which occur during the algorithm can optionally be passed to a log 
  * function. `log` should take one argument which will be the error encountered. 
  * Use this to log the error to a custom logger.
+ * @param {boolean} optionsOrCustomizer.ignoreCloningMethods
+ * Whether cloning methods will be observed.
  * @param {string} optionsOrCustomizer.logMode 
  * Case-insensitive. If "silent", no warnings will be logged. Use with caution, 
  * as failures to perform true clones are logged as warnings. If "quiet", the 
@@ -567,7 +669,7 @@ function cloneInternalNoRecursion(_value,
  * If `true`, errors thrown by the customizer will be thrown by `cloneDeep`. By 
  * default, the error is logged and the algorithm proceeds with default 
  * behavior.
- * @returns {Object} The deep copy.
+ * @returns {U} The deep copy.
  */
 function cloneDeep(value, optionsOrCustomizer) {
     /** @type {import("./public-types").Customizer|undefined} */
@@ -582,12 +684,16 @@ function cloneDeep(value, optionsOrCustomizer) {
     /** @type {boolean|undefined} */
     let letCustomizerThrow = false;
 
+    /** @type {boolean|undefined} */
+    let ignoreCloningMethods = false;
+
     if (typeof optionsOrCustomizer === "function")
         customizer = optionsOrCustomizer;
     else if (typeof optionsOrCustomizer === "object") {
         ({ 
             log, 
             logMode,
+            ignoreCloningMethods,
             letCustomizerThrow 
         } = optionsOrCustomizer);
         
@@ -605,7 +711,8 @@ function cloneDeep(value, optionsOrCustomizer) {
     
     return cloneInternalNoRecursion(value, 
                                     customizer, 
-                                    log,
+                                    log, 
+                                    ignoreCloningMethods || false, 
                                     letCustomizerThrow || false);
 }
  
