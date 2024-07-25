@@ -173,9 +173,8 @@ declare module "cms-clone-deep" {
  * the check for circular references. 
  * 
  * The best use of the customizer to support user-made types. You can also use 
- * it to override some of the design decisions made in the algorithm (you could, 
- * for example, use it to throw if the user tries to clone functions, 
- * `WeakMaps`, or `WeakSets`).
+ * it to override some of the design decisions made in the algorithm (say, 
+ * ignore all non-enumerable properties of an object).
  * 
  * @template T
  * The type of the input value.
