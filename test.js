@@ -1,13 +1,23 @@
+import "./clone-deep-polyfills.js";
+
 import assert from "node:assert";
 import { describe, mock, test } from "node:test";
 
 import { 
-    Tag, 
+    Tag,
+    getTag,
     supportedPrototypes, 
     forbiddenProps, 
     getTypedArrayConstructor,
     isIterable,
     CLONE,
+    isDOMMatrix,
+    isDOMMatrixReadOnly,
+    isDOMPoint,
+    isDOMPointReadOnly,
+    isDOMRect,
+    isDOMRectReadOnly,
+    createFileList
 } from "./clone-deep-helpers.js";
 import  cloneDeep from "./clone-deep.js";
 import { cloneDeepFully, useCustomizers } from "./clone-deep-utils.js";
@@ -18,7 +28,7 @@ const consoleDotWarn = console.warn;
 
 // convenient helper functions
 const getProto = object => Object.getPrototypeOf(object);
-const tagOf = value => Object.prototype.toString.call(value);
+const tagOf = value => getTag(value);
 
 try {
     // There are so many warnings logged that it slows the test down
@@ -125,6 +135,7 @@ try {
             const getNew = TypedArray => new TypedArray(new ArrayBuffer());
 
             const type = {
+                // "standard" classes
                 args: [
                         {
                             callee: mock.fn(),
@@ -153,6 +164,8 @@ try {
                 set: [new Set(), Tag.SET],
                 string: [new String(), Tag.STRING],
                 symbol: [new Object(Symbol("symbol")), Tag.SYMBOL],
+
+                // ArrayBuffer, DataView and TypedArrays
                 arraybuffer: [new ArrayBuffer(), Tag.ARRAYBUFFER],
                 dataview: [getNew(DataView), Tag.DATAVIEW],
                 float32: [getNew(Float32Array), Tag.FLOAT32],
@@ -165,7 +178,12 @@ try {
                 uint16: [getNew(Uint16Array), Tag.UINT16],
                 uint32: [getNew(Uint32Array), Tag.UINT32],
                 bigint64: [getNew(BigInt64Array), Tag.BIGINT64],
-                biguint64: [getNew(BigUint64Array), Tag.BIGUINT64]
+                biguint64: [getNew(BigUint64Array), Tag.BIGUINT64],
+
+                // Web APIs
+                blob: [new Blob(), Tag.BLOB],
+                file: [new File([], ""), Tag.FILE],
+                filelist: [createFileList([]), Tag.FILELIST]
             }
 
             for (const key of Object.keys(type)) {
@@ -919,6 +937,31 @@ try {
                 cloneDeep(proto);
             });
         });
+
+        test("FileLists are cloned properly", () => {
+            // -- arrange
+
+            const dateFoo = new Date("July 20, 69 20:17:40 GMT+00:00")
+            const fileFoo = new File(["foo"], "foo", {
+                type: "text/plain",
+                lastModified: dateFoo.getTime()
+            })
+
+            const dateBar = new Date("July 21, 69 20:17:40 GMT+00:00")
+            const fileBar = new File([JSON.stringify({ bar: "bar "})], "bar", {
+                type: "application/json",
+                lastModified: dateBar.getTime()
+            });
+
+            // -- act
+            const fileList = createFileList(fileFoo, fileBar);
+            const cloned = cloneDeep(fileList);
+
+            // -- assert
+            assert.deepEqual(cloned, fileList);
+            assert.notStrictEqual(cloned.item(0), fileList.item(0));
+            assert.notStrictEqual(cloned.item(1), fileList.item(1));
+        });
     });
 
     describe("cloneDeep customizer", () => {
@@ -1645,6 +1688,41 @@ try {
             }));
             assert.strictEqual(false, isIterable({}));
             assert.strictEqual(false, isIterable(null));
+        });
+
+        test("geometry type checkers function as expected", () => {
+            // -- arrange
+            const domMatrix = new DOMMatrix;
+            const domMatrixReadOnly = new DOMMatrixReadOnly;
+            const domPoint = new DOMPoint;
+            const domPointReadOnly = new DOMPointReadOnly;
+            const domRect = new DOMRect;
+            const domRectReadOnly = new DOMRectReadOnly;
+
+            // -- act/assert
+            assert.strictEqual(true, isDOMMatrix(domMatrix));
+            assert.strictEqual(false, isDOMMatrix(domMatrixReadOnly));
+            assert.strictEqual(false, isDOMMatrix({}));
+
+            assert.strictEqual(true, isDOMMatrixReadOnly(domMatrixReadOnly));
+            assert.strictEqual(false, isDOMMatrixReadOnly(domMatrix));
+            assert.strictEqual(false, isDOMMatrixReadOnly({}));
+
+            assert.strictEqual(true, isDOMPoint(domPoint));
+            assert.strictEqual(false, isDOMPoint(domPointReadOnly));
+            assert.strictEqual(false, isDOMPoint({}));
+
+            assert.strictEqual(true, isDOMPointReadOnly(domPointReadOnly));
+            assert.strictEqual(false, isDOMPointReadOnly(domPoint));
+            assert.strictEqual(false, isDOMPointReadOnly({}));
+
+            assert.strictEqual(true, isDOMRect(domRect));
+            assert.strictEqual(false, isDOMRect(domRectReadOnly));
+            assert.strictEqual(false, isDOMRect({}));
+
+            assert.strictEqual(true, isDOMRectReadOnly(domRectReadOnly));
+            assert.strictEqual(false, isDOMRectReadOnly(domRect));
+            assert.strictEqual(false, isDOMRectReadOnly({}));
         });
     });
 }

@@ -9,7 +9,9 @@ import {
     Warning,
     isTypedArray,
     CLONE,
-    isIterable
+    isIterable,
+    cloneFile,
+    createFileList
 } from "./clone-deep-helpers.js";
 
 /** 
@@ -271,12 +273,10 @@ export function cloneInternalNoRecursion(_value,
         const tag = getTag(value);
 
         // Check if we should observe cloning methods on this loop
-        if (parentObjectRegistry !== undefined){
-            parentObjectRegistry.forEach(object => {
-                if (value === object?.constructor?.prototype)
-                    ignoreCloningMethodsThisLoop = true;
-            });
-        }
+        if (parentObjectRegistry !== undefined) [...parentObjectRegistry].some(
+            object => ignoreCloningMethodsThisLoop = value === object
+                ?.constructor
+                ?.prototype);
 
         if (forbiddenProps[tag] !== undefined
             && forbiddenProps[tag].prototype === value)
@@ -568,6 +568,36 @@ export function cloneInternalNoRecursion(_value,
                 assign(cloned, parentOrAssigner, prop, metadata);
 
                 log(Warning.PROMISE);
+            }
+
+            else if (Tag.BLOB === tag) {
+                /** @type {Blob} */
+                const blob = value;
+                
+                cloned = assign(blob.slice(), parentOrAssigner, prop, metadata);
+            }
+
+            else if (Tag.FILE === tag) {
+                /** @type {File} */
+                const file = value;
+
+                cloned = cloneFile(file);
+                assign(cloned, parentOrAssigner, prop, metadata);
+            }
+
+            else if (Tag.FILELIST === tag) {
+                /** @type {FileList} */
+                const fileList = value;
+
+                /** @type {File[]} */
+                const files = [];
+                for (let index = 0; index < fileList.length; index++) {
+                    const file = fileList.item(index);
+                    if (file !== null) files.push(cloneFile(file));
+                }
+
+                cloned = createFileList(...files);
+                assign(cloned, parentOrAssigner, prop, metadata);
             }
 
             else throw getWarning("Attempted to clone unsupported type.");

@@ -316,5 +316,7 @@ Some rudimentary benchmarking can be done within the repository. In the director
    - [blikblum](https://github.com/blikblum)
  - Thanks to Tiago Bertolo, the author of [this article](https://medium.com/@tiagobertolo/which-is-the-best-method-for-deep-cloning-in-javascript-are-they-all-bad-101f32d620c5). It reminded me to clone the metadata of objects.
  - Thanks to MDN and its documentation on the [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm).
- - Thanks to StackExchange user Jonathan Tran for his `http.createServer` example.
+ - Thanks to StackExchange user Jonathan Tran for his `http.createServer` [example](https://stackoverflow.com/a/13635318/22334683).
  - Thanks to [clone](https://www.npmjs.com/package/clone) for its implementation of cloning Promises.
+ - Thanks to [this](https://stackoverflow.com/a/62491100/22334683) stackoverflow answer for its suggestion for cloning Files.
+ - Thanks to [fisker](https://github.com/fisker) and their [package](https://github.com/fisker/create-file-list) for its implementation of creating FileList instances.
