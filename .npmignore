@@ -1,10 +1,7 @@
-node_modules/
-tsdist/
 .github/
-benchmark.css
-index.html
-benchmark.js
-serve.js
-test.js
+node_modules/
+benchmark/
+test/
+tsdist/
 README.md
 LICENSE
