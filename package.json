@@ -12,7 +12,8 @@
   ],
   "scripts": {
     "test": "node --test",
-    "test-coverage": "node --test --experimental-test-coverage"
+    "test-coverage": "node --test --experimental-test-coverage",
+    "serve": "node .\\benchmark\\serve.js"
   },
   "author": "Caleb Sword",
   "license": "MIT",
