@@ -459,6 +459,6 @@ export function clearPolyfills() {
     globalThis.DOMPointReadOnly = undefined;
     globalThis.DOMPoint = undefined;
     globalThis.DOMQuad = undefined;
-    globablThis.FileList = undefined;
+    globalThis.FileList = undefined;
     globalThis.DataTransfer = undefined;
 }

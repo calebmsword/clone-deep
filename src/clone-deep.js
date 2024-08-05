@@ -488,7 +488,7 @@ export function cloneDeepInternal(_value,
                     parentOrAssigner(cloned) {
                         isExtensibleSealFrozen.push([error.stack, cloned]);
                         Object.defineProperty(clonedError, "stack", {
-                            enumerable: false,
+                            enumerable: defaultDescriptor?.enumerable || false,
                             get: () => cloned,
                             set
                         });
@@ -617,6 +617,8 @@ export function cloneDeepInternal(_value,
 
                 const clonedException = new DOMException(exception.message, 
                                                          exception.name);
+                const descriptor = Object.getOwnPropertyDescriptor(exception,
+                                                                   "stack");
 
                 queue.push({ 
                     value: exception.stack,
@@ -628,7 +630,7 @@ export function cloneDeepInternal(_value,
                             cloned
                         ]);
                         Object.defineProperty(clonedException, "stack", {
-                            enumerable: false,
+                            enumerable: descriptor?.enumerable || false,
                             get: () => cloned
                         });
                     }
