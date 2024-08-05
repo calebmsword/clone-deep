@@ -1410,7 +1410,7 @@ try {
 
         test("Native prototypes can be fully cloned without errors", () => {
             supportedPrototypes.forEach(proto => {
-                cloneDeepFully(proto);
+                cloneDeepFully(proto, { force: true });
             });
         });
 

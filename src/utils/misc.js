@@ -144,3 +144,26 @@ export function hasAccessor(metadata) {
            && (typeof metadata.get === "function"
                || typeof metadata.set === "function");
 }
+
+/**
+ * Returns an array of all properties in the object.
+ * This includes symbols and non-enumerable properties. `undefined` or `null` 
+ * returns an empty array.
+ * @param {Object} o An object.
+ * @returns {(string|symbol)[]} An array of property names.
+ */
+ function getAllPropertiesOf(o) {
+    return [Object.getOwnPropertyNames(o), Object.getOwnPropertySymbols(o)]
+        .flat();
+}
+
+/**
+ * Is true if the provided object has methods. Is false otherwise.
+ * @param {any} o An object
+ * @returns {Boolean}
+ */
+export function hasMethods(o) {
+    // We cannot access some properties of Function.prototype in strict mode
+    if (o === Function.prototype) return true;
+    return getAllPropertiesOf(o).some(key => typeof o[key] === "function");
+}

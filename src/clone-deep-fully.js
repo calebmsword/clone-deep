@@ -1,4 +1,5 @@
 import cloneDeep, { cloneDeepInternal } from "./clone-deep.js";
+import { hasMethods } from "./utils/misc.js";
 
 /**
  * Deeply clones the provided object and its prototype chain.
@@ -51,29 +52,6 @@ export default function cloneDeepFully(value, options) {
         ignoreCloningMethods, 
         letCustomizerThrow
     } = options);
-    
-    /**
-     * Returns an array of all properties in the object.
-     * This includes symbols and non-enumerable properties. `undefined` or 
-     * `null` returns an empty array.
-     * @param {Object} o An object.
-     * @returns {(string|symbol)[]} An array of property names.
-     */
-    function getAllPropertiesOf(o) {
-        return [Object.getOwnPropertyNames(o), Object.getOwnPropertySymbols(o)]
-            .flat();
-    }
-    
-    /**
-     * Is true if the provided object has methods. Is false otherwise.
-     * @param {any} o An object
-     * @returns {Boolean}
-     */
-    function hasMethods(o) {
-        // We cannot access some properties of Function.prototype in strict mode
-        if (o === Function.prototype) return true;
-        return getAllPropertiesOf(o).some(key => typeof o[key] === "function");
-    }
 
     /** @type {U} */
     const clone = cloneDeep(value, options);
