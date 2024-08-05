@@ -183,7 +183,14 @@ try {
                 // Web APIs
                 blob: [new Blob(), Tag.BLOB],
                 file: [new File([], ""), Tag.FILE],
-                filelist: [createFileList([]), Tag.FILELIST]
+                filelist: [createFileList([]), Tag.FILELIST],
+                dommatrix: [new DOMMatrix(), Tag.DOMMATRIX],
+                dommatrixreadonly: [new DOMMatrixReadOnly(), 
+                                    Tag.DOMMATRIXREADONLY],
+                dompoint: [new DOMPoint(), Tag.DOMPOINT],
+                dompointreadonly: [new DOMPointReadOnly, Tag.DOMPOINTREADONLY],
+                domrect: [new DOMRect(), Tag.DOMRECT],
+                domrectreadonly: [new DOMRectReadOnly(), Tag.DOMRECTREADONLY]
             }
 
             for (const key of Object.keys(type)) {
@@ -195,7 +202,6 @@ try {
 
                 // -- assert
                 assert.strictEqual(typeof cloned, "object");
-
                 assert.strictEqual(tagOf(cloned), tag);
             }
         });
@@ -961,6 +967,49 @@ try {
             assert.deepEqual(cloned, fileList);
             assert.notStrictEqual(cloned.item(0), fileList.item(0));
             assert.notStrictEqual(cloned.item(1), fileList.item(1));
+        });
+
+        describe("geometry web APIs", () => {
+
+            test("the geometry classes are deeply cloned", () => {
+                [
+                    DOMMatrix,
+                    DOMMatrixReadOnly,
+                    DOMPoint,
+                    DOMPointReadOnly,
+                    DOMRect,
+                    DOMRectReadOnly
+                ].forEach(GeometryClass => {
+                    // -- arrange
+                    const original = new GeometryClass;
+
+                    // -- act
+                    const cloned = cloneDeep(original);
+
+                    // -- assert
+                    assert.notStrictEqual(original, cloned);
+                    assert.deepEqual(original, cloned);
+                });
+            });
+
+            test("DOMMatrix is2D property preserved", () => {
+                // -- arrange
+                const original2D = new DOMMatrix([1, 1, 1, 1, 1, 1]);
+                const original3D = new DOMMatrix([
+                    1, 1, 1, 1,
+                    1, 1, 1, 1,
+                    1, 1, 1, 1,
+                    1, 1, 1, 1
+                ]);
+
+                // -- act
+                const cloned2D = cloneDeep(original2D);
+                const cloned3D = cloneDeep(original3D);
+
+                // -- assert
+                assert.strictEqual(cloned2D.is2D, original2D.is2D);
+                assert.strictEqual(cloned3D.is2D, original3D.is2D);
+            });
         });
     });
 

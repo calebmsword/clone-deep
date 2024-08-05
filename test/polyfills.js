@@ -6,6 +6,12 @@ const proto = x => Object.getPrototypeOf(x);
 
 export function polyfill() {
     
+    // This is far overcomplicated in an attempt to preserve functionality 
+    // that isn't necessary for the shim. (That is, calling  
+    // metadata(proto(proto(domMatrix))).m11.get.call(domMatrix) is the same as
+    // just doing domMatrix.m11.) My apologies.
+    // This property isn't even part of the specification and is an 
+    // implmentation detail of V8 so it was frankly a waste of time.
     if (typeof globalThis.DOMMatrixReadOnly !== "function") {
 
         globalThis.DOMMatrixReadOnly = class DOMMatrixReadOnly {
@@ -14,6 +20,8 @@ export function polyfill() {
             #m11;
             
             #is2D;
+
+            [Symbol.toStringTag] = "DOMMatrixReadOnly";
 
             get is2D() {
                 return this.#is2D;
@@ -125,6 +133,8 @@ export function polyfill() {
                 globalThis.DOMMatrix = class DOMMatrix extends 
                     DOMMatrixReadOnly {
                     static #registry = new WeakSet;
+
+                    [Symbol.toStringTag] = "DOMMatrix";
         
                     constructor(arg) {
                         super(arg);
@@ -148,23 +158,6 @@ export function polyfill() {
                                 }
                             });
                     }
-
-                    /** @override */
-                    scale() {
-                        if (!DOMMatrix.#registry.has(this)) 
-                            throw new TypeError(msg);
-                        if (this.is2D)
-                            return new DOMMatrix([
-                                this.a, this.b, 
-                                this.c, this.d, 
-                                this.e, this.f]);
-                        else 
-                            return new DOMMatrix([
-                                this.m11, this.m12, this.m13, this.m14, 
-                                this.m21, this.m22, this.m23, this.m24, 
-                                this.m31, this.m32, this.m33, this.m34, 
-                                this.m41, this.m42, this.m43, this.m44]);
-                    }
                 }
             }
 
@@ -172,10 +165,10 @@ export function polyfill() {
                 if (!DOMMatrixReadOnly.#registry.has(this)) 
                     throw new TypeError(msg);
                 if (this.is2D)
-                    return new DOMMatrixReadOnly([
+                    return new DOMMatrix([
                         this.a, this.b, this.c, this.d, this.e, this.f]);
                 else 
-                    return new DOMMatrixReadOnly([
+                    return new DOMMatrix([
                         this.m11, this.m12, this.m13, this.m14, 
                         this.m21, this.m22, this.m23, this.m24, 
                         this.m31, this.m32, this.m33, this.m34, 
@@ -187,134 +180,132 @@ export function polyfill() {
     }
     
     if (typeof globalThis.DOMPointReadOnly !== "function") {
+
         globalThis.DOMPointReadOnly = class DOMPointReadOnly {
             static #registry = new WeakSet;
 
-            #x = 0;
+            #x;
 
-            constructor() {
+            get x() {
+                if (!DOMPointReadOnly.#registry.has(this)) 
+                    throw new TypeError(msg);
+                return this.#x;
+            }
+
+            constructor(x = 0) {
                 DOMPointReadOnly.#registry.add(this);
 
-                /** @type {(x: number) => void} */
-                function setX(x) { 
-                    this.#x = x;
-                }
-
-                if (!Object.getOwnPropertyNames(DOMPointReadOnly.prototype)
-                        .includes("x"))
-                    Object.defineProperty(DOMPointReadOnly.prototype, "x", {
-                        configurable: "true",
-                        enumerable: "true",
-                        /** @this DOMPointReadOnly */
-                        get() {
-                            if (!DOMPointReadOnly.#registry.has(this)) 
-                                throw new TypeError(msg);
-                            return this.#x;
-                        }
-                    });
-
-                globalThis.DOMPoint = class DOMPoint extends DOMPointReadOnly {
-                    static #registry = new WeakSet;
-        
-                    constructor() {
-                        super();
-                        DOMPoint.#registry.add(this);
-                        
-                        if (!Object.getOwnPropertyNames(DOMPoint.prototype)
-                                .includes("x"))
-                            Object.defineProperty(DOMPoint.prototype, "x", {
-                                configurable: "true",
-                                enumerable: "true",
-                                get() {
-                                    return metadata(proto(proto(this)))
-                                        .x
-                                        .get
-                                        .call(this);
-                                },
-                                set(x) {
-                                    if (!DOMPoint.#registry.has(this)) 
-                                        throw new TypeError(msg);
-                                    setX.call(this, x);
-                                }
-                            });
-                    }
-                }
+                if (typeof x !== "number") x = 0;
+                this.#x = x;
             }
 
             toJSON() {
                 if (!DOMPointReadOnly.#registry.has(this)) 
                     throw new TypeError(msg);
-                return { x: this.#x };
+                return { x: this.x };
             }
-        };
 
-        new DOMPointReadOnly;
+            /** @param {DOMPoint|DOMPointReadOnly} domPoint */
+            static fromPoint(domPoint) {
+                return new DOMPointReadOnly(domPoint.x);
+            }
+        }
+
+        globalThis.DOMPoint = class DOMPoint extends DOMPointReadOnly {
+            static #registry = new WeakSet;
+
+            #x;
+
+            get x() {
+                if (!DOMPoint.#registry.has(this)) 
+                    throw new TypeError(msg);
+                return this.#x;
+            }
+
+            set x(newX) {
+                if (!DOMPoint.#registry.has(this)) 
+                    throw new TypeError(msg);
+                this.#x = newX;
+            }
+
+            constructor(x = 0) {
+                super(x);
+
+                DOMPoint.#registry.add(this);
+
+                if (typeof x !== "number") x = 0;
+                this.#x = x;
+            }
+
+            /** 
+             * @param {DOMPoint|DOMPointReadOnly} domPoint
+             * @override 
+             */
+            static fromPoint(domPoint) {
+                return new DOMPoint(domPoint.x);
+            }
+
+        }
     }
 
     if (typeof globalThis.DOMRectReadOnly !== "function") {
+        
         globalThis.DOMRectReadOnly = class DOMRectReadOnly {
             static #registry = new WeakSet;
 
-            /** @type {number} */
-            #x = 0;
+            #x;
 
-            constructor() {
+            get x() {
+                return this.#x;
+            }
 
+            constructor(x) {
                 DOMRectReadOnly.#registry.add(this);
 
-                /** @type {(x: number) => void} */
-                function setX(x) { 
-                    this.#x = x;
-                }
+                if (typeof x !== "number") x = 0;
+                this.#x = x;
+            }
 
-                if (!Object.getOwnPropertyNames(DOMRectReadOnly.prototype)
-                        .includes("x"))
-                    Object.defineProperty(DOMRectReadOnly.prototype, "x", {
-                        configurable: "true",
-                        enumerable: "true",
-                        /** @this DOMRectReadOnly */
-                        get() {
-                            if (!DOMRectReadOnly.#registry.has(this)) 
-                                throw new TypeError(msg);
-                            return this.#x;
-                        }
-                    });
-
-                globalThis.DOMRect = class DOMRect extends DOMRectReadOnly {
-                    static #registry = new WeakSet;
-        
-                    constructor() {
-                        super();
-                        DOMRect.#registry.add(this);
-                        
-                        if (!Object.getOwnPropertyNames(DOMRect.prototype)
-                                .includes("x"))
-                            Object.defineProperty(DOMRect.prototype, "x", {
-                                configurable: "true",
-                                enumerable: "true",
-                                get() {
-                                    return metadata(proto(proto(this)))
-                                        .x
-                                        .get
-                                        .call(this);
-                                },
-                                set(x) {
-                                    if (!DOMRect.#registry.has(this)) 
-                                        throw new TypeError(msg);
-                                    setX.call(this, x);
-                                }
-                            });
-                    }
-                }
+            /** @param {DOMRect|DOMRectReadOnly} */
+            static fromRect(rect) {
+                return new DOMRectReadOnly(rect.x);
             }
         };
 
-        new DOMRectReadOnly;
+        globalThis.DOMRect = class DOMRect extends DOMRectReadOnly {
+            static #registry = new WeakSet;
+
+            #x;
+
+            get x() {
+                return this.#x;
+            }
+
+            set x(newX) {
+                this.#x = newX;
+            }
+
+            constructor(x) {
+                super(x)
+
+                DOMRect.#registry.add(this);
+
+                if (typeof x !== "number") x = 0;
+                this.#x = x;
+            }
+
+            /** @param {DOMRect|DOMRectReadOnly} */
+            static fromRect(rect) {
+                return new DOMRect(rect.x);
+            }
+        };
     }
 
     if (typeof globalThis.DOMQuad !== "function") {
         globalThis.DOMQuad = class DOMQuad {
             static #registry = new WeakSet;
+
+            [Symbol.toStringTag] = "DOMQuad";
 
             constructor() {
                 DOMQuad.#registry.add(this);
@@ -332,7 +323,7 @@ export function polyfill() {
         globalThis.FileList = class FileList {
             static #registry = new WeakSet;
 
-            // [Symbol.toStringTag] = "FileList";
+            [Symbol.toStringTag] = "FileList";
 
             /** @type {File[]} */
             #items;

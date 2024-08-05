@@ -600,6 +600,50 @@ export function cloneInternalNoRecursion(_value,
                 assign(cloned, parentOrAssigner, prop, metadata);
             }
 
+            else if (Tag.DOMMATRIX === tag) {
+                /** @type {DOMMatrix} */
+                const matrix = value;
+
+                assign(matrix.scale(1), parentOrAssigner, prop, metadata);
+            }
+
+            else if (Tag.DOMMATRIXREADONLY === tag) {
+                /** @type {DOMMatrixReadOnly} */
+                const matrix = value;
+
+                cloned = matrix.is2D 
+                    ? new DOMMatrixReadOnly([
+                        matrix.a, matrix.b, matrix.c, matrix.d, 
+                        matrix.e, matrix.f])
+                    : new DOMMatrixReadOnly([
+                        matrix.m11, matrix.m12, matrix.m13, matrix.m14, 
+                        matrix.m21, matrix.m22, matrix.m23, matrix.m24, 
+                        matrix.m31, matrix.m32, matrix.m33, matrix.m34, 
+                        matrix.m41, matrix.m42, matrix.m43, matrix.m44, 
+                    ]);
+                assign(cloned, parentOrAssigner, prop, metadata);
+            }
+
+            else if ([Tag.DOMPOINT, Tag.DOMPOINTREADONLY].includes(tag)) {
+                /** @type {DOMPoint} */
+                const domPoint = value;
+
+                const Class = tag === Tag.DOMPOINT? DOMPoint : DOMPointReadOnly;
+
+                cloned = Class.fromPoint(domPoint);
+                assign(cloned, parentOrAssigner, prop, metadata);
+            }
+
+            else if ([Tag.DOMRECT, Tag.DOMRECTREADONLY].includes(tag)) {
+                /** @type {DOMRect|DOMRectReadOnly} */
+                const domRect = value;
+
+                const Class = tag === Tag.DOMRECT ? DOMRect : DOMRectReadOnly;
+
+                cloned = Class.fromRect(domRect);
+                assign(cloned, parentOrAssigner, prop, metadata);
+            }
+
             else throw getWarning("Attempted to clone unsupported type.");
         }
         catch(error) {
@@ -632,7 +676,7 @@ export function cloneInternalNoRecursion(_value,
 
         // Ensure clone has prototype of value
         if (ignoreProto !== true
-            && Object.getPrototypeOf(cloned) !== Object.getPrototypeOf(value))
+            && Object.getPrototypeOf(cloned) !== Object.getPrototypeOf(value)) 
             Object.setPrototypeOf(cloned, Object.getPrototypeOf(value));
         
         if (ignoreProps === true) continue;
