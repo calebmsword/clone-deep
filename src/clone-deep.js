@@ -291,8 +291,6 @@ export function cloneDeepInternal(_value,
          */
         const tag = getTag(value, prioritizePerformance);
 
-        const isSupportedPrototype = supportedPrototypes.includes(value);
-
         // Check if we should observe cloning methods on this loop
         if (parentObjectRegistry !== undefined) [...parentObjectRegistry].some(
             object => ignoreCloningMethodsThisLoop = value === object
@@ -330,12 +328,12 @@ export function cloneDeepInternal(_value,
                                 /** @param {any} s */
                                 s => ["string", "symbol"].includes(typeof s))) 
                         propsToIgnore.push(...result.propsToIgnore);
-                    else log(getWarning("return value of CLONE method is an " + 
-                                    "object whose propsToIgnore property, " + 
-                                    "if not undefined, is expected to be an " + 
-                                    "array of strings or symbols. The given " + 
-                                    "result is not this type of array so it " + 
-                                    "will have no effect."));
+                    else log(getWarning(
+                        "return value of CLONE method is an object whose " + 
+                        "propsToIgnore property, if not undefined, is " + 
+                        "expected to be an array of strings or symbols. The " + 
+                        "given result is not this type of array so it will " + 
+                        "have no effect."));
 
                 if (typeof result.ignoreProps === "boolean")
                     ignoreProps = result.ignoreProps;
@@ -353,7 +351,7 @@ export function cloneDeepInternal(_value,
             // Also, treat prototypes like ordinary objects. The tag wrongly 
             // indicates that prototypes are instances of themselves.
             else if ([Tag.OBJECT, Tag.ARGUMENTS].includes(tag)
-                     || isSupportedPrototype)
+                     || supportedPrototypes.includes(value))
                 cloned = assign(Object.create(Object.getPrototypeOf(value)), 
                                 parentOrAssigner, 
                                 prop,
@@ -700,8 +698,8 @@ export function cloneDeepInternal(_value,
         }
         catch(error) {
             const msg = "Encountered error while attempting to clone " + 
-            "specific value. The value will be \"cloned\" into an empty " + 
-            "object."
+                        "specific value. The value will be \"cloned\" into " + 
+                        "an empty object."
 
             if (error instanceof Error) {
                 error.message = `${msg} Error encountered: ${error.message}`;
