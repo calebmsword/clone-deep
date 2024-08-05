@@ -1,30 +1,4 @@
-import cloneDeep, { cloneInternalNoRecursion } from "./clone-deep.js";
-
-/**
- * Creates a customizer which composes other customizers.
- * The customizers are executed in order. The first to return an object is used 
- * as the result. If no customizer returns an object, undefined is returned.
- * @param {import("../public-types").Customizer[]} customizers 
- * An array of customizer functions.
- * @returns {import("../public-types").Customizer} 
- * A new customizer which composes the provided customizers.
- */
-export function useCustomizers(customizers) {
-    if (!Array.isArray(customizers)
-        || customizers.some(element => typeof element !== "function"))
-        throw new Error("useCustomizers must receive an array of functions");
-    
-    /**
-     * @param {any} value
-     * @returns {object|void}
-     */
-    return function combinedCustomizer(value) {
-        for (const customizer of customizers) {
-            const result = customizer(value);
-            if (typeof result === "object") return result;
-        }
-    }
-}
+import cloneDeep, { cloneDeepInternal } from "./clone-deep.js";
 
 /**
  * Deeply clones the provided object and its prototype chain.
@@ -33,7 +7,7 @@ export function useCustomizers(customizers) {
  * @template [U = T]
  * See the documentation for `cloneDeep`.
  * @param {T} value The object to clone.
- * @param {import("../public-types.js").CloneDeepFullyOptions|import("../public-types.js").Customizer} [options] 
+ * @param {import("../public-types").CloneDeepFullyOptions|import("../public-types").Customizer} [options] 
  * If a function, it is used as the customizer for the clone. 
  * @param {object} [options] 
  * If an object, it is used as a configuration object. See the documentation for 
@@ -41,11 +15,11 @@ export function useCustomizers(customizers) {
  * @param {boolean} options.force 
  * If `true`, prototypes with methods will be cloned. Normally, this function 
  * stops if it reaches any prototype with methods.
- * @param {import("../public-types.js").Customizer} options.customizer 
+ * @param {import("../public-types").Customizer} options.customizer 
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.ignoreCloningMethods
  * See the documentation for `cloneDeep`.
- * @param {import("../public-types.js").Log} options.log 
+ * @param {import("../public-types").Log} options.log 
  * See the documentation for `cloneDeep`.
  * @param {string} options.logMode 
  * See the documentation for `cloneDeep`.
@@ -53,7 +27,7 @@ export function useCustomizers(customizers) {
  * See the documentation for `cloneDeep`.
  * @returns {U} The deep copy.
  */
-export function cloneDeepFully(value, options) {
+export default function cloneDeepFully(value, options) {
     if (typeof options !== "object" && typeof options !== "function") 
         options = {};
     if (typeof options === "object" 
@@ -120,7 +94,7 @@ export function cloneDeepFully(value, options) {
         if (ignoreCloningMethods !== true) 
             parentObjectRegistry?.add(tempOrig);
 
-        const newProto = cloneInternalNoRecursion(
+        const newProto = cloneDeepInternal(
             Object.getPrototypeOf(tempOrig), 
             customizer, 
             log || defaultLog, 

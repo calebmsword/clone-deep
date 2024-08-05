@@ -11,8 +11,6 @@
         "strict": true
     },
     "include": [
-        "src/clone-deep.js",
-        "src/internals.js",
-        "src/utils.js"
+        "src/**/*"
     ]
 }

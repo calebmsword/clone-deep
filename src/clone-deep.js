@@ -1,18 +1,24 @@
 import { 
-    getTag, 
-    getAtomicErrorConstructor, 
-    getTypedArrayConstructor,
-    Tag, 
+    CLONE, 
+    forbiddenProps, 
     supportedPrototypes, 
-    forbiddenProps,
+    Tag
+} from "./utils/constants.js"
+import { 
+    getTag, 
+    isIterable, 
+    isTypedArray, 
+} from "./utils/type-checking.js";
+import { 
     getWarning,
-    Warning,
-    isTypedArray,
-    CLONE,
-    isIterable,
-    cloneFile,
-    createFileList
-} from "./internals.js";
+    Warning
+} from "./utils/clone-deep-warning.js";
+import { 
+    cloneFile, 
+    createFileList, 
+    getAtomicErrorConstructor, 
+    getTypedArrayConstructor, 
+} from "./utils/misc.js";
 
 /** 
  * This symbol is used to indicate that the cloned value is the top-level object 
@@ -29,9 +35,9 @@ const TOP_LEVEL = Symbol("TOP_LEVEL");
  * See CloneDeep.
  * @param {T} _value 
  * The value to clone.
- * @param {import("../public-types.js").Customizer|undefined} customizer 
+ * @param {import("../public-types").Customizer|undefined} customizer 
  * A customizer function.
- * @param {import("../public-types.js").Log} log 
+ * @param {import("../public-types").Log} log 
  * Receives an error object for logging.
  * @param {boolean} ignoreCloningMethods
  * Whether cloning methods will be observed.
@@ -42,17 +48,17 @@ const TOP_LEVEL = Symbol("TOP_LEVEL");
  * in the prototype of an object that was cloned earlier in the chain.
  * @returns {U}
  */
-export function cloneInternalNoRecursion(_value, 
-                                         customizer, 
-                                         log,
-                                         ignoreCloningMethods, 
-                                         doThrow,
-                                         parentObjectRegistry) {
+export function cloneDeepInternal(_value, 
+                                 customizer, 
+                                 log,
+                                 ignoreCloningMethods, 
+                                 doThrow,
+                                 parentObjectRegistry) {
 
     /**
      * Handles the assignment of the cloned value to some persistent place.
      * @param {any} cloned The cloned value.
-     * @param {Object|import("../private-types.js").assigner|Symbol|Object} 
+     * @param {Object|import("../private-types").assigner|Symbol|Object} 
      * [parentOrAssigner] Either the parent object that the cloned value will 
      * be assigned to, or a function which assigns the value itself. If equal to 
      * `TOP_LEVEL`, then it is the value that will be returned by the algorithm. 
@@ -114,7 +120,7 @@ export function cloneInternalNoRecursion(_value,
 
     /** 
      * A queue so we can avoid recursion.
-     * @type {import("../private-types.js").QueueElement[]}
+     * @type {import("../private-types").QueueElement[]}
      */ 
     const queue = [{ value: _value, parentOrAssigner: TOP_LEVEL }];
     
@@ -203,7 +209,7 @@ export function cloneInternalNoRecursion(_value,
             /** @type {any} */
             let clone;
 
-            /** @type {import("../public-types.js").AdditionalValue[]|undefined} */
+            /** @type {import("../public-types").AdditionalValue[]|undefined} */
             let additionalValues; 
 
             /** @type {boolean|undefined} */
@@ -307,7 +313,7 @@ export function cloneInternalNoRecursion(_value,
                      && ignoreCloningMethods !== true
                      && ignoreCloningMethodsThisLoop === false) {
                 
-                /** @type {import("../public-types.js").CloneMethodResult<any>} */
+                /** @type {import("../public-types").CloneMethodResult<any>} */
                 const result = value[CLONE]();
                 
                 if (result.propsToIgnore !== undefined)
@@ -455,7 +461,7 @@ export function cloneInternalNoRecursion(_value,
                         : new AggregateError(errors, message, { cause });
                 }
                 else {
-                    /** @type {import("../private-types.js").AtomicErrorConstructor} */
+                    /** @type {import("../private-types").AtomicErrorConstructor} */
                     const ErrorConstructor = getAtomicErrorConstructor(error, 
                                                                        log);
 
@@ -499,7 +505,7 @@ export function cloneInternalNoRecursion(_value,
             
             else if (isTypedArray(value) || Tag.DATAVIEW === tag) {
 
-                /** @type {import("../private-types.js").TypedArrayConstructor} */
+                /** @type {import("../private-types").TypedArrayConstructor} */
                 const TypedArray = getTypedArrayConstructor(tag, log);
 
                 // copy data over to clone
@@ -598,6 +604,37 @@ export function cloneInternalNoRecursion(_value,
 
                 cloned = createFileList(...files);
                 assign(cloned, parentOrAssigner, prop, metadata);
+            }
+
+            else if (Tag.DOMEXCEPTION === tag) {
+                /** @type {DOMException} */
+                const exception = value;
+
+                const clonedException = new DOMException(exception.message, 
+                                                         exception.name);
+
+                queue.push({ 
+                    value: exception.stack,
+
+                    /** @param {any} cloned */ 
+                    parentOrAssigner(cloned) {
+                        isExtensibleSealFrozen.push([
+                            exception.stack, 
+                            cloned
+                        ]);
+                        Object.defineProperty(clonedException, "stack", {
+                            enumerable: false,
+                            get: () => cloned
+                        });
+                    }
+                });
+
+                cloned = assign(clonedException, 
+                                parentOrAssigner, 
+                                prop, 
+                                metadata);
+
+                propsToIgnore.push("stack");
             }
 
             else if (Tag.DOMMATRIX === tag) {
@@ -729,15 +766,15 @@ export function cloneInternalNoRecursion(_value,
  * Nefarious customizer usage could require them be distinct, however. Please do 
  * not do this.
  * @param {T} value The value to deeply copy.
- * @param {import("../public-types.js").CloneDeepOptions|import("../public-types.js").Customizer} [optionsOrCustomizer] 
+ * @param {import("../public-types").CloneDeepOptions|import("../public-types").Customizer} [optionsOrCustomizer] 
  * If a function, this argument is used as the customizer.
  * @param {object} [optionsOrCustomizer] 
  * If an object, this argument is used as a configuration object.
- * @param {import("../public-types.js").Customizer} optionsOrCustomizer.customizer 
+ * @param {import("../public-types").Customizer} optionsOrCustomizer.customizer 
  * Allows the user to inject custom logic. The function is given the value to 
  * copy. If the function returns an object, the value of the `clone` property on 
  * that object will be used as the clone.
- * @param {import("../public-types.js").Log} optionsOrCustomizer.log 
+ * @param {import("../public-types").Log} optionsOrCustomizer.log 
  * Any errors which occur during the algorithm can optionally be passed to a log 
  * function. `log` should take one argument which will be the error encountered. 
  * Use this to log the error to a custom logger.
@@ -754,10 +791,10 @@ export function cloneInternalNoRecursion(_value,
  * @returns {U} The deep copy.
  */
 function cloneDeep(value, optionsOrCustomizer) {
-    /** @type {import("../public-types.js").Customizer|undefined} */
+    /** @type {import("../public-types").Customizer|undefined} */
     let customizer;
 
-    /** @type {import("../public-types.js").Log|undefined} */
+    /** @type {import("../public-types").Log|undefined} */
     let log;
 
     /** @type {string|undefined} */
@@ -791,11 +828,11 @@ function cloneDeep(value, optionsOrCustomizer) {
             /** @type {(error: Error) => void} */
             log = error => console.warn(error.message);
     
-    return cloneInternalNoRecursion(value, 
-                                    customizer, 
-                                    log, 
-                                    ignoreCloningMethods || false, 
-                                    letCustomizerThrow || false);
+    return cloneDeepInternal(value, 
+                             customizer, 
+                             log, 
+                             ignoreCloningMethods || false, 
+                             letCustomizerThrow || false);
 }
  
 export default cloneDeep;

@@ -3,24 +3,26 @@ import "./polyfills.js";
 import assert from "node:assert";
 import { describe, mock, test } from "node:test";
 
-import { 
-    Tag,
-    getTag,
-    supportedPrototypes, 
+import {
+    CLONE, 
     forbiddenProps, 
-    getTypedArrayConstructor,
-    isIterable,
-    CLONE,
-    isDOMMatrix,
-    isDOMMatrixReadOnly,
-    isDOMPoint,
-    isDOMPointReadOnly,
-    isDOMRect,
-    isDOMRectReadOnly,
-    createFileList
-} from "../src/internals.js";
+    supportedPrototypes, 
+    Tag
+} from "../src/utils/constants.js";
+import { 
+    getTag, 
+    isDOMMatrix, 
+    isDOMMatrixReadOnly, 
+    isDOMPoint, 
+    isDOMPointReadOnly, 
+    isDOMRect, 
+    isDOMRectReadOnly, 
+    isIterable
+} from "../src/utils/type-checking.js";
+import { createFileList, getTypedArrayConstructor } from "../src/utils/misc.js";
 import  cloneDeep from "../src/clone-deep.js";
-import { cloneDeepFully, useCustomizers } from "../src/utils.js";
+import cloneDeepFully from "../src/clone-deep-fully.js";
+import useCustomizers from "../src/use-customizers.js";
 
 // we will monkeypatch console.warn in a second, so hold onto the original 
 // implementation for safekeeping
@@ -182,15 +184,16 @@ try {
 
                 // Web APIs
                 blob: [new Blob(), Tag.BLOB],
-                file: [new File([], ""), Tag.FILE],
-                filelist: [createFileList([]), Tag.FILELIST],
+                domexception: [new DOMException, Tag.DOMEXCEPTION],
                 dommatrix: [new DOMMatrix(), Tag.DOMMATRIX],
                 dommatrixro: [new DOMMatrixReadOnly(), Tag.DOMMATRIXREADONLY],
                 dompoint: [new DOMPoint(), Tag.DOMPOINT],
                 dompointreadonly: [new DOMPointReadOnly, Tag.DOMPOINTREADONLY],
                 domquad: [new DOMQuad, Tag.DOMQUAD],
                 domrect: [new DOMRect(), Tag.DOMRECT],
-                domrectreadonly: [new DOMRectReadOnly(), Tag.DOMRECTREADONLY]
+                domrectreadonly: [new DOMRectReadOnly(), Tag.DOMRECTREADONLY],
+                file: [new File([], ""), Tag.FILE],
+                filelist: [createFileList([]), Tag.FILELIST]
             }
 
             for (const key of Object.keys(type)) {
@@ -1010,6 +1013,67 @@ try {
                 // -- assert
                 assert.strictEqual(cloned2D.is2D, original2D.is2D);
                 assert.strictEqual(cloned3D.is2D, original3D.is2D);
+            });
+        });
+
+        describe("DOMExecption", () => {
+            test("DOMException names and codes are cloned properly", () => {
+                // -- arrange
+                const exc = new DOMException;
+                const namedExc = new DOMException("custom msg", 
+                                                  "IndexSizeError");
+    
+                // -- act
+                const clonedExc = cloneDeep(exc);
+                const clonedNamed = cloneDeep(namedExc);
+    
+                // -- assert
+                assert.notStrictEqual(clonedExc, exc);
+                assert.deepEqual(clonedExc, exc);
+    
+                assert.notStrictEqual(clonedNamed, namedExc);
+                assert.deepEqual(clonedNamed, namedExc);
+    
+                assert.deepStrictEqual(
+                    [exc.name, exc.code, exc.stack], 
+                    [clonedExc.name, clonedExc.code, clonedExc.stack]);
+                assert.deepStrictEqual(
+                    [namedExc.name, namedExc.code, namedExc.stack], 
+                    [clonedNamed.name, clonedNamed.code, clonedNamed.stack]);
+            });
+
+            test("if stack is nonprimitive, it is still properly " + 
+                 "cloned", () => {
+                // -- arrange
+                const exc = new DOMException;
+                exc.stack = Object.preventExtensions({});
+
+                // -- act
+                const cloned = cloneDeep(exc);
+
+                // -- assert
+                assert.notStrictEqual(cloned.stack, exc.stack);
+                assert.deepEqual(cloned.stack, exc.stack);
+                assert.strictEqual(Object.isExtensible(cloned.stack), false);
+            });
+
+            test("if runtime does not provide a stack (or the stack is " + 
+                 "undefined), cloned DOMException will returned undefined if " + 
+                 "you access stack", () => {
+                // -- arrange 
+                const exc = new DOMException;
+                exc.stack = undefined;
+                
+                // -- act
+                const cloned = cloneDeep(exc);
+
+                // -- assert
+                assert.notStrictEqual(cloned, exc);
+                assert.deepEqual(cloned, exc);
+                assert.deepStrictEqual(
+                    [exc.name, exc.code, exc.stack], 
+                    [cloned.name, cloned.code, cloned.stack]);
+                assert.strictEqual(undefined, cloned.stack);
             });
         });
     });
