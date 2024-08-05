@@ -634,6 +634,14 @@ export function cloneInternalNoRecursion(_value,
                 assign(cloned, parentOrAssigner, prop, metadata);
             }
 
+            else if (Tag.DOMQUAD === tag) {
+                /** @type {DOMQuad} */
+                const quad = value;
+
+                const cloned = new DOMQuad(quad.p1, quad.p2, quad.p3, quad.p4);
+                assign(cloned, parentOrAssigner, prop, metadata);
+            }
+
             else if ([Tag.DOMRECT, Tag.DOMRECTREADONLY].includes(tag)) {
                 /** @type {DOMRect|DOMRectReadOnly} */
                 const domRect = value;

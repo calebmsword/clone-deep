@@ -4,6 +4,13 @@ const metadata = x => Object.getOwnPropertyDescriptors(x);
 
 const proto = x => Object.getPrototypeOf(x);
 
+/**
+ * Polyfills unsupported web APIs for a Node environment.
+ * This does NOT fully implement the web APIs. Not even close. The goal is to 
+ * implement the subset of functionality required for the testing for this 
+ * project and nothing more. None of these classes suffice as a genuine polyfill 
+ * for actual use. 
+ */
 export function polyfill() {
     
     // This is far overcomplicated in an attempt to preserve functionality 
@@ -305,10 +312,33 @@ export function polyfill() {
         globalThis.DOMQuad = class DOMQuad {
             static #registry = new WeakSet;
 
+            /** @type {DOMPoint} */
+            p1;
+
+            /** @type {DOMPoint} */
+            p2;
+
+            /** @type {DOMPoint} */
+            p3;
+
+            /** @type {DOMPoint} */
+            p4;
+
             [Symbol.toStringTag] = "DOMQuad";
 
-            constructor() {
+            /**
+             * @param {DOMPoint|DOMPointReadOnly} p1 
+             * @param {DOMPoint|DOMPointReadOnly} p2 
+             * @param {DOMPoint|DOMPointReadOnly} p3 
+             * @param {DOMPoint|DOMPointReadOnly} p4 
+             */
+            constructor(p1, p2, p3, p4) {
                 DOMQuad.#registry.add(this);
+
+                this.p1 = p1 ? DOMPoint.fromPoint(p1) : new DOMPoint;
+                this.p2 = p2 ? DOMPoint.fromPoint(p2) : new DOMPoint;
+                this.p3 = p3 ? DOMPoint.fromPoint(p3) : new DOMPoint;
+                this.p4 = p4 ? DOMPoint.fromPoint(p4) : new DOMPoint;
             }
 
             toJSON() {

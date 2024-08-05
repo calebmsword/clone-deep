@@ -185,10 +185,10 @@ try {
                 file: [new File([], ""), Tag.FILE],
                 filelist: [createFileList([]), Tag.FILELIST],
                 dommatrix: [new DOMMatrix(), Tag.DOMMATRIX],
-                dommatrixreadonly: [new DOMMatrixReadOnly(), 
-                                    Tag.DOMMATRIXREADONLY],
+                dommatrixro: [new DOMMatrixReadOnly(), Tag.DOMMATRIXREADONLY],
                 dompoint: [new DOMPoint(), Tag.DOMPOINT],
                 dompointreadonly: [new DOMPointReadOnly, Tag.DOMPOINTREADONLY],
+                domquad: [new DOMQuad, Tag.DOMQUAD],
                 domrect: [new DOMRect(), Tag.DOMRECT],
                 domrectreadonly: [new DOMRectReadOnly(), Tag.DOMRECTREADONLY]
             }
@@ -977,6 +977,7 @@ try {
                     DOMMatrixReadOnly,
                     DOMPoint,
                     DOMPointReadOnly,
+                    DOMQuad,
                     DOMRect,
                     DOMRectReadOnly
                 ].forEach(GeometryClass => {
