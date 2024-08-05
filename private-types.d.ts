@@ -33,3 +33,13 @@ export type AtomicErrorConstructor =
     SyntaxErrorConstructor | 
     TypeErrorConstructor | 
     URIErrorConstructor;
+
+type ConstructorFor<T> = new (...args: any[]) => T;
+
+export type GeometryConstructor = 
+    ConstructorFor<DOMMatrix> |
+    ConstructorFor<DOMMatrixReadOnly> |
+    ConstructorFor<DOMPoint> |
+    ConstructorFor<DOMMatrixReadOnly> |
+    ConstructorFor<DOMRect> |
+    ConstructorFor<DOMRectReadOnly>;

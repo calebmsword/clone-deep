@@ -5,9 +5,8 @@ import { describe, mock, test } from "node:test";
 
 import {
     CLONE, 
-    forbiddenProps, 
     supportedPrototypes, 
-    Tag
+    Tag 
 } from "../src/utils/constants.js";
 import { 
     getTag, 
@@ -202,10 +201,16 @@ try {
 
                 // -- act
                 const cloned = cloneDeep(value);
+                const clonedFast = cloneDeep(value, {
+                    prioritizePerformance: true
+                });
 
                 // -- assert
                 assert.strictEqual(typeof cloned, "object");
                 assert.strictEqual(tagOf(cloned), tag);
+
+                assert.strictEqual(typeof clonedFast, "object");
+                assert.strictEqual(tagOf(clonedFast), tag);
             }
         });
 
@@ -262,7 +267,6 @@ try {
             // -- act
             const cloned = cloneDeep(_original);
 
-            // Note that cloned.accessor is accessed TWICE.
             cloned.accessor;
             cloned.accessor = "different value";
 
@@ -276,7 +280,7 @@ try {
             assert.strictEqual(cloned.noAccessor, noAccessorValue);
             assert.strictEqual(descriptor.writable, false);
 
-            assert.strictEqual(get.mock.calls.length, 2);
+            assert.strictEqual(get.mock.calls.length, 1);
             assert.strictEqual(set.mock.calls.length, 1);
             assert.strictEqual(cloned.accessor, accessorValue);
         });
@@ -389,28 +393,6 @@ try {
                 calls[0].arguments[0].message.includes(
                     "Attempted to clone unsupported type."), 
                 true);
-        });
-
-        test("A warning is logged if prototype with forbidden props " +
-             "is cloned", () => {
-            Object.values(forbiddenProps).forEach(({ prototype }) => {
-                // -- arrange
-                const log = mock.fn(() => {});
-
-                // -- act
-                cloneDeep(prototype, { log });
-
-                // -- assert
-                const calls = log.mock.calls;
-                const error = calls[0].arguments[0];
-                assert.strictEqual(calls.length > 0, true);
-                assert.strictEqual(error instanceof Error, true);
-                assert.strictEqual(
-                    error.message.includes(
-                        "The cloned object will not have any inaccessible " + 
-                        "properties"),
-                    true);
-            });
         });
 
         test("A warning is logged if a promise is cloned", () => {
@@ -622,7 +604,7 @@ try {
                              errorStackReassigned.stack);
             assert.strictEqual(Object.isExtensible(clonedStackReassigned.stack), 
                                false);
-        })
+        });
 
         test("Errors are cloned correctly even if monkeypatched", () => {
             let doMonkeypatch = true;
@@ -793,33 +775,6 @@ try {
             });
         });
 
-        test('Function.prototype is "cloned" with allowed properties', () => {
-            // -- arrange
-            const expectedProperties = [
-                "length",
-                "name",
-                "constructor",
-                "apply",
-                "bind",
-                "call",
-                "toString",
-                Symbol.hasInstance
-            ]
-
-            // -- act
-            const cloned = cloneDeep(Function.prototype);
-
-            // -- assert
-            assert.strictEqual([
-                ...Object.getOwnPropertyNames(cloned),
-                ...Object.getOwnPropertySymbols(cloned)
-            ].length, expectedProperties.length);
-            
-            expectedProperties.forEach(key => {
-                assert.strictEqual(cloned.hasOwnProperty(key), true);
-            });
-        });
-
         test("functions become empty objects inheriting " + 
              "Function.prototype", () => {
             [function() {}, () => {}].forEach(func => {
@@ -949,7 +904,6 @@ try {
 
         test("FileLists are cloned properly", () => {
             // -- arrange
-
             const dateFoo = new Date("July 20, 69 20:17:40 GMT+00:00")
             const fileFoo = new File(["foo"], "foo", {
                 type: "text/plain",
@@ -970,6 +924,18 @@ try {
             assert.deepEqual(cloned, fileList);
             assert.notStrictEqual(cloned.item(0), fileList.item(0));
             assert.notStrictEqual(cloned.item(1), fileList.item(1));
+        });
+
+        test("objects with the File prototype are not assumed to be " + 
+             "Files", () => {
+            // -- arrange
+            const fakeFile = Object.create(File.prototype);
+
+            // -- act
+            const clone = cloneDeep(fakeFile);
+
+            // -- assert
+            assert.strictEqual(Tag.OBJECT, getTag(clone));
         });
 
         describe("geometry web APIs", () => {
@@ -1005,14 +971,25 @@ try {
                     1, 1, 1, 1,
                     1, 1, 1, 1
                 ]);
+                const original2DRO = new DOMMatrixReadOnly([1, 1, 1, 1, 1, 1]);
+                const original3DRO = new DOMMatrixReadOnly([
+                    1, 1, 1, 1,
+                    1, 1, 1, 1,
+                    1, 1, 1, 1,
+                    1, 1, 1, 1
+                ]);
 
                 // -- act
                 const cloned2D = cloneDeep(original2D);
                 const cloned3D = cloneDeep(original3D);
+                const cloned2DRO = cloneDeep(original2DRO);
+                const cloned3DRO = cloneDeep(original3DRO);
 
                 // -- assert
                 assert.strictEqual(cloned2D.is2D, original2D.is2D);
                 assert.strictEqual(cloned3D.is2D, original3D.is2D);
+                assert.strictEqual(cloned2DRO.is2D, original2DRO.is2D);
+                assert.strictEqual(cloned3DRO.is2D, original3DRO.is2D);
             });
         });
 

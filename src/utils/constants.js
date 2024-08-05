@@ -42,7 +42,6 @@ export const Tag = Object.freeze({
 
     // Web APIs
     BLOB: "[object Blob]",
-    CRYPTOKEY: "[object CryptoKey]",
     DOMEXCEPTION: "[object DOMException]",
     DOMMATRIX: "[object DOMMatrix]",
     DOMMATRIXREADONLY: "[object DOMMatrixReadOnly]",
@@ -86,36 +85,16 @@ export const supportedPrototypes = Object.freeze([
     Uint16Array.prototype,
     Uint32Array.prototype,
     BigInt64Array.prototype,
-    BigUint64Array.prototype
-]);
+    BigUint64Array.prototype,
 
-/**
- * Some native prototypes have properties that cannot be accessed or reassigned.
- * All such properties are stored here.
- */
-export const forbiddenProps = Object.freeze({
-    [Tag.FUNCTION]: { 
-        prototype: Function.prototype,
-        properties: ["caller", "callee", "arguments"]
-    },
-    [Tag.MAP]: {
-        prototype: Map.prototype,
-        properties: ["size"]
-    },
-    [Tag.SET]: {
-        prototype: Set.prototype,
-        properties: ["size"]
-    },
-    [Tag.SYMBOL]: {
-        prototype: Symbol.prototype,
-        properties: ["description"]
-    },
-    [Tag.ARRAYBUFFER]: {
-        prototype: ArrayBuffer.prototype,
-        properties: ["byteLength", "maxByteLength", "resizable", "detached"]
-    },
-    [Tag.DATAVIEW]: {
-        prototype: DataView.prototype,
-        properties: ["buffer", "byteLength", "byteOffset"]
-    }
-});
+    // Web APIs
+    Blob.prototype,
+    DOMException.prototype,
+    DOMMatrix.prototype,
+    DOMMatrixReadOnly.prototype,
+    DOMPoint.prototype,
+    DOMPointReadOnly.prototype,
+    DOMQuad.prototype,
+    File.prototype,
+    FileList.prototype
+]);

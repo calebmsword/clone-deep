@@ -21,6 +21,8 @@ import cloneDeep, { cloneDeepInternal } from "./clone-deep.js";
  * See the documentation for `cloneDeep`.
  * @param {import("../public-types").Log} options.log 
  * See the documentation for `cloneDeep`.
+ * @param {boolean} options.prioritizePerformance
+ * See the documentation for `cloneDeep`.
  * @param {string} options.logMode 
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.letCustomizerThrow 
@@ -37,14 +39,16 @@ export default function cloneDeepFully(value, options) {
     /** @type {import("../public-types").Customizer|undefined} */
     let customizer;
     let log;
+    let prioritizePerformance;
     let ignoreCloningMethods;
     let letCustomizerThrow;
 
     if (typeof options === "function") customizer = options;
     else ({
-        customizer,
-        log,
-        ignoreCloningMethods,
+        customizer, 
+        log, 
+        prioritizePerformance, 
+        ignoreCloningMethods, 
         letCustomizerThrow
     } = options);
     
@@ -98,6 +102,7 @@ export default function cloneDeepFully(value, options) {
             Object.getPrototypeOf(tempOrig), 
             customizer, 
             log || defaultLog, 
+            prioritizePerformance || false,
             ignoreCloningMethods || false, 
             letCustomizerThrow || false,
             parentObjectRegistry);

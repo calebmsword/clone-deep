@@ -1,6 +1,5 @@
 import { 
     CLONE, 
-    forbiddenProps, 
     supportedPrototypes, 
     Tag
 } from "./utils/constants.js"
@@ -18,6 +17,8 @@ import {
     createFileList, 
     getAtomicErrorConstructor, 
     getTypedArrayConstructor, 
+    hasAccessor, 
+    isDefaultDescriptor, 
 } from "./utils/misc.js";
 
 /** 
@@ -39,6 +40,8 @@ const TOP_LEVEL = Symbol("TOP_LEVEL");
  * A customizer function.
  * @param {import("../public-types").Log} log 
  * Receives an error object for logging.
+ * @param {boolean} prioritizePerformance
+ * Whether or not type-checking will be more performant.
  * @param {boolean} ignoreCloningMethods
  * Whether cloning methods will be observed.
  * @param {boolean} doThrow 
@@ -51,39 +54,49 @@ const TOP_LEVEL = Symbol("TOP_LEVEL");
 export function cloneDeepInternal(_value, 
                                  customizer, 
                                  log,
+                                 prioritizePerformance, 
                                  ignoreCloningMethods, 
                                  doThrow,
                                  parentObjectRegistry) {
 
     /**
      * Handles the assignment of the cloned value to some persistent place.
-     * @param {any} cloned The cloned value.
-     * @param {Object|import("../private-types").assigner|Symbol|Object} 
-     * [parentOrAssigner] Either the parent object that the cloned value will 
-     * be assigned to, or a function which assigns the value itself. If equal to 
-     * `TOP_LEVEL`, then it is the value that will be returned by the algorithm. 
-     * @param {PropertyKey} [prop] If `parentOrAssigner` is a parent 
-     * object, then `parentOrAssigner[prop]` will be assigned `cloned`.
-     * @param {PropertyDescriptor} [metadata] The property descriptor 
-     * for the object. If not an object, then this is ignored.
-     * @returns {any} The cloned value.
+     * @param {any} cloned 
+     * The cloned value.
+     * @param {Object|import("../private-types").assigner|symbol|Object} [parentOrAssigner] 
+     * Either the parent object that the cloned value will be assigned to, or a 
+     * function which assigns the value itself. If equal to `TOP_LEVEL`, then it 
+     * is the value that will be returned by the algorithm. 
+     * @param {PropertyKey} [prop] 
+     * If `parentOrAssigner` is a parent object, then `parentOrAssigner[prop]` 
+     * will be assigned `cloned`.
+     * @param {PropertyDescriptor} [metadata] 
+     * The property descriptor for the object. If not an object, then this is 
+     * ignored.
+     * @returns {any} 
+     * The cloned value.
      */
     function assign(cloned, parentOrAssigner, prop, metadata) {
         if (parentOrAssigner === TOP_LEVEL) 
             result = cloned;
         else if (typeof parentOrAssigner === "function") 
             parentOrAssigner(cloned, prop, metadata);
+        else if (typeof parentOrAssigner === "object" 
+                 && (typeof prop === "string" || typeof prop === "symbol")
+                 && isDefaultDescriptor(metadata)) {
+            /** @type {{ [key: string|symbol]: any }} */
+            const parent = parentOrAssigner;
+
+            parent[prop] = cloned;
+        }
         else if (typeof prop !== "undefined" && typeof metadata === "object") {
             /** @type {PropertyDescriptor} */
             const clonedMetadata = { 
                 configurable: metadata.configurable,
                 enumerable: metadata.enumerable
             };
-
-            const hasAccessor = typeof metadata.get === "function"
-                                || typeof metadata.set === "function";
             
-            if (!hasAccessor) {
+            if (!hasAccessor(metadata)) {
                 // `cloned` or getAccessor will determine the value
                 clonedMetadata.value = cloned;
 
@@ -96,7 +109,7 @@ export function cloneDeepInternal(_value,
             if (typeof metadata.set === "function")
                 clonedMetadata.set = metadata.set;
 
-            if (hasAccessor) 
+            if (hasAccessor(metadata)) 
                 log(getWarning(
                     `Cloning value with name ${String(prop)} whose property ` +
                     "descriptor contains a get or set accessor."));
@@ -276,22 +289,15 @@ export function cloneDeepInternal(_value,
          * Identifies the type of the value.
          * @type {String}
          */
-        const tag = getTag(value);
+        const tag = getTag(value, prioritizePerformance);
+
+        const isSupportedPrototype = supportedPrototypes.includes(value);
 
         // Check if we should observe cloning methods on this loop
         if (parentObjectRegistry !== undefined) [...parentObjectRegistry].some(
             object => ignoreCloningMethodsThisLoop = value === object
                 ?.constructor
                 ?.prototype);
-
-        if (forbiddenProps[tag] !== undefined
-            && forbiddenProps[tag].prototype === value)
-            log(getWarning(
-                `Attempted to clone ${tag.substring(8, tag.length - 1)}` + 
-                ".prototype. This object cannot have the following properties" + 
-                `accessed: ${forbiddenProps[tag].properties.join(", ")}. The ` + 
-                "cloned object will not have any inaccessible properties."
-            ));
         
         try {
             // skip the following "else if" branches
@@ -347,7 +353,7 @@ export function cloneDeepInternal(_value,
             // Also, treat prototypes like ordinary objects. The tag wrongly 
             // indicates that prototypes are instances of themselves.
             else if ([Tag.OBJECT, Tag.ARGUMENTS].includes(tag)
-                     || supportedPrototypes.includes(value))
+                     || isSupportedPrototype)
                 cloned = assign(Object.create(Object.getPrototypeOf(value)), 
                                 parentOrAssigner, 
                                 prop,
@@ -503,7 +509,8 @@ export function cloneDeepInternal(_value,
                 cloned = assign(arrayBuffer, parentOrAssigner, prop, metadata);
             }
             
-            else if (isTypedArray(value) || Tag.DATAVIEW === tag) {
+            else if (isTypedArray(value, prioritizePerformance, tag) 
+                     || Tag.DATAVIEW === tag) {
 
                 /** @type {import("../private-types").TypedArrayConstructor} */
                 const TypedArray = getTypedArrayConstructor(tag, log);
@@ -647,7 +654,7 @@ export function cloneDeepInternal(_value,
             else if (Tag.DOMMATRIXREADONLY === tag) {
                 /** @type {DOMMatrixReadOnly} */
                 const matrix = value;
-
+                
                 cloned = matrix.is2D 
                     ? new DOMMatrixReadOnly([
                         matrix.a, matrix.b, matrix.c, matrix.d, 
@@ -730,19 +737,17 @@ export function cloneDeepInternal(_value,
         [Object.getOwnPropertyNames(value), Object.getOwnPropertySymbols(value)]
             .forEach(array => {
                 array.forEach(key => {
-                    if (typeof key === "string" 
-                        && forbiddenProps[tag] !== undefined
-                        && value === forbiddenProps[tag].prototype
-                        && forbiddenProps[tag].properties.includes(key)) 
-                        return;
 
                     if (propsToIgnore.includes(key)) return;
                     
+                    const metadata = Object.getOwnPropertyDescriptor(value, 
+                                                                     key);
+
                     queue.push({ 
-                        value: value[key], 
+                        value: !hasAccessor(metadata) ? value[key] : undefined, 
                         parentOrAssigner: cloned,
                         prop: key,
-                        metadata: Object.getOwnPropertyDescriptor(value, key)
+                        metadata: metadata
                     });
                 });
             });
@@ -778,6 +783,8 @@ export function cloneDeepInternal(_value,
  * Any errors which occur during the algorithm can optionally be passed to a log 
  * function. `log` should take one argument which will be the error encountered. 
  * Use this to log the error to a custom logger.
+ * @param {boolean} optionsOrCustomizer.prioritizePerformance
+ * Whether type-checking will be done performantly or robustly.
  * @param {boolean} optionsOrCustomizer.ignoreCloningMethods
  * Whether cloning methods will be observed.
  * @param {string} optionsOrCustomizer.logMode 
@@ -797,6 +804,9 @@ function cloneDeep(value, optionsOrCustomizer) {
     /** @type {import("../public-types").Log|undefined} */
     let log;
 
+    /** @type {boolean|undefined} */
+    let prioritizePerformance;
+
     /** @type {string|undefined} */
     let logMode;
 
@@ -811,6 +821,7 @@ function cloneDeep(value, optionsOrCustomizer) {
     else if (typeof optionsOrCustomizer === "object") {
         ({ 
             log, 
+            prioritizePerformance, 
             logMode,
             ignoreCloningMethods,
             letCustomizerThrow 
@@ -831,6 +842,7 @@ function cloneDeep(value, optionsOrCustomizer) {
     return cloneDeepInternal(value, 
                              customizer, 
                              log, 
+                             prioritizePerformance || false, 
                              ignoreCloningMethods || false, 
                              letCustomizerThrow || false);
 }

@@ -117,15 +117,18 @@ export const {
     isDOMRect
 } = getGeometryCheckers(DOMRectReadOnly, { name: "x" }, "x");
 
+const lastModifiedGetter = 
+    Object.getOwnPropertyDescriptors(File.prototype).lastModified.get;
+
 /**
  * Returns `true` if the given value is a File instance, `false` otherwise.
  * @param {any} value 
  * @returns {boolean}
  */
 export function isFile(value) {
+    if (!(value instanceof File)) return false;
     try {
-        Blob.prototype.slice.call(value);
-        getDescriptors(getPrototype(value)).lastModified.get?.call(value);
+        lastModifiedGetter?.call(value);
         return true;
     }
     catch {
@@ -240,12 +243,20 @@ const typeCheckers = [
  * accessor function. No matter which method is used, we return the tag 
  * associated with the detected class.
  * 
+ * Since calling prototype methods can be expensive, it is possible to call this 
+ * function is such a way that `Object.prototype.toString.call` is solely used 
+ * to determine tags using the `prioritizePerformance` parameter.
+ * 
  * @param {any} value 
  * The value to get the tag of.
+ * @param {boolean} prioritizePerformance
+ * Whether type-checking should be done performantly.
  * @returns {string} tag 
  * A string indicating the value's type.
  */
-export function getTag(value) {
+export function getTag(value, prioritizePerformance) {
+
+    if (prioritizePerformance) return Object.prototype.toString.call(value);
 
     /** @type {undefined|string} */
     let result;
@@ -287,13 +298,33 @@ export function isIterable(value) {
 const TypedArrayProto = getPrototype(getPrototype((
     new Float32Array(new ArrayBuffer(0)))));
 
+const typedArrayTags = Object.freeze([
+    "[object Float32Array]",
+    "[object Float64Array]",
+    "[object Int8Array]",
+    "[object Int16Array]",
+    "[object Int32Array]",
+    "[object Uint8Array]",
+    "[object Uint8ClampedArray]",
+    "[object Uint16Array]",
+    "[object Uint32Array]",
+    "[object BigInt64Array]",
+    "[object BigUint64Array]",
+]);
+
 /**
  * Returns `true` if given value is a TypedArray instance, `false` otherwise.
  * @param {string} value 
  * Any arbitrary value
+ * @param {boolean} prioritizePerformance
+ * Whether type-checking should be done performantly.
+ * @param {string} tag
+ * The tag for the value.
  * @returns {boolean}
  */
-export function isTypedArray(value) {
+export function isTypedArray(value, prioritizePerformance, tag) {
+    if (prioritizePerformance) return typedArrayTags.includes(tag);
+
     try {
         TypedArrayProto.lastIndexOf.call(value);
         return true;

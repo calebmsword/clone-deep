@@ -28,8 +28,6 @@ export function polyfill() {
             
             #is2D;
 
-            [Symbol.toStringTag] = "DOMMatrixReadOnly";
-
             get is2D() {
                 return this.#is2D;
             }
@@ -140,8 +138,6 @@ export function polyfill() {
                 globalThis.DOMMatrix = class DOMMatrix extends 
                     DOMMatrixReadOnly {
                     static #registry = new WeakSet;
-
-                    [Symbol.toStringTag] = "DOMMatrix";
         
                     constructor(arg) {
                         super(arg);
@@ -166,6 +162,8 @@ export function polyfill() {
                             });
                     }
                 }
+
+                DOMMatrix.prototype[Symbol.toStringTag] = "DOMMatrix";
             }
 
             scale() {
@@ -184,6 +182,8 @@ export function polyfill() {
         };
 
         new DOMMatrixReadOnly;
+
+        DOMMatrixReadOnly.prototype[Symbol.toStringTag] = "DOMMatrixReadOnly";
     }
     
     if (typeof globalThis.DOMPointReadOnly !== "function") {
@@ -217,6 +217,8 @@ export function polyfill() {
                 return new DOMPointReadOnly(domPoint.x);
             }
         }
+
+        DOMPointReadOnly.prototype[Symbol.toStringTag] = "DOMPointReadOnly";
 
         globalThis.DOMPoint = class DOMPoint extends DOMPointReadOnly {
             static #registry = new WeakSet;
@@ -253,6 +255,8 @@ export function polyfill() {
             }
 
         }
+
+        DOMPoint.prototype[Symbol.toStringTag] = "DOMPoint";
     }
 
     if (typeof globalThis.DOMRectReadOnly !== "function") {
@@ -278,6 +282,8 @@ export function polyfill() {
                 return new DOMRectReadOnly(rect.x);
             }
         };
+
+        DOMRectReadOnly.prototype[Symbol.toStringTag] = "DOMRectReadOnly";
 
         globalThis.DOMRect = class DOMRect extends DOMRectReadOnly {
             static #registry = new WeakSet;
@@ -306,6 +312,8 @@ export function polyfill() {
                 return new DOMRect(rect.x);
             }
         };
+
+        DOMRect.prototype[Symbol.toStringTag] = "DOMRect";
     }
 
     if (typeof globalThis.DOMQuad !== "function") {
@@ -313,16 +321,40 @@ export function polyfill() {
             static #registry = new WeakSet;
 
             /** @type {DOMPoint} */
-            p1;
+            #p1;
 
             /** @type {DOMPoint} */
-            p2;
+            #p2;
 
             /** @type {DOMPoint} */
-            p3;
+            #p3;
 
             /** @type {DOMPoint} */
-            p4;
+            #p4;
+
+            get p1() {
+                if (!DOMQuad.#registry.has(this))
+                    throw new TypeError(msg);
+                return this.#p1;
+            }
+
+            get p2() {
+                if (!DOMQuad.#registry.has(this))
+                    throw new TypeError(msg);
+                return this.#p2;
+            }
+
+            get p3() {
+                if (!DOMQuad.#registry.has(this))
+                    throw new TypeError(msg);
+                return this.#p3;
+            }
+
+            get p4() {
+                if (!DOMQuad.#registry.has(this))
+                    throw new TypeError(msg);
+                return this.#p4;
+            }
 
             [Symbol.toStringTag] = "DOMQuad";
 
@@ -335,10 +367,10 @@ export function polyfill() {
             constructor(p1, p2, p3, p4) {
                 DOMQuad.#registry.add(this);
 
-                this.p1 = p1 ? DOMPoint.fromPoint(p1) : new DOMPoint;
-                this.p2 = p2 ? DOMPoint.fromPoint(p2) : new DOMPoint;
-                this.p3 = p3 ? DOMPoint.fromPoint(p3) : new DOMPoint;
-                this.p4 = p4 ? DOMPoint.fromPoint(p4) : new DOMPoint;
+                this.#p1 = p1 ? DOMPoint.fromPoint(p1) : new DOMPoint;
+                this.#p2 = p2 ? DOMPoint.fromPoint(p2) : new DOMPoint;
+                this.#p3 = p3 ? DOMPoint.fromPoint(p3) : new DOMPoint;
+                this.#p4 = p4 ? DOMPoint.fromPoint(p4) : new DOMPoint;
             }
 
             toJSON() {
@@ -347,6 +379,8 @@ export function polyfill() {
                 return {};
             }
         }
+
+        DOMQuad.prototype[Symbol.toStringTag] = "DOMQuad";
     }
 
     if (typeof globalThis.FileList !== "function") {
@@ -379,6 +413,8 @@ export function polyfill() {
                 return this.#items.length;
             }
         }
+
+        FileList.prototype[Symbol.toStringTag] = "FileList";
     }
 
     if (typeof globalThis.DataTransfer !== "function") {
@@ -411,4 +447,18 @@ export function polyfill() {
     }
 }
 
+// Causes this module to have side effect of populating polyfills.
 polyfill();
+
+/**
+ * Clear all polyfills.
+ */
+export function clearPolyfills() {
+    globalThis.DOMMatrixReadOnly = undefined;
+    globalThis.DOMMatrix = undefined;
+    globalThis.DOMPointReadOnly = undefined;
+    globalThis.DOMPoint = undefined;
+    globalThis.DOMQuad = undefined;
+    globablThis.FileList = undefined;
+    globalThis.DataTransfer = undefined;
+}

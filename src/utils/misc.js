@@ -121,3 +121,26 @@ export function cloneFile(file) {
         lastModified: file.lastModified
     });
 }
+
+/**
+ * Whether the provided property descriptor is the default value.
+ * @param {PropertyDescriptor} [descriptor] 
+ * @returns {boolean}
+ */
+export function isDefaultDescriptor(descriptor) {
+    return typeof descriptor === "object"
+           &&descriptor.configurable === true
+           && descriptor.enumerable === true
+           && descriptor.writable === true;
+}
+
+/**
+ * Whether the property descriptor is for a property with getter and/or setter.
+ * @param {PropertyDescriptor} [metadata]
+ * @returns {boolean}
+ */
+export function hasAccessor(metadata) {
+    return typeof metadata === "object" 
+           && (typeof metadata.get === "function"
+               || typeof metadata.set === "function");
+}
