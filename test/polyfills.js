@@ -1,3 +1,5 @@
+/* node:coverage disable */
+
 const msg = "Illegal invocation";
 
 const metadata = x => Object.getOwnPropertyDescriptors(x);

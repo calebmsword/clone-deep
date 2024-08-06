@@ -1,3 +1,5 @@
+/* node:coverage disable */
+
 import "./polyfills.js";
 
 import assert from "node:assert";
