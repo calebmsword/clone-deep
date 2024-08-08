@@ -5,15 +5,14 @@
   "version": "1.0.17",
   "description": "A dependency-free utility for deeply cloning JavaScript objects.",
   "main": "index.js",
-  "types": "cms-clone-deep.d.ts",
+  "types": "public-types.d.ts",
   "keywords": [
     "clone",
     "deep"
   ],
   "scripts": {
     "test": "node --test",
-    "test-coverage": "node --test --experimental-test-coverage",
-    "serve": "node .\\benchmark\\serve.js"
+    "test-coverage": "node --test --experimental-test-coverage"
   },
   "author": "Caleb Sword",
   "license": "MIT",

@@ -1,10 +1,9 @@
-import cloneDeep from "../src/clone-deep.js";
+import cloneDeep from "./clone-deep.js";
 
 /**
  * This script is meant to be run as the script for the benchmark UI. The 
- * associated HTML is in index.html. Run `node benchmark\serve.js` in the 
- * directory containing index.html and the UI will be hosted at 
- * http://localhost:8787.
+ * associated HTML is in index.html. Run `node serve.js` in the directory 
+ * containing index.html and the UI will be hosted at http://localhost:8787.
  */
 
 let numIterations = 1000;

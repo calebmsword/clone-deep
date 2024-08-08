@@ -1,12 +1,30 @@
-import cloneDeep from "./clone-deep.js";
-import { cloneDeepInternal } from "./utils/clone-deep-internal.js";
-import { hasMethods } from "./utils/metadata.js";
+import cloneDeep, { cloneInternalNoRecursion } from "./clone-deep.js";
 
-/** @typedef {import("./types").CloneDeepFullyOptions} CloneDeepFullyOptions */
-
-/** @typedef {import("./types").Customizer} Customizer */
-
-/** @typedef {import("./types").Log} Log */
+/**
+ * Creates a customizer which composes other customizers.
+ * The customizers are executed in order. The first to return an object is used 
+ * as the result. If no customizer returns an object, undefined is returned.
+ * @param {import("./public-types").Customizer[]} customizers 
+ * An array of customizer functions.
+ * @returns {import("./public-types").Customizer} 
+ * A new customizer which composes the provided customizers.
+ */
+export function useCustomizers(customizers) {
+    if (!Array.isArray(customizers)
+        || customizers.some(element => typeof element !== "function"))
+        throw new Error("useCustomizers must receive an array of functions");
+    
+    /**
+     * @param {any} value
+     * @returns {object|void}
+     */
+    return function combinedCustomizer(value) {
+        for (const customizer of customizers) {
+            const result = customizer(value);
+            if (typeof result === "object") return result;
+        }
+    }
+}
 
 /**
  * Deeply clones the provided object and its prototype chain.
@@ -15,7 +33,7 @@ import { hasMethods } from "./utils/metadata.js";
  * @template [U = T]
  * See the documentation for `cloneDeep`.
  * @param {T} value The object to clone.
- * @param {CloneDeepFullyOptions|Customizer} [options] 
+ * @param {import("./public-types.js").CloneDeepFullyOptions|import("./public-types.js").Customizer} [options] 
  * If a function, it is used as the customizer for the clone. 
  * @param {object} [options] 
  * If an object, it is used as a configuration object. See the documentation for 
@@ -23,13 +41,11 @@ import { hasMethods } from "./utils/metadata.js";
  * @param {boolean} options.force 
  * If `true`, prototypes with methods will be cloned. Normally, this function 
  * stops if it reaches any prototype with methods.
- * @param {Customizer} options.customizer 
+ * @param {import("./public-types.js").Customizer} options.customizer 
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.ignoreCloningMethods
  * See the documentation for `cloneDeep`.
- * @param {Log} options.log 
- * See the documentation for `cloneDeep`.
- * @param {boolean} options.prioritizePerformance
+ * @param {import("./public-types.js").Log} options.log 
  * See the documentation for `cloneDeep`.
  * @param {string} options.logMode 
  * See the documentation for `cloneDeep`.
@@ -37,27 +53,49 @@ import { hasMethods } from "./utils/metadata.js";
  * See the documentation for `cloneDeep`.
  * @returns {U} The deep copy.
  */
-export default function cloneDeepFully(value, options) {
+export function cloneDeepFully(value, options) {
     if (typeof options !== "object" && typeof options !== "function") 
         options = {};
     if (typeof options === "object" 
         && typeof options.force !== "boolean") 
         options.force = false;
     
+    /** @type {import("./public-types").Customizer|undefined} */
     let customizer;
     let log;
-    let prioritizePerformance;
     let ignoreCloningMethods;
     let letCustomizerThrow;
 
     if (typeof options === "function") customizer = options;
     else ({
-        customizer, 
-        log, 
-        prioritizePerformance, 
-        ignoreCloningMethods, 
+        customizer,
+        log,
+        ignoreCloningMethods,
         letCustomizerThrow
     } = options);
+    
+    /**
+     * Returns an array of all properties in the object.
+     * This includes symbols and non-enumerable properties. `undefined` or 
+     * `null` returns an empty array.
+     * @param {Object} o An object.
+     * @returns {(string|symbol)[]} An array of property names.
+     */
+    function getAllPropertiesOf(o) {
+        return [Object.getOwnPropertyNames(o), Object.getOwnPropertySymbols(o)]
+            .flat();
+    }
+    
+    /**
+     * Is true if the provided object has methods. Is false otherwise.
+     * @param {any} o An object
+     * @returns {Boolean}
+     */
+    function hasMethods(o) {
+        // We cannot access some properties of Function.prototype in strict mode
+        if (o === Function.prototype) return true;
+        return getAllPropertiesOf(o).some(key => typeof o[key] === "function");
+    }
 
     /** @type {U} */
     const clone = cloneDeep(value, options);
@@ -82,11 +120,10 @@ export default function cloneDeepFully(value, options) {
         if (ignoreCloningMethods !== true) 
             parentObjectRegistry?.add(tempOrig);
 
-        const newProto = cloneDeepInternal(
+        const newProto = cloneInternalNoRecursion(
             Object.getPrototypeOf(tempOrig), 
             customizer, 
             log || defaultLog, 
-            prioritizePerformance || false,
             ignoreCloningMethods || false, 
             letCustomizerThrow || false,
             parentObjectRegistry);
