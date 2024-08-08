@@ -85,6 +85,9 @@ export function getAtomicErrorConstructor(value, log) {
  * @returns {FileList}
  */
 export function createFileList(...files) {
+    if (!isCallable(globalThis.DataTransfer))
+        throw getWarning("Cannot create FileList in this runtime.");
+
     const dataTransfer = new DataTransfer;
 
     for (const file of files) dataTransfer.items.add(file);

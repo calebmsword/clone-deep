@@ -34,7 +34,11 @@ export function polyfill() {
                 return this.#is2D;
             }
 
-            /** @param {[number, number, number, number, number, number] | [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number] | undefined} array */
+            /** @typedef {[number, number, number, number, number, number]} Sextet */
+            /** @typedef {[number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number]} Sixteenet */
+            /** @typedef {Sextet|Sixteenet} DOMMatrixInit */
+
+            /** @param {DOMMatrixInit | undefined} array */
             constructor(array) {
                 if (array !== undefined && 
                     (!Array.isArray(array) || ![6, 16].includes(array.length)))

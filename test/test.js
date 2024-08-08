@@ -5,7 +5,7 @@ import "./polyfills.js";
 import assert from "node:assert";
 import { describe, mock, test } from "node:test";
 
-import { polyfill } from "./polyfills.js";
+import { clearPolyfills, polyfill } from "./polyfills.js";
 
 import  cloneDeep from "../src/clone-deep.js";
 import cloneDeepFully from "../src/clone-deep-fully.js";
@@ -216,6 +216,88 @@ try {
 
                 assert.strictEqual(typeof clonedFast, "object");
                 assert.strictEqual(tagOf(clonedFast), tag);
+            }
+        });
+
+        test("non-web apis are cloned into the correct type in runtime " + 
+             "without Web API polyfills", () => {
+
+            clearPolyfills();
+            
+            try {
+                const getNew = TypedArray => new TypedArray(new ArrayBuffer());
+
+                const type = {
+                    // "standard" classes
+                    args: [
+                            {
+                                callee: mock.fn(),
+                                length: 0,
+                                [Symbol.iterator]() {
+                                    let i = 0;
+                                    return {
+                                        next: () => this[i++],
+                                        done: () => i >= this.length
+                                    }
+                                },
+                                [Symbol.toStringTag]: "Arguments"
+                            },
+                            Tag.ARGUMENTS
+                    ],
+                    array: [[], Tag.ARRAY],
+                    bigint: [new Object(BigInt(0)), Tag.BIGINT],
+                    boolean: [new Boolean(), Tag.BOOLEAN],
+                    date: [new Date(), Tag.DATE],
+                    error: [new Error(), Tag.ERROR],
+                    map: [new Map(), Tag.MAP],
+                    number: [new Number(), Tag.NUMBER],
+                    object: [new Object(), Tag.OBJECT],
+                    promise: [new Promise(r => r()), Tag.PROMISE],
+                    regexp: [/i/, Tag.REGEXP],
+                    set: [new Set(), Tag.SET],
+                    string: [new String(), Tag.STRING],
+                    symbol: [new Object(Symbol("symbol")), Tag.SYMBOL],
+
+                    // ArrayBuffer, DataView and TypedArrays
+                    arraybuffer: [new ArrayBuffer(), Tag.ARRAYBUFFER],
+                    dataview: [getNew(DataView), Tag.DATAVIEW],
+                    float32: [getNew(Float32Array), Tag.FLOAT32],
+                    float64: [getNew(Float64Array), Tag.FLOAT64],
+                    int8: [getNew(Int8Array), Tag.INT8],
+                    int16: [getNew(Int16Array), Tag.INT16],
+                    int32: [getNew(Int32Array), Tag.INT32],
+                    uint8: [getNew(Uint8Array), Tag.UINT8],
+                    uint8Clamped: [getNew(Uint8ClampedArray), Tag.UINT8CLAMPED],
+                    uint16: [getNew(Uint16Array), Tag.UINT16],
+                    uint32: [getNew(Uint32Array), Tag.UINT32],
+                    bigint64: [getNew(BigInt64Array), Tag.BIGINT64],
+                    biguint64: [getNew(BigUint64Array), Tag.BIGUINT64],
+                }
+
+                for (const key of Object.keys(type)) {
+                    // -- arrange
+                    const [value, tag] = type[key];
+
+                    // -- act
+                    const cloned = cloneDeep(value);
+                    const clonedFast = cloneDeep(value, {
+                        prioritizePerformance: true
+                    });
+
+                    // -- assert
+                    assert.strictEqual(typeof cloned, "object");
+                    assert.strictEqual(tagOf(cloned), tag);
+
+                    assert.strictEqual(typeof clonedFast, "object");
+                    assert.strictEqual(tagOf(clonedFast), tag);
+                }
+            }
+            catch(error) {
+                polyfill();
+                throw error;
+            }
+            finally {
+                polyfill();
             }
         });
 
@@ -1848,7 +1930,6 @@ try {
             assert.strictEqual(false, isDOMPoint(domPointReadOnly));
             assert.strictEqual(false, isDOMPoint({}));
 
-            console.log("bingus moment?");
             assert.strictEqual(true, isDOMPointReadOnly(domPointReadOnly));
             assert.strictEqual(false, isDOMPointReadOnly(domPoint));
             assert.strictEqual(false, isDOMPointReadOnly({}));
@@ -1860,6 +1941,24 @@ try {
             assert.strictEqual(true, isDOMRectReadOnly(domRectReadOnly));
             assert.strictEqual(false, isDOMRectReadOnly(domRect));
             assert.strictEqual(false, isDOMRectReadOnly({}));
+        });
+
+        test("createFileList throws if DataTransfer is not available", () => {
+            // -- act/assert
+            try {
+                clearPolyfills();
+
+                assert.throws(() => {
+                    createFileList(new File(["Foo"], "foo"));
+                });
+            }
+            catch(error) {
+                polyfill();
+                throw error;
+            }
+            finally {
+                polyfill();
+            }
         });
     });
 }

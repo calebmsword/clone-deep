@@ -143,9 +143,13 @@ export function isFile(value) {
     }
 }
 
+/** @typedef {new (...args: any[]) => any} Constructor */
+
+/** @typedef {BigIntConstructor|SymbolConstructor|Constructor} ClassesToTypeCheckConstructor */
+
 /** 
  * Convenience array used for `getTag`.
- * @type {Array<[any, string, string, ...any]>} 
+ * @type {Array<[ClassesToTypeCheckConstructor|string, string, string, ...any]>} 
  */
 const classesToTypeCheck = [
     // "standard" classes
@@ -168,9 +172,9 @@ const classesToTypeCheck = [
     [DataView, "getInt8", Tag.DATAVIEW],
 
     // Web APIs
-    [Blob, "clone", Tag.BLOB],
-    [DOMQuad, "toJSON", Tag.DOMQUAD],
-    [FileList, "item", Tag.FILELIST, 0]
+    ["Blob", "clone", Tag.BLOB],
+    ["DOMQuad", "toJSON", Tag.DOMQUAD],
+    ["FileList", "item", Tag.FILELIST, 0]
 ];
 
 /**
@@ -269,7 +273,10 @@ export function getTag(value, prioritizePerformance) {
     let result;
 
     classesToTypeCheck.some(([Class, method, tag, ...args]) => {
-        if (!(value instanceof Class)) return;
+        if(typeof Class === "string") Class = getWebApiFromString(Class)
+        
+        if (Class === undefined || !(value instanceof Class)) return;
+        
         try {
             Class.prototype[method].call(value, ...args);
             result = tag;
