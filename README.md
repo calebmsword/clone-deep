@@ -61,6 +61,12 @@ cloned = cloneDeep(originalObject, {
     // the algorithm will ignore these methods.
     ignoreCloningMethods: false,
 
+    // This algorithm robustly type-checks provided objects to check if they 
+    // were created by native class constructors, but this comes at the cost of 
+    // performance. When true, the type-checking will be slightly less robust 
+    // for the sake of speed.
+    prioritizePerformance: false,
+
     // Not every JavaScript object can be cloned. Warnings are, by default, 
     // logged to the console when failures to perform true clones occur. You can 
     // provide a custom logger which receives the error object containing the 
@@ -276,7 +282,20 @@ JavaScript has a native function `structuredClone` which deeply clones objects. 
  - `structuredClone` does not clone non-enumerable properties. `cloneDeep` does.
  - `structuredClone` does not preserve the extensible, sealed, or frozen property of an object or any of its nested objects. `cloneDeep` does.
  - `structuredClone` does not clone the property descriptor associated with any value in an object. `cloneDeep` does.
- - `structuredClone` supports all of the types listed [here](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types). `cloneDeep` only supports the types listed under "JavaScript types" (and `Symbol`).
+ - `structuredClone` supports all of the types listed [here](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types). `cloneDeep` only supports: 
+   - the types listed under "JavaScript types" from [here](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types)
+   - `Symbol`
+   - `Blob`
+   - `DOMException`
+   - `DOMMatrix`
+   - `DOMMatrixReadOnly`
+   - `DOMPoint`
+   - `DOMPointReadOnly`
+   - `DOMQuad`
+   - `DOMRect`
+   - `DOMRectReadOnly`
+   - `File`
+   - `FileList`
  - `structuredClone` is implemented with recursion in some runtimes meaning deeply nested objects blow up the call stack. `cloneDeep` uses no recursion.
  - `structuredClone` throws an error if the user attempts to clone an object with methods. `cloneDeep` will copy the methods *by value* and noisily log a warning.
  - `structuredClone` throws an error when provided an object of an unsupported type. On the other hand, `cloneDeep` will copy the type as an empty object and noisily log a warning.
@@ -297,7 +316,7 @@ The file `clone-deep.test.js` contains all unit tests. Execute `npm test` to run
 
 ## benchmarking
 
-Some rudimentary benchmarking can be done within the repository. In the directory containing the source code, execute `node serve.js <PORT>`, where the `PORT` command line option is optional and defaults to `8787`, and visit `http://localhost:<PORT>` to see the benchmarking UI. `benchmark.js` and `benchmark.css` contain the JavaScript and styling, respectively, for the hosted web page. You can use your favorite browser's dev tools to profile the result.
+Some rudimentary benchmarking can be done within the repository. In the directory containing the source code, execute `npm run serve -- <PORT>`, where the `-- <PORT>` command line option is optional and defaults to `8787`, and visit `http://localhost:<PORT>` to see the benchmarking UI. You can use your favorite browser's dev tools to profile the result.
 
 ## contribution guidelines
 
@@ -316,5 +335,7 @@ Some rudimentary benchmarking can be done within the repository. In the director
    - [blikblum](https://github.com/blikblum)
  - Thanks to Tiago Bertolo, the author of [this article](https://medium.com/@tiagobertolo/which-is-the-best-method-for-deep-cloning-in-javascript-are-they-all-bad-101f32d620c5). It reminded me to clone the metadata of objects.
  - Thanks to MDN and its documentation on the [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm).
- - Thanks to StackExchange user Jonathan Tran for his `http.createServer` example.
+ - Thanks to StackExchange user Jonathan Tran for his `http.createServer` [example](https://stackoverflow.com/a/13635318/22334683).
  - Thanks to [clone](https://www.npmjs.com/package/clone) for its implementation of cloning Promises.
+ - Thanks to [this](https://stackoverflow.com/a/62491100/22334683) stackoverflow answer for its suggestion for cloning Files.
+ - Thanks to [fisker](https://github.com/fisker) and their [package](https://github.com/fisker/create-file-list) for its implementation of creating FileList instances.
