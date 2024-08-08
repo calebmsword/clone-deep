@@ -4,11 +4,6 @@ import {
     Tag
 } from "./constants.js"
 import { 
-    getTag, 
-    isIterable, 
-    isTypedArray, 
-} from "./type-checking.js";
-import { 
     getWarning,
     Warning
 } from "./clone-deep-warning.js";
@@ -24,6 +19,11 @@ import {
     hasAccessor, 
     isDefaultDescriptor, 
 } from "./metadata.js";
+import { 
+    getTag, 
+    isIterable, 
+    isTypedArray, 
+} from "./type-checking.js";
 
 /** 
  * This symbol is used to indicate that the cloned value is the top-level object 
