@@ -1,19 +1,38 @@
-import { 
-    Customizer, 
-    CloneDeepOptions, 
-    CloneDeepFullyOptions
-} from "./src/types";
+export interface AdditionalValue {
+    value: any,
+    assigner: (clone: any) => void
+}
 
-export { 
-    Customizer, 
-    CloneDeepOptions, 
-    CloneDeepFullyOptions
-} from "./src/types";
+export interface ValueTransform {
+    clone?: any,
+    additionalValues?: AdditionalValue[],
+    ignore?: boolean,
+    ignoreProps?: boolean,
+    ignoreProto?: boolean,
+}
 
-export { 
-    AdditionalValue, 
-    ValueTransform 
-} from "./src/utils/types";
+export type Customizer = (value: any) => ValueTransform|void;
+
+export type Log = (error: Error) => any;
+
+export interface CloneDeepOptions {
+    customizer?: Customizer
+    log?: Log,
+    ignoreCloningMethods?: boolean
+    logMode?: string
+    letCustomizerThrow?: boolean
+}
+
+export interface CloneDeepFullyOptions extends CloneDeepOptions {
+    force?: boolean
+}
+
+export interface CloneMethodResult<T> {
+    clone: T
+    propsToIgnore?: (string|symbol)[]
+    ignoreProps?: boolean,
+    ignoreProto: true
+}
 
 declare module "cms-clone-deep" {
 
@@ -181,11 +200,6 @@ declare module "cms-clone-deep" {
  * Case-insensitive. If "silent", no warnings will be logged. Use with caution, 
  * as failures to perform true clones are logged as warnings. If "quiet", the 
  * stack trace of the warning is ignored.
- * @param {boolean} optionsOrCustomizer.prioritizePerformance 
- * Normally, the algorithm uses many mechanisms to robustly determine whether 
- * objects were created by native class constructors. However, this has some 
- * effect on performance. Setting this property to `true` will make the 
- * type-checking slightly less robust for the sake of speed.
  * @param {boolean} optionsOrCustomizer.ignoreCloningMethods 
  * If true, cloning methods asociated with an object will not be used to clone 
  * the object.
@@ -225,13 +239,11 @@ export default function cloneDeep<T, U = T>(
  * See the documentation for `cloneDeep`.
  * @param {string} options.logMode 
  * See the documentation for `cloneDeep`.
- * @param {boolean} options.prioritizePerformance 
- * See the documentation for `cloneDeep`.
  * @param {boolean} optionsOrCustomizer.ignoreCloningMethods 
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.letCustomizerThrow 
  * See the documentation for `cloneDeep`.
- * @returns {U} 
+ * @returns {any} 
  * The deep copy.
  */
 export function cloneDeepFully<T, U = T>(
