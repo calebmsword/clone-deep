@@ -1,5 +1,5 @@
 import cloneDeep, { cloneDeepInternal } from "./clone-deep.js";
-import { hasMethods } from "./utils/misc.js";
+import { hasMethods } from "./utils/metadata.js";
 
 /**
  * Deeply clones the provided object and its prototype chain.

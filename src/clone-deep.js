@@ -15,12 +15,15 @@ import {
 import { 
     cloneFile, 
     createFileList, 
-    forAllOwnProperties, 
     getAtomicErrorConstructor, 
-    getTypedArrayConstructor, 
+    getTypedArrayConstructor
+} from "./utils/helpers.js";
+import { 
+    forAllOwnProperties, 
+    getPrototype, 
     hasAccessor, 
     isDefaultDescriptor, 
-} from "./utils/misc.js";
+} from "./utils/metadata.js";
 
 /** 
  * This symbol is used to indicate that the cloned value is the top-level object 
@@ -352,7 +355,7 @@ export function cloneDeepInternal(_value,
             // indicates that prototypes are instances of themselves.
             else if ([Tag.OBJECT, Tag.ARGUMENTS].includes(tag)
                      || supportedPrototypes.includes(value))
-                cloned = assign(Object.create(Object.getPrototypeOf(value)), 
+                cloned = assign(Object.create(getPrototype(value)), 
                                 parentOrAssigner, 
                                 prop,
                                 metadata);
@@ -750,8 +753,8 @@ export function cloneDeepInternal(_value,
 
         // Ensure clone has prototype of value
         if (ignoreProto !== true
-            && Object.getPrototypeOf(cloned) !== Object.getPrototypeOf(value)) 
-            Object.setPrototypeOf(cloned, Object.getPrototypeOf(value));
+            && getPrototype(cloned) !== getPrototype(value)) 
+            Object.setPrototypeOf(cloned, getPrototype(value));
         
         if (ignoreProps === true) continue;
 
@@ -759,8 +762,7 @@ export function cloneDeepInternal(_value,
         forAllOwnProperties(value, key => {
             if (propsToIgnore.includes(key)) return;
             
-            const metadata = Object.getOwnPropertyDescriptor(value, 
-                                                                key);
+            const metadata = Object.getOwnPropertyDescriptor(value, key);
 
             queue.push({ 
                 value: !hasAccessor(metadata) ? value[key] : undefined, 

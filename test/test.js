@@ -5,11 +5,19 @@ import "./polyfills.js";
 import assert from "node:assert";
 import { describe, mock, test } from "node:test";
 
+import  cloneDeep from "../src/clone-deep.js";
+import cloneDeepFully from "../src/clone-deep-fully.js";
+import useCustomizers from "../src/use-customizers.js";
+
 import {
     CLONE, 
     supportedPrototypes, 
     Tag 
 } from "../src/utils/constants.js";
+import { 
+    createFileList, 
+    getTypedArrayConstructor 
+} from "../src/utils/helpers.js";
 import { 
     getTag, 
     isDOMMatrix, 
@@ -20,10 +28,6 @@ import {
     isDOMRectReadOnly, 
     isIterable
 } from "../src/utils/type-checking.js";
-import { createFileList, getTypedArrayConstructor } from "../src/utils/misc.js";
-import  cloneDeep from "../src/clone-deep.js";
-import cloneDeepFully from "../src/clone-deep-fully.js";
-import useCustomizers from "../src/use-customizers.js";
 
 // we will monkeypatch console.warn in a second, so hold onto the original 
 // implementation for safekeeping

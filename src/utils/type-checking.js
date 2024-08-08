@@ -1,5 +1,10 @@
+/**
+ * @file Functions for runtime type-checking of objects.
+ * @author Caleb Sword <caleb.m.sword@gmail.com>
+ */
+
 import { Tag } from "./constants.js";
-import { getDescriptors, getPrototype } from "./misc.js";
+import { getDescriptors, getPrototype } from "./metadata.js";
 
 /**
  * Determines whether a particular property is read-only.
@@ -117,8 +122,7 @@ export const {
     isDOMRect
 } = getGeometryCheckers(DOMRectReadOnly, { name: "x" }, "x");
 
-const lastModifiedGetter = 
-    Object.getOwnPropertyDescriptors(File.prototype).lastModified.get;
+const lastModifiedGetter = getDescriptors(File.prototype).lastModified.get;
 
 /**
  * Returns `true` if the given value is a File instance, `false` otherwise.
@@ -299,17 +303,17 @@ const TypedArrayProto = getPrototype(getPrototype((
     new Float32Array(new ArrayBuffer(0)))));
 
 const typedArrayTags = Object.freeze([
-    "[object Float32Array]",
-    "[object Float64Array]",
-    "[object Int8Array]",
-    "[object Int16Array]",
-    "[object Int32Array]",
-    "[object Uint8Array]",
-    "[object Uint8ClampedArray]",
-    "[object Uint16Array]",
-    "[object Uint32Array]",
-    "[object BigInt64Array]",
-    "[object BigUint64Array]",
+    Tag.FLOAT32, 
+    Tag.FLOAT64, 
+    Tag.INT8, 
+    Tag.INT16, 
+    Tag.INT32, 
+    Tag.UINT8, 
+    Tag.UINT8CLAMPED, 
+    Tag.UINT16, 
+    Tag.UINT32, 
+    Tag.BIGINT64, 
+    Tag.BIGUINT64
 ]);
 
 /**
