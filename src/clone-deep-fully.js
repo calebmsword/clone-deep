@@ -1,4 +1,5 @@
-import cloneDeep, { cloneDeepInternal } from "./clone-deep.js";
+import cloneDeep from "./clone-deep.js";
+import { cloneDeepInternal } from "./utils/clone-deep-internal.js";
 import { hasMethods } from "./utils/metadata.js";
 
 /**
