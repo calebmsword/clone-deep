@@ -16,14 +16,15 @@ var contentTypesByExtension = {
     ".js":   "text/javascript"
 };
 
-const directory = process.cwd();
+const directory = path.dirname(import.meta.dirname);
 
 http.createServer((request, response) => {
 
     const uri = parse(request.url).pathname;
     let filename = path.join(directory, uri);
 
-    if (fs.statSync(filename).isDirectory()) filename += "\\index.html";
+    if (fs.statSync(filename).isDirectory()) 
+        filename += "\\benchmark\\index.html";
 
     fs.access(filename, R_OK, err => {
         if (err) {

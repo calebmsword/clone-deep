@@ -1,16 +1,32 @@
+/* node:coverage disable */
+
+import "./polyfills.js";
+
 import assert from "node:assert";
 import { describe, mock, test } from "node:test";
 
+import { clearPolyfills, polyfill } from "./polyfills.js";
+
+import  cloneDeep from "../src/clone-deep.js";
+import cloneDeepFully from "../src/clone-deep-fully.js";
+import useCustomizers from "../src/use-customizers.js";
+
+import { CLONE, Tag } from "../src/utils/constants.js";
 import { 
-    Tag, 
-    supportedPrototypes, 
-    forbiddenProps, 
-    getTypedArrayConstructor,
-    isIterable,
-    CLONE,
-} from "./clone-deep-helpers.js";
-import  cloneDeep from "./clone-deep.js";
-import { cloneDeepFully, useCustomizers } from "./clone-deep-utils.js";
+    createFileList, 
+    getSupportedPrototypes, 
+    getTypedArrayConstructor 
+} from "../src/utils/helpers.js";
+import { 
+    getTag, 
+    isDOMMatrix, 
+    isDOMMatrixReadOnly, 
+    isDOMPoint, 
+    isDOMPointReadOnly, 
+    isDOMRect, 
+    isDOMRectReadOnly, 
+    isIterable
+} from "../src/utils/type-checking.js";
 
 // we will monkeypatch console.warn in a second, so hold onto the original 
 // implementation for safekeeping
@@ -18,7 +34,7 @@ const consoleDotWarn = console.warn;
 
 // convenient helper functions
 const getProto = object => Object.getPrototypeOf(object);
-const tagOf = value => Object.prototype.toString.call(value);
+const tagOf = value => getTag(value);
 
 try {
     // There are so many warnings logged that it slows the test down
@@ -125,6 +141,7 @@ try {
             const getNew = TypedArray => new TypedArray(new ArrayBuffer());
 
             const type = {
+                // "standard" classes
                 args: [
                         {
                             callee: mock.fn(),
@@ -153,6 +170,8 @@ try {
                 set: [new Set(), Tag.SET],
                 string: [new String(), Tag.STRING],
                 symbol: [new Object(Symbol("symbol")), Tag.SYMBOL],
+
+                // ArrayBuffer, DataView and TypedArrays
                 arraybuffer: [new ArrayBuffer(), Tag.ARRAYBUFFER],
                 dataview: [getNew(DataView), Tag.DATAVIEW],
                 float32: [getNew(Float32Array), Tag.FLOAT32],
@@ -165,7 +184,20 @@ try {
                 uint16: [getNew(Uint16Array), Tag.UINT16],
                 uint32: [getNew(Uint32Array), Tag.UINT32],
                 bigint64: [getNew(BigInt64Array), Tag.BIGINT64],
-                biguint64: [getNew(BigUint64Array), Tag.BIGUINT64]
+                biguint64: [getNew(BigUint64Array), Tag.BIGUINT64],
+
+                // Web APIs
+                blob: [new Blob(), Tag.BLOB],
+                domexception: [new DOMException, Tag.DOMEXCEPTION],
+                dommatrix: [new DOMMatrix(), Tag.DOMMATRIX],
+                dommatrixro: [new DOMMatrixReadOnly(), Tag.DOMMATRIXREADONLY],
+                dompoint: [new DOMPoint(), Tag.DOMPOINT],
+                dompointreadonly: [new DOMPointReadOnly, Tag.DOMPOINTREADONLY],
+                domquad: [new DOMQuad, Tag.DOMQUAD],
+                domrect: [new DOMRect(), Tag.DOMRECT],
+                domrectreadonly: [new DOMRectReadOnly(), Tag.DOMRECTREADONLY],
+                file: [new File([], ""), Tag.FILE],
+                filelist: [createFileList([]), Tag.FILELIST]
             }
 
             for (const key of Object.keys(type)) {
@@ -174,11 +206,98 @@ try {
 
                 // -- act
                 const cloned = cloneDeep(value);
+                const clonedFast = cloneDeep(value, {
+                    prioritizePerformance: true
+                });
 
                 // -- assert
                 assert.strictEqual(typeof cloned, "object");
-
                 assert.strictEqual(tagOf(cloned), tag);
+
+                assert.strictEqual(typeof clonedFast, "object");
+                assert.strictEqual(tagOf(clonedFast), tag);
+            }
+        });
+
+        test("non-web apis are cloned into the correct type in runtime " + 
+             "without Web API polyfills", () => {
+
+            clearPolyfills();
+            
+            try {
+                const getNew = TypedArray => new TypedArray(new ArrayBuffer());
+
+                const type = {
+                    // "standard" classes
+                    args: [
+                            {
+                                callee: mock.fn(),
+                                length: 0,
+                                [Symbol.iterator]() {
+                                    let i = 0;
+                                    return {
+                                        next: () => this[i++],
+                                        done: () => i >= this.length
+                                    }
+                                },
+                                [Symbol.toStringTag]: "Arguments"
+                            },
+                            Tag.ARGUMENTS
+                    ],
+                    array: [[], Tag.ARRAY],
+                    bigint: [new Object(BigInt(0)), Tag.BIGINT],
+                    boolean: [new Boolean(), Tag.BOOLEAN],
+                    date: [new Date(), Tag.DATE],
+                    error: [new Error(), Tag.ERROR],
+                    map: [new Map(), Tag.MAP],
+                    number: [new Number(), Tag.NUMBER],
+                    object: [new Object(), Tag.OBJECT],
+                    promise: [new Promise(r => r()), Tag.PROMISE],
+                    regexp: [/i/, Tag.REGEXP],
+                    set: [new Set(), Tag.SET],
+                    string: [new String(), Tag.STRING],
+                    symbol: [new Object(Symbol("symbol")), Tag.SYMBOL],
+
+                    // ArrayBuffer, DataView and TypedArrays
+                    arraybuffer: [new ArrayBuffer(), Tag.ARRAYBUFFER],
+                    dataview: [getNew(DataView), Tag.DATAVIEW],
+                    float32: [getNew(Float32Array), Tag.FLOAT32],
+                    float64: [getNew(Float64Array), Tag.FLOAT64],
+                    int8: [getNew(Int8Array), Tag.INT8],
+                    int16: [getNew(Int16Array), Tag.INT16],
+                    int32: [getNew(Int32Array), Tag.INT32],
+                    uint8: [getNew(Uint8Array), Tag.UINT8],
+                    uint8Clamped: [getNew(Uint8ClampedArray), Tag.UINT8CLAMPED],
+                    uint16: [getNew(Uint16Array), Tag.UINT16],
+                    uint32: [getNew(Uint32Array), Tag.UINT32],
+                    bigint64: [getNew(BigInt64Array), Tag.BIGINT64],
+                    biguint64: [getNew(BigUint64Array), Tag.BIGUINT64],
+                }
+
+                for (const key of Object.keys(type)) {
+                    // -- arrange
+                    const [value, tag] = type[key];
+
+                    // -- act
+                    const cloned = cloneDeep(value);
+                    const clonedFast = cloneDeep(value, {
+                        prioritizePerformance: true
+                    });
+
+                    // -- assert
+                    assert.strictEqual(typeof cloned, "object");
+                    assert.strictEqual(tagOf(cloned), tag);
+
+                    assert.strictEqual(typeof clonedFast, "object");
+                    assert.strictEqual(tagOf(clonedFast), tag);
+                }
+            }
+            catch(error) {
+                polyfill();
+                throw error;
+            }
+            finally {
+                polyfill();
             }
         });
 
@@ -235,7 +354,6 @@ try {
             // -- act
             const cloned = cloneDeep(_original);
 
-            // Note that cloned.accessor is accessed TWICE.
             cloned.accessor;
             cloned.accessor = "different value";
 
@@ -249,7 +367,7 @@ try {
             assert.strictEqual(cloned.noAccessor, noAccessorValue);
             assert.strictEqual(descriptor.writable, false);
 
-            assert.strictEqual(get.mock.calls.length, 2);
+            assert.strictEqual(get.mock.calls.length, 1);
             assert.strictEqual(set.mock.calls.length, 1);
             assert.strictEqual(cloned.accessor, accessorValue);
         });
@@ -362,28 +480,6 @@ try {
                 calls[0].arguments[0].message.includes(
                     "Attempted to clone unsupported type."), 
                 true);
-        });
-
-        test("A warning is logged if prototype with forbidden props " +
-             "is cloned", () => {
-            Object.values(forbiddenProps).forEach(({ prototype }) => {
-                // -- arrange
-                const log = mock.fn(() => {});
-
-                // -- act
-                cloneDeep(prototype, { log });
-
-                // -- assert
-                const calls = log.mock.calls;
-                const error = calls[0].arguments[0];
-                assert.strictEqual(calls.length > 0, true);
-                assert.strictEqual(error instanceof Error, true);
-                assert.strictEqual(
-                    error.message.includes(
-                        "The cloned object will not have any inaccessible " + 
-                        "properties"),
-                    true);
-            });
         });
 
         test("A warning is logged if a promise is cloned", () => {
@@ -595,7 +691,7 @@ try {
                              errorStackReassigned.stack);
             assert.strictEqual(Object.isExtensible(clonedStackReassigned.stack), 
                                false);
-        })
+        });
 
         test("Errors are cloned correctly even if monkeypatched", () => {
             let doMonkeypatch = true;
@@ -766,33 +862,6 @@ try {
             });
         });
 
-        test('Function.prototype is "cloned" with allowed properties', () => {
-            // -- arrange
-            const expectedProperties = [
-                "length",
-                "name",
-                "constructor",
-                "apply",
-                "bind",
-                "call",
-                "toString",
-                Symbol.hasInstance
-            ]
-
-            // -- act
-            const cloned = cloneDeep(Function.prototype);
-
-            // -- assert
-            assert.strictEqual([
-                ...Object.getOwnPropertyNames(cloned),
-                ...Object.getOwnPropertySymbols(cloned)
-            ].length, expectedProperties.length);
-            
-            expectedProperties.forEach(key => {
-                assert.strictEqual(cloned.hasOwnProperty(key), true);
-            });
-        });
-
         test("functions become empty objects inheriting " + 
              "Function.prototype", () => {
             [function() {}, () => {}].forEach(func => {
@@ -915,10 +984,200 @@ try {
         });
 
         test("Native prototypes can be cloned without errors", () => {
-            supportedPrototypes.forEach(proto => {
+            getSupportedPrototypes().forEach(proto => {
                 cloneDeep(proto);
             });
         });
+
+        test("FileLists are cloned properly", () => {
+            // -- arrange
+            const dateFoo = new Date("July 20, 69 20:17:40 GMT+00:00")
+            const fileFoo = new File(["foo"], "foo", {
+                type: "text/plain",
+                lastModified: dateFoo.getTime()
+            })
+
+            const dateBar = new Date("July 21, 69 20:17:40 GMT+00:00")
+            const fileBar = new File([JSON.stringify({ bar: "bar "})], "bar", {
+                type: "application/json",
+                lastModified: dateBar.getTime()
+            });
+
+            // -- act
+            const fileList = createFileList(fileFoo, fileBar);
+            const cloned = cloneDeep(fileList);
+
+            // -- assert
+            assert.deepEqual(cloned, fileList);
+            assert.notStrictEqual(cloned.item(0), fileList.item(0));
+            assert.notStrictEqual(cloned.item(1), fileList.item(1));
+        });
+
+        test("objects with the File prototype are not assumed to be " + 
+             "Files", () => {
+            // -- arrange
+            const fakeFile = Object.create(File.prototype);
+
+            // -- act
+            const clone = cloneDeep(fakeFile);
+
+            // -- assert
+            assert.strictEqual(Tag.OBJECT, getTag(clone));
+        });
+
+        describe("geometry web APIs", () => {
+
+            test("the geometry classes are deeply cloned", () => {
+                [
+                    DOMMatrix,
+                    DOMMatrixReadOnly,
+                    DOMPoint,
+                    DOMPointReadOnly,
+                    DOMQuad,
+                    DOMRect,
+                    DOMRectReadOnly
+                ].forEach(GeometryClass => {
+                    // -- arrange
+                    const original = new GeometryClass;
+                    
+                    // -- act
+                    const cloned = cloneDeep(original);
+
+                    // -- assert
+                    assert.notStrictEqual(original, cloned);
+                    assert.deepEqual(original, cloned);
+                });
+            });
+
+            test("DOMMatrix is2D property preserved", () => {
+                // -- arrange
+                const original2D = new DOMMatrix([1, 1, 1, 1, 1, 1]);
+                const original3D = new DOMMatrix([
+                    1, 1, 1, 1,
+                    1, 1, 1, 1,
+                    1, 1, 1, 1,
+                    1, 1, 1, 1
+                ]);
+                const original2DRO = new DOMMatrixReadOnly([1, 1, 1, 1, 1, 1]);
+                const original3DRO = new DOMMatrixReadOnly([
+                    1, 1, 1, 1,
+                    1, 1, 1, 1,
+                    1, 1, 1, 1,
+                    1, 1, 1, 1
+                ]);
+
+                // -- act
+                const cloned2D = cloneDeep(original2D);
+                const cloned3D = cloneDeep(original3D);
+                const cloned2DRO = cloneDeep(original2DRO);
+                const cloned3DRO = cloneDeep(original3DRO);
+
+                // -- assert
+                assert.strictEqual(cloned2D.is2D, original2D.is2D);
+                assert.strictEqual(cloned3D.is2D, original3D.is2D);
+                assert.strictEqual(cloned2DRO.is2D, original2DRO.is2D);
+                assert.strictEqual(cloned3DRO.is2D, original3DRO.is2D);
+            });
+        });
+
+        describe("DOMExecption", () => {
+            test("DOMException names and codes are cloned properly", () => {
+                // -- arrange
+                const exc = new DOMException;
+                const namedExc = new DOMException("custom msg", 
+                                                  "IndexSizeError");
+    
+                // -- act
+                const clonedExc = cloneDeep(exc);
+                const clonedNamed = cloneDeep(namedExc);
+    
+                // -- assert
+                assert.notStrictEqual(clonedExc, exc);
+                assert.deepEqual(clonedExc, exc);
+    
+                assert.notStrictEqual(clonedNamed, namedExc);
+                assert.deepEqual(clonedNamed, namedExc);
+    
+                assert.deepStrictEqual(
+                    [exc.name, exc.code, exc.stack], 
+                    [clonedExc.name, clonedExc.code, clonedExc.stack]);
+                assert.deepStrictEqual(
+                    [namedExc.name, namedExc.code, namedExc.stack], 
+                    [clonedNamed.name, clonedNamed.code, clonedNamed.stack]);
+            });
+
+            test("if stack is nonprimitive, it is still properly " + 
+                 "cloned", () => {
+                // -- arrange
+                const exc = new DOMException;
+                exc.stack = Object.preventExtensions({});
+
+                // -- act
+                const cloned = cloneDeep(exc);
+
+                // -- assert
+                assert.notStrictEqual(cloned.stack, exc.stack);
+                assert.deepEqual(cloned.stack, exc.stack);
+                assert.strictEqual(Object.isExtensible(cloned.stack), false);
+            });
+
+            test("if runtime does not provide a stack (or the stack is " + 
+                 "undefined), cloned DOMException will returned undefined if " + 
+                 "you access stack", () => {
+                // -- arrange 
+                const exc = new DOMException;
+                exc.stack = undefined;
+                
+                // -- act
+                const cloned = cloneDeep(exc);
+
+                // -- assert
+                assert.notStrictEqual(cloned, exc);
+                assert.deepEqual(cloned, exc);
+                assert.deepStrictEqual(
+                    [exc.name, exc.code, exc.stack], 
+                    [cloned.name, cloned.code, cloned.stack]);
+                assert.strictEqual(undefined, cloned.stack);
+            });
+        });
+
+        test("DOMQuad correctly clones properties not from its prototype", 
+             () => {
+            // -- arrange
+            const quad = new DOMQuad;
+            Object.defineProperty(quad, "p1", {
+                value: new DOMQuad
+            });
+
+            // -- act
+            const cloned = cloneDeep(quad);
+
+            // -- assert
+            assert.notStrictEqual(quad, cloned);
+            assert.deepEqual(quad, cloned);
+            assert.strictEqual(
+                true, 
+                Object
+                    .getOwnPropertyNames(cloned)
+                    .includes("p1"));
+        });
+
+        test("DOMQuad correctly clones its points", 
+            () => {
+            // -- arrange
+            const quad = new DOMQuad;
+            quad.p1.test1 = "test1";
+            Object.defineProperty(quad.p1, "test2", {
+                get: () => "test2"
+            });
+
+            // -- act
+            const cloned = cloneDeep(quad);
+
+            // -- assert
+            assert.strictEqual("test1", cloned.p1.test1);
+            assert.strictEqual("test2", cloned.p1.test2);
+       });
     });
 
     describe("cloneDeep customizer", () => {
@@ -1275,8 +1534,8 @@ try {
         });
 
         test("Native prototypes can be fully cloned without errors", () => {
-            supportedPrototypes.forEach(proto => {
-                cloneDeepFully(proto);
+            getSupportedPrototypes().forEach(proto => {
+                cloneDeepFully(proto, { force: true });
             });
         });
 
@@ -1645,6 +1904,61 @@ try {
             }));
             assert.strictEqual(false, isIterable({}));
             assert.strictEqual(false, isIterable(null));
+        });
+
+        test("geometry type checkers function as expected", () => {
+            polyfill();
+
+            // -- arrange
+            const domMatrix = new DOMMatrix;
+            const domMatrixReadOnly = new DOMMatrixReadOnly;
+            const domPoint = new DOMPoint;
+            const domPointReadOnly = new DOMPointReadOnly;
+            const domRect = new DOMRect;
+            const domRectReadOnly = new DOMRectReadOnly;
+
+            // -- act/assert
+            assert.strictEqual(true, isDOMMatrix(domMatrix));
+            assert.strictEqual(false, isDOMMatrix(domMatrixReadOnly));
+            assert.strictEqual(false, isDOMMatrix({}));
+
+            assert.strictEqual(true, isDOMMatrixReadOnly(domMatrixReadOnly));
+            assert.strictEqual(false, isDOMMatrixReadOnly(domMatrix));
+            assert.strictEqual(false, isDOMMatrixReadOnly({}));
+
+            assert.strictEqual(true, isDOMPoint(domPoint));
+            assert.strictEqual(false, isDOMPoint(domPointReadOnly));
+            assert.strictEqual(false, isDOMPoint({}));
+
+            assert.strictEqual(true, isDOMPointReadOnly(domPointReadOnly));
+            assert.strictEqual(false, isDOMPointReadOnly(domPoint));
+            assert.strictEqual(false, isDOMPointReadOnly({}));
+
+            assert.strictEqual(true, isDOMRect(domRect));
+            assert.strictEqual(false, isDOMRect(domRectReadOnly));
+            assert.strictEqual(false, isDOMRect({}));
+
+            assert.strictEqual(true, isDOMRectReadOnly(domRectReadOnly));
+            assert.strictEqual(false, isDOMRectReadOnly(domRect));
+            assert.strictEqual(false, isDOMRectReadOnly({}));
+        });
+
+        test("createFileList throws if DataTransfer is not available", () => {
+            // -- act/assert
+            try {
+                clearPolyfills();
+
+                assert.throws(() => {
+                    createFileList(new File(["Foo"], "foo"));
+                });
+            }
+            catch(error) {
+                polyfill();
+                throw error;
+            }
+            finally {
+                polyfill();
+            }
         });
     });
 }
