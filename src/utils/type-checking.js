@@ -337,3 +337,12 @@ export function isTypedArray(value, prioritizePerformance, tag) {
         return false;
     }
 }
+
+/**
+ * Whether the provided value can be called as a function.
+ * @param {any} value 
+ * @returns {boolean}
+ */
+export function isCallable(value) {
+    return value !== Function.prototype && typeof value === "function"; 
+}

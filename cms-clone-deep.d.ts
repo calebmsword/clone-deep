@@ -1,39 +1,19 @@
-export interface AdditionalValue {
-    value: any,
-    assigner: (clone: any) => void
-}
+import { 
+    Customizer, 
+    CloneDeepOptions, 
+    CloneDeepFullyOptions
+} from "./src/types";
 
-export interface ValueTransform {
-    clone?: any,
-    additionalValues?: AdditionalValue[],
-    ignore?: boolean,
-    ignoreProps?: boolean,
-    ignoreProto?: boolean,
-}
+export { 
+    Customizer, 
+    CloneDeepOptions, 
+    CloneDeepFullyOptions
+} from "./src/types";
 
-export type Customizer = (value: any) => ValueTransform|void;
-
-export type Log = (error: Error) => any;
-
-export interface CloneDeepOptions {
-    customizer?: Customizer
-    log?: Log
-    prioritizePerformance?: boolean
-    ignoreCloningMethods?: boolean
-    logMode?: string
-    letCustomizerThrow?: boolean
-}
-
-export interface CloneDeepFullyOptions extends CloneDeepOptions {
-    force?: boolean
-}
-
-export interface CloneMethodResult<T> {
-    clone: T
-    propsToIgnore?: (string|symbol)[]
-    ignoreProps?: boolean,
-    ignoreProto: true
-}
+export { 
+    AdditionalValue, 
+    ValueTransform 
+} from "./src/utils/types";
 
 declare module "cms-clone-deep" {
 

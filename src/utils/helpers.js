@@ -5,9 +5,9 @@ import { getWarning } from "./clone-deep-warning.js";
  * Gets the appropriate TypedArray constructor for the given object tag.
  * @param {string} tag
  * The tag for the object.
- * @param {import("../../public-types.js").Log} log
+ * @param {import("../types").Log} log
  * A logging function.
- * @returns {import("../../private-types.js").TypedArrayConstructor}
+ * @returns {import("./types").TypedArrayConstructor}
  */
 export function getTypedArrayConstructor(tag, log) {
     switch (tag) {
@@ -47,9 +47,9 @@ export function getTypedArrayConstructor(tag, log) {
  * @param {Error} value
  * The object itself. This is necessary to correctly find constructors for 
  * various Error subclasses.
- * @param {(error: Error) => any} [log]
+ * @param {import("../types").Log} [log]
  * An optional logging function.
- * @returns {import("../../private-types.js").AtomicErrorConstructor}
+ * @returns {import("./types").AtomicErrorConstructor}
  */
 export function getAtomicErrorConstructor(value, log) {
     const name = value.name;

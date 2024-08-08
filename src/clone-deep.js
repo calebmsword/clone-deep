@@ -1,5 +1,11 @@
 import { cloneDeepInternal } from "./utils/clone-deep-internal.js"
 
+/** @typedef {import("./types").CloneDeepOptions} CloneDeepOptions */
+
+/** @typedef {import("./types").Customizer} Customizer */
+
+/** @typedef {import("./types").Log} Log */
+
 /**
  * @template T
  * The type of the input value.
@@ -8,15 +14,15 @@ import { cloneDeepInternal } from "./utils/clone-deep-internal.js"
  * Nefarious customizer usage could require them be distinct, however. Please do 
  * not do this.
  * @param {T} value The value to deeply copy.
- * @param {import("../public-types").CloneDeepOptions|import("../public-types").Customizer} [optionsOrCustomizer] 
+ * @param {CloneDeepOptions|Customizer} [optionsOrCustomizer] 
  * If a function, this argument is used as the customizer.
  * @param {object} [optionsOrCustomizer] 
  * If an object, this argument is used as a configuration object.
- * @param {import("../public-types").Customizer} optionsOrCustomizer.customizer 
+ * @param {Customizer} optionsOrCustomizer.customizer 
  * Allows the user to inject custom logic. The function is given the value to 
  * copy. If the function returns an object, the value of the `clone` property on 
  * that object will be used as the clone.
- * @param {import("../public-types").Log} optionsOrCustomizer.log 
+ * @param {Log} optionsOrCustomizer.log 
  * Any errors which occur during the algorithm can optionally be passed to a log 
  * function. `log` should take one argument which will be the error encountered. 
  * Use this to log the error to a custom logger.
@@ -35,10 +41,10 @@ import { cloneDeepInternal } from "./utils/clone-deep-internal.js"
  * @returns {U} The deep copy.
  */
 function cloneDeep(value, optionsOrCustomizer) {
-    /** @type {import("../public-types").Customizer|undefined} */
+    /** @type {Customizer|undefined} */
     let customizer;
 
-    /** @type {import("../public-types").Log|undefined} */
+    /** @type {Log|undefined} */
     let log;
 
     /** @type {boolean|undefined} */
@@ -73,7 +79,7 @@ function cloneDeep(value, optionsOrCustomizer) {
         if (logMode.toLowerCase() === "silent")
             log = () => {};
         else if (logMode.toLowerCase() === "quiet")
-            /** @type {(error: Error) => void} */
+            /** @type {Log} */
             log = error => console.warn(error.message);
     
     return cloneDeepInternal(value, 

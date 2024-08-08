@@ -3,7 +3,7 @@ export const CLONE = Symbol("Clone");
 
 /**
  * Contains the tag for various types.
- * @type {Object<string, string>}
+ * @type {import("./types").Tag}
  */
 export const Tag = Object.freeze({
     // "standard" classes

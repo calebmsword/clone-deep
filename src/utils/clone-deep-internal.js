@@ -40,9 +40,9 @@ const TOP_LEVEL = Symbol("TOP_LEVEL");
  * See CloneDeep.
  * @param {T} _value 
  * The value to clone.
- * @param {import("../../public-types").Customizer|undefined} customizer 
+ * @param {import("../types").Customizer|undefined} customizer 
  * A customizer function.
- * @param {import("../../public-types").Log} log 
+ * @param {import("../types").Log} log 
  * Receives an error object for logging.
  * @param {boolean} prioritizePerformance
  * Whether or not type-checking will be more performant.
@@ -67,7 +67,7 @@ export function cloneDeepInternal(_value,
      * Handles the assignment of the cloned value to some persistent place.
      * @param {any} cloned 
      * The cloned value.
-     * @param {Object|import("../../private-types").assigner|symbol|Object} [parentOrAssigner] 
+     * @param {Object|import("./types").assigner|symbol|Object} [parentOrAssigner] 
      * Either the parent object that the cloned value will be assigned to, or a 
      * function which assigns the value itself. If equal to `TOP_LEVEL`, then it 
      * is the value that will be returned by the algorithm. 
@@ -137,7 +137,7 @@ export function cloneDeepInternal(_value,
 
     /** 
      * A queue so we can avoid recursion.
-     * @type {import("../../private-types").QueueElement[]}
+     * @type {import("./types").QueueElement[]}
      */ 
     const queue = [{ value: _value, parentOrAssigner: TOP_LEVEL }];
     
@@ -225,7 +225,7 @@ export function cloneDeepInternal(_value,
             /** @type {any} */
             let clone;
 
-            /** @type {import("../../public-types").AdditionalValue[]|undefined} */
+            /** @type {import("./types").AdditionalValue[]|undefined} */
             let additionalValues; 
 
             /** @type {boolean|undefined} */
@@ -290,7 +290,7 @@ export function cloneDeepInternal(_value,
 
         /**
          * Identifies the type of the value.
-         * @type {String}
+         * @type {string}
          */
         const tag = getTag(value, prioritizePerformance);
 
@@ -320,7 +320,7 @@ export function cloneDeepInternal(_value,
                      && ignoreCloningMethods !== true
                      && ignoreCloningMethodsThisLoop === false) {
                 
-                /** @type {import("../../public-types").CloneMethodResult<any>} */
+                /** @type {import("./types").CloneMethodResult<any>} */
                 const result = value[CLONE]();
                 
                 if (result.propsToIgnore !== undefined)
@@ -468,7 +468,7 @@ export function cloneDeepInternal(_value,
                         : new AggregateError(errors, message, { cause });
                 }
                 else {
-                    /** @type {import("../../private-types").AtomicErrorConstructor} */
+                    /** @type {import("./types").AtomicErrorConstructor} */
                     const ErrorConstructor = getAtomicErrorConstructor(error, 
                                                                        log);
 
@@ -513,7 +513,7 @@ export function cloneDeepInternal(_value,
             else if (isTypedArray(value, prioritizePerformance, tag) 
                      || Tag.DATAVIEW === tag) {
 
-                /** @type {import("../../private-types").TypedArrayConstructor} */
+                /** @type {import("./types").TypedArrayConstructor} */
                 const TypedArray = getTypedArrayConstructor(tag, log);
 
                 // copy data over to clone
@@ -684,15 +684,15 @@ export function cloneDeepInternal(_value,
             }
 
             else if (Tag.DOMQUAD === tag) {
-                /** @type {import("../../private-types").DOMQuadExtended} */
+                /** @type {import("./types").DOMQuadExtended} */
                 const quad = value;
 
-                /** @type {import("../../private-types").DOMQuadExtended} */
+                /** @type {import("./types").DOMQuadExtended} */
                 cloned = new DOMQuad(quad.p1, quad.p2, quad.p3, quad.p4);
 
 
                 ["p1", "p2", "p3", "p4"].forEach(key => {
-                    /** @type {import("../../private-types").DOMPointExtended} */
+                    /** @type {import("./types").DOMPointExtended} */
                     const point = quad[key];
 
                     forAllOwnProperties(point, prop => {

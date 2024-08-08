@@ -2,6 +2,12 @@ import cloneDeep from "./clone-deep.js";
 import { cloneDeepInternal } from "./utils/clone-deep-internal.js";
 import { hasMethods } from "./utils/metadata.js";
 
+/** @typedef {import("./types").CloneDeepFullyOptions} CloneDeepFullyOptions */
+
+/** @typedef {import("./types").Customizer} Customizer */
+
+/** @typedef {import("./types").Log} Log */
+
 /**
  * Deeply clones the provided object and its prototype chain.
  * @template T
@@ -9,7 +15,7 @@ import { hasMethods } from "./utils/metadata.js";
  * @template [U = T]
  * See the documentation for `cloneDeep`.
  * @param {T} value The object to clone.
- * @param {import("../public-types").CloneDeepFullyOptions|import("../public-types").Customizer} [options] 
+ * @param {CloneDeepFullyOptions|Customizer} [options] 
  * If a function, it is used as the customizer for the clone. 
  * @param {object} [options] 
  * If an object, it is used as a configuration object. See the documentation for 
@@ -17,11 +23,11 @@ import { hasMethods } from "./utils/metadata.js";
  * @param {boolean} options.force 
  * If `true`, prototypes with methods will be cloned. Normally, this function 
  * stops if it reaches any prototype with methods.
- * @param {import("../public-types").Customizer} options.customizer 
+ * @param {Customizer} options.customizer 
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.ignoreCloningMethods
  * See the documentation for `cloneDeep`.
- * @param {import("../public-types").Log} options.log 
+ * @param {Log} options.log 
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.prioritizePerformance
  * See the documentation for `cloneDeep`.
@@ -38,7 +44,6 @@ export default function cloneDeepFully(value, options) {
         && typeof options.force !== "boolean") 
         options.force = false;
     
-    /** @type {import("../public-types").Customizer|undefined} */
     let customizer;
     let log;
     let prioritizePerformance;

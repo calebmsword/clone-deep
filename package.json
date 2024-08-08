@@ -5,7 +5,7 @@
   "version": "1.0.17",
   "description": "A dependency-free utility for deeply cloning JavaScript objects.",
   "main": "index.js",
-  "types": "public-types.d.ts",
+  "types": "cms-clone-deep.d.ts",
   "keywords": [
     "clone",
     "deep"
