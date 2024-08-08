@@ -15,6 +15,7 @@ import {
 import { 
     cloneFile, 
     createFileList, 
+    forAllOwnProperties, 
     getAtomicErrorConstructor, 
     getTypedArrayConstructor, 
     hasAccessor, 
@@ -113,7 +114,7 @@ export function cloneDeepInternal(_value,
                 log(getWarning(
                     `Cloning value with name ${String(prop)} whose property ` +
                     "descriptor contains a get or set accessor."));
-
+            
             Object.defineProperty(parentOrAssigner, prop, clonedMetadata);
         }
         return cloned;
@@ -146,7 +147,6 @@ export function cloneDeepInternal(_value,
     const isExtensibleSealFrozen = [];
 
     for (let obj = queue.shift(); obj !== undefined; obj = queue.shift()) {
-
         /**
          * The value to deeply clone.
          */ 
@@ -229,7 +229,7 @@ export function cloneDeepInternal(_value,
             let ignore;
 
             try {
-                const customResult = customizer(value);
+                const customResult = customizer(value);         
                 
                 if (typeof customResult === "object") {
                     useCustomizerClone = true;
@@ -672,17 +672,39 @@ export function cloneDeepInternal(_value,
                 /** @type {DOMPoint} */
                 const domPoint = value;
 
-                const Class = tag === Tag.DOMPOINT? DOMPoint : DOMPointReadOnly;
+                const Class = tag === Tag.DOMPOINT 
+                    ? DOMPoint 
+                    : DOMPointReadOnly;
 
                 cloned = Class.fromPoint(domPoint);
                 assign(cloned, parentOrAssigner, prop, metadata);
             }
 
             else if (Tag.DOMQUAD === tag) {
-                /** @type {DOMQuad} */
+                /** @type {import("../private-types").DOMQuadExtended} */
                 const quad = value;
 
-                const cloned = new DOMQuad(quad.p1, quad.p2, quad.p3, quad.p4);
+                /** @type {import("../private-types").DOMQuadExtended} */
+                cloned = new DOMQuad(quad.p1, quad.p2, quad.p3, quad.p4);
+
+
+                ["p1", "p2", "p3", "p4"].forEach(key => {
+                    /** @type {import("../private-types").DOMPointExtended} */
+                    const point = quad[key];
+
+                    forAllOwnProperties(point, prop => {
+                        const metadata = Object.getOwnPropertyDescriptor(point, 
+                                                                         prop);
+                        
+                        queue.push({
+                            value: !hasAccessor(metadata) ? point[prop] : null,
+                            parentOrAssigner: cloned[key],
+                            prop,
+                            metadata
+                        });
+                    });
+                });
+
                 assign(cloned, parentOrAssigner, prop, metadata);
             }
 
@@ -734,23 +756,19 @@ export function cloneDeepInternal(_value,
         if (ignoreProps === true) continue;
 
         // Now copy all enumerable and non-enumerable properties.
-        [Object.getOwnPropertyNames(value), Object.getOwnPropertySymbols(value)]
-            .forEach(array => {
-                array.forEach(key => {
+        forAllOwnProperties(value, key => {
+            if (propsToIgnore.includes(key)) return;
+            
+            const metadata = Object.getOwnPropertyDescriptor(value, 
+                                                                key);
 
-                    if (propsToIgnore.includes(key)) return;
-                    
-                    const metadata = Object.getOwnPropertyDescriptor(value, 
-                                                                     key);
-
-                    queue.push({ 
-                        value: !hasAccessor(metadata) ? value[key] : undefined, 
-                        parentOrAssigner: cloned,
-                        prop: key,
-                        metadata: metadata
-                    });
-                });
+            queue.push({ 
+                value: !hasAccessor(metadata) ? value[key] : undefined, 
+                parentOrAssigner: cloned,
+                prop: key,
+                metadata: metadata
             });
+        });
     }
 
     // Check extensible, seal, and frozen statuses.

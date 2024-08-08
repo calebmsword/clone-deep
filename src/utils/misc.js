@@ -167,3 +167,18 @@ export function hasMethods(o) {
     if (o === Function.prototype) return true;
     return getAllPropertiesOf(o).some(key => typeof o[key] === "function");
 }
+
+/**
+ * Iterate the provided callback on every property of the given object.
+ * This includes symbols and non-enumerable properties. This does not include 
+ * properties in the prototype chain.
+ * This is more performant than using {@link getAllPropertiesOf}.
+ * @param {any} object
+ * @param {(key: string|symbol) => void} propertyCallback 
+ */
+export function forAllOwnProperties(object, propertyCallback) {
+    [Object.getOwnPropertyNames(object), Object.getOwnPropertySymbols(object)]
+        .forEach(array => {
+            array.forEach(propertyCallback);
+        });
+}

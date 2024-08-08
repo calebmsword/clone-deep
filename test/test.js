@@ -954,7 +954,7 @@ try {
                 ].forEach(GeometryClass => {
                     // -- arrange
                     const original = new GeometryClass;
-
+                    
                     // -- act
                     const cloned = cloneDeep(original);
 
@@ -1055,6 +1055,44 @@ try {
                 assert.strictEqual(undefined, cloned.stack);
             });
         });
+
+        test("DOMQuad correctly clones properties not from its prototype", 
+             () => {
+            // -- arrange
+            const quad = new DOMQuad;
+            Object.defineProperty(quad, "p1", {
+                value: new DOMQuad
+            });
+
+            // -- act
+            const cloned = cloneDeep(quad);
+
+            // -- assert
+            assert.notStrictEqual(quad, cloned);
+            assert.deepEqual(quad, cloned);
+            assert.strictEqual(
+                true, 
+                Object
+                    .getOwnPropertyNames(cloned)
+                    .includes("p1"));
+        });
+
+        test("DOMQuad correctly clones its points", 
+            () => {
+            // -- arrange
+            const quad = new DOMQuad;
+            quad.p1.test1 = "test1";
+            Object.defineProperty(quad.p1, "test2", {
+                get: () => "test2"
+            });
+
+            // -- act
+            const cloned = cloneDeep(quad);
+
+            // -- assert
+            assert.strictEqual("test1", cloned.p1.test1);
+            assert.strictEqual("test2", cloned.p1.test2);
+       });
     });
 
     describe("cloneDeep customizer", () => {

@@ -43,3 +43,11 @@ export type GeometryConstructor =
     ConstructorFor<DOMMatrixReadOnly> |
     ConstructorFor<DOMRect> |
     ConstructorFor<DOMRectReadOnly>;
+
+export interface DOMQuadExtended extends DOMQuad {
+    [key: string]: any
+}
+
+export interface DOMPointExtended extends DOMPoint {
+    [key: string|symbol]: any
+}
