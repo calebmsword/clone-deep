@@ -1,5 +1,6 @@
-import { Tag } from "./constants.js";
+import { supportedPrototypes, Tag, WebApi } from "./constants.js";
 import { getWarning } from "./clone-deep-warning.js";
+import { isCallable } from "./type-checking.js";
 
 /**
  * Gets the appropriate TypedArray constructor for the given object tag.
@@ -101,4 +102,40 @@ export function cloneFile(file) {
         type: file.type,
         lastModified: file.lastModified
     });
+}
+
+/**
+ * Attempts to retreive a web API from the global object.
+ * Doing this in a way that utilizes TypeScript effectively is obtuse, hence 
+ * this function was made so that TypeScript jank doesn't obfuscate code 
+ * elsewhere.
+ * @param {string} string 
+ * @returns {new (...args: any[]) => any | undefined}
+ */
+export function getWebApiFromString(string) {
+    /** @type {any} */
+    const __global = globalThis;
+
+    /** @type {{ [key: string]: new (...args: any[]) => any | undefined }} */
+    const global = __global;
+
+    return global[string];
+}   
+
+/**
+ * Returns an array of prototypes of available supported types for this runtime.
+ * @returns {any[]}
+ */
+export function getSupportedPrototypes() {
+    /** @type {object[]} */
+    const webApiPrototypes = [];
+
+    Object.keys(WebApi).forEach(webApiString => {
+        const WebApi = getWebApiFromString(webApiString);
+
+        if (WebApi !== undefined && isCallable(WebApi)) 
+            webApiPrototypes.push(WebApi.prototype);
+    });
+
+    return supportedPrototypes.concat(webApiPrototypes);
 }

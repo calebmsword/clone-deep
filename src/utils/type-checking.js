@@ -3,7 +3,8 @@
  * @author Caleb Sword <caleb.m.sword@gmail.com>
  */
 
-import { Tag } from "./constants.js";
+import { Tag, WebApi } from "./constants.js";
+import { getWebApiFromString } from "./helpers.js";
 import { getDescriptors, getPrototype } from "./metadata.js";
 
 /**
@@ -34,8 +35,8 @@ export function isReadOnly(value, property) {
 
 /**
  * A factory which creates type checkers for readonly geometry (sub)classes.
- * @param {any} Class 
- * An immutable geometry subclass (DOMMatrixReadOnly, DOMRectReadOnly, etc).
+ * @param {string} webApiString 
+ * The name of an immutable geometry subclass.
  * @param {string|symbol|{ name: string|symbol }} methodOrProp 
  * If a primitive, then the name of a method on the immutable geometry subclass.
  * If an object, it should be a hash with a single property `"name"` that 
@@ -44,22 +45,25 @@ export function isReadOnly(value, property) {
  * An instance property.
  * @returns {{ [method: string]: (value: any) => boolean }}
  */
-function getGeometryCheckers(Class, methodOrProp, property) {
+function getGeometryCheckers(webApiString, methodOrProp, property) {
 
     /** @type {Map<any, boolean>} */
     const registry = new Map;
-    
-    const descriptors = getDescriptors(getPrototype(new Class));
 
     /**
      * @param {any} value 
      * @returns {boolean}
      */
     function isSubclass(value) {
+        const WebApi = getWebApiFromString(webApiString);
+        if (!isCallable(WebApi)) return false;
+        
         if (registry.has(value)) {
             const result = registry.get(value);
             if (typeof result === "boolean") return result;
         }
+
+        const descriptors = getDescriptors(getPrototype(new WebApi));
 
         /** @type {boolean} */
         let result;
@@ -69,7 +73,7 @@ function getGeometryCheckers(Class, methodOrProp, property) {
                 descriptors[methodOrProp.name].get?.call(value);
             }
             else {
-                Class.prototype[methodOrProp].call(value);
+                WebApi.prototype[methodOrProp].call(value);
             }
             result = true;
         }
@@ -97,9 +101,8 @@ function getGeometryCheckers(Class, methodOrProp, property) {
         return isSubclass(value) && isMutable(value);
     }
 
-    const immutableClassName = Class.name;
-    const mutableClassName = immutableClassName.substring(
-        0, immutableClassName.length - 8);
+    const immutableClassName = webApiString;
+    const mutableClassName = webApiString.substring(0, webApiString.length - 8);
 
     return {
         [`is${immutableClassName}`]: isImmutableType,
@@ -110,17 +113,17 @@ function getGeometryCheckers(Class, methodOrProp, property) {
 export const {
     isDOMMatrixReadOnly,
     isDOMMatrix
-} = getGeometryCheckers(DOMMatrixReadOnly, "scale", "m11");
+} = getGeometryCheckers(WebApi.DOMMatrixReadOnly, "scale", "m11");
 
 export const {
     isDOMPointReadOnly,
     isDOMPoint
-} = getGeometryCheckers(DOMPointReadOnly, "toJSON", "x");
+} = getGeometryCheckers(WebApi.DOMPointReadOnly, "toJSON", "x");
 
 export const {
     isDOMRectReadOnly,
     isDOMRect
-} = getGeometryCheckers(DOMRectReadOnly, { name: "x" }, "x");
+} = getGeometryCheckers(WebApi.DOMRectReadOnly, { name: "x" }, "x");
 
 const lastModifiedGetter = getDescriptors(File.prototype).lastModified.get;
 

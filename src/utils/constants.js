@@ -54,6 +54,20 @@ export const Tag = Object.freeze({
     FILELIST: "[object FileList]",
 });
 
+export const WebApi = Object.freeze({
+    Blob: "Blob", 
+    DOMException: "DOMException", 
+    DOMMatrix: "DOMMatrix", 
+    DOMMatrixReadOnly: "DOMMatrixReadOnly", 
+    DOMPoint: "DOMPoint", 
+    DOMPointReadOnly: "DOMPointReadOnly", 
+    DOMQuad: "DOMQuad", 
+    DOMRect: "DOMRect", 
+    DOMRectReadOnly: "DOMRectReadOnly", 
+    File: "File", 
+    FileList: "FileList"
+});
+
 /** All prototypes of supported types. */
 export const supportedPrototypes = Object.freeze([
     // "standard" classes

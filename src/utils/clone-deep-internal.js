@@ -1,6 +1,5 @@
 import { 
     CLONE, 
-    supportedPrototypes, 
     Tag
 } from "./constants.js"
 import { 
@@ -11,6 +10,7 @@ import {
     cloneFile, 
     createFileList, 
     getAtomicErrorConstructor, 
+    getSupportedPrototypes, 
     getTypedArrayConstructor
 } from "./helpers.js";
 import { 
@@ -148,6 +148,9 @@ export function cloneDeepInternal(_value,
      * @type {Array<[any, any]>}
      */ 
     const isExtensibleSealFrozen = [];
+
+    /** An array of all prototypes of supported types in this runtime. */
+    const supportedPrototypes = getSupportedPrototypes();
 
     for (let obj = queue.shift(); obj !== undefined; obj = queue.shift()) {
         /**

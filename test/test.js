@@ -5,17 +5,16 @@ import "./polyfills.js";
 import assert from "node:assert";
 import { describe, mock, test } from "node:test";
 
+import { polyfill } from "./polyfills.js";
+
 import  cloneDeep from "../src/clone-deep.js";
 import cloneDeepFully from "../src/clone-deep-fully.js";
 import useCustomizers from "../src/use-customizers.js";
 
-import {
-    CLONE, 
-    supportedPrototypes, 
-    Tag 
-} from "../src/utils/constants.js";
+import { CLONE, Tag } from "../src/utils/constants.js";
 import { 
     createFileList, 
+    getSupportedPrototypes, 
     getTypedArrayConstructor 
 } from "../src/utils/helpers.js";
 import { 
@@ -903,7 +902,7 @@ try {
         });
 
         test("Native prototypes can be cloned without errors", () => {
-            supportedPrototypes.forEach(proto => {
+            getSupportedPrototypes().forEach(proto => {
                 cloneDeep(proto);
             });
         });
@@ -1453,7 +1452,7 @@ try {
         });
 
         test("Native prototypes can be fully cloned without errors", () => {
-            supportedPrototypes.forEach(proto => {
+            getSupportedPrototypes().forEach(proto => {
                 cloneDeepFully(proto, { force: true });
             });
         });
@@ -1826,6 +1825,8 @@ try {
         });
 
         test("geometry type checkers function as expected", () => {
+            polyfill();
+
             // -- arrange
             const domMatrix = new DOMMatrix;
             const domMatrixReadOnly = new DOMMatrixReadOnly;
@@ -1847,6 +1848,7 @@ try {
             assert.strictEqual(false, isDOMPoint(domPointReadOnly));
             assert.strictEqual(false, isDOMPoint({}));
 
+            console.log("bingus moment?");
             assert.strictEqual(true, isDOMPointReadOnly(domPointReadOnly));
             assert.strictEqual(false, isDOMPointReadOnly(domPoint));
             assert.strictEqual(false, isDOMPointReadOnly({}));
