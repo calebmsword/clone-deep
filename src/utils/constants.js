@@ -100,15 +100,4 @@ export const supportedPrototypes = Object.freeze([
     Uint32Array.prototype,
     BigInt64Array.prototype,
     BigUint64Array.prototype,
-
-    // Web APIs
-    Blob.prototype,
-    DOMException.prototype,
-    DOMMatrix.prototype,
-    DOMMatrixReadOnly.prototype,
-    DOMPoint.prototype,
-    DOMPointReadOnly.prototype,
-    DOMQuad.prototype,
-    File.prototype,
-    FileList.prototype
 ]);
