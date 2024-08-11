@@ -82,9 +82,9 @@ export function cloneDeepInternal(_value,
      */
     function assign(cloned, parentOrAssigner, prop, metadata) {
         if (parentOrAssigner === TOP_LEVEL) 
-            result = cloned;
+            {result = cloned;}
         else if (typeof parentOrAssigner === "function") 
-            parentOrAssigner(cloned, prop, metadata);
+            {parentOrAssigner(cloned, prop, metadata);}
         else if (typeof parentOrAssigner === "object" 
                  && (typeof prop === "string" || typeof prop === "symbol")
                  && isDefaultDescriptor(metadata)) {
@@ -109,14 +109,14 @@ export function cloneDeepInternal(_value,
             }
 
             if (typeof metadata.get === "function")
-                clonedMetadata.get = metadata.get;
+                {clonedMetadata.get = metadata.get;}
             if (typeof metadata.set === "function")
-                clonedMetadata.set = metadata.set;
+                {clonedMetadata.set = metadata.set;}
 
             if (hasAccessor(metadata)) 
-                log(getWarning(
+                {log(getWarning(
                     `Cloning value with name ${String(prop)} whose property ` +
-                    "descriptor contains a get or set accessor."));
+                    "descriptor contains a get or set accessor."));}
             
             Object.defineProperty(parentOrAssigner, prop, clonedMetadata);
         }
@@ -156,7 +156,7 @@ export function cloneDeepInternal(_value,
         /**
          * The value to deeply clone.
          */ 
-        const value = obj.value;
+        const {value} = obj;
 
         /** 
          * `parentOrAssigner` is either
@@ -166,18 +166,18 @@ export function cloneDeepInternal(_value,
          *  - function: an "assigner" that has the responsibility of assigning 
          * the cloned value to something
          */ 
-        const parentOrAssigner = obj.parentOrAssigner;
+        const {parentOrAssigner} = obj;
 
         /**
          * `prop` is used with `parentOrAssigner` if it is an object so that the 
          * cloned object will be assigned to `parentOrAssigner[prop]`.
          */
-        const prop = obj.prop;
+        const {prop} = obj;
 
         /**
          * Contains the property descriptor for this value, or undefined.
          */
-        const metadata = obj.metadata;
+        const {metadata} = obj;
 
         /**
          * Will contain the cloned object.
@@ -214,7 +214,7 @@ export function cloneDeepInternal(_value,
          * Any properties in `value` added here will not be cloned.
          * @type {(string|symbol)[]}
          */
-        let propsToIgnore = [];
+        const propsToIgnore = [];
 
         /**
          * Whether the cloning methods should be observed this loop.
@@ -248,26 +248,26 @@ export function cloneDeepInternal(_value,
                        ignoreProto
                     } = customResult);
 
-                    if (ignore === true) continue;
+                    if (ignore === true) {continue;}
 
                     cloned = assign(clone, parentOrAssigner, prop, metadata);
 
                     if (Array.isArray(additionalValues))
-                        additionalValues.forEach(object => {
+                        {additionalValues.forEach(object => {
                             if (typeof object === "object" 
                                 && typeof object.assigner === "function")
-                                queue.push({
+                                {queue.push({
                                     value: object.value,
                                     parentOrAssigner: object.assigner
-                                });
-                            else throw Warning.IMPROPER_ADDITIONAL_VALUES;
-                        });
+                                });}
+                            else {throw Warning.IMPROPER_ADDITIONAL_VALUES;}
+                        });}
                     else if (additionalValues !== undefined)
-                        throw Warning.IMPROPER_ADDITIONAL_VALUES;
+                        {throw Warning.IMPROPER_ADDITIONAL_VALUES;}
                 }
             }
             catch(error) {
-                if (doThrow === true) throw error;
+                if (doThrow === true) {throw error;}
 
                 clone = undefined;
                 useCustomizerClone = false;
@@ -287,7 +287,7 @@ export function cloneDeepInternal(_value,
                     log(getWarning(error.message, cause, stack));
                 }
                 else 
-                    log(getWarning(msg, { cause: error }));
+                    {log(getWarning(msg, { cause: error }));}
             }
         }
 
@@ -298,14 +298,13 @@ export function cloneDeepInternal(_value,
         const tag = getTag(value, prioritizePerformance);
 
         // Check if we should observe cloning methods on this loop
-        if (parentObjectRegistry !== undefined) [...parentObjectRegistry].some(
-            object => ignoreCloningMethodsThisLoop = value === object
+        if (parentObjectRegistry !== undefined) {[...parentObjectRegistry].some(
+            object => {return ignoreCloningMethodsThisLoop = value === object
                 ?.constructor
-                ?.prototype);
+                ?.prototype});}
         
         try {
-            // skip the following "else if" branches
-            if (useCustomizerClone === true) {}
+            if (useCustomizerClone === true) {/* skip following branches */}
 
             // If value is primitive, just assign it directly.
             else if (value === null || !["object", "function"]
@@ -316,7 +315,7 @@ export function cloneDeepInternal(_value,
 
             // We won't clone weakmaps or weaksets (or their prototypes).
             else if ([Tag.WEAKMAP, Tag.WEAKSET].includes(tag))
-                throw tag === Tag.WEAKMAP ? Warning.WEAKMAP : Warning.WEAKSET;
+                {throw tag === Tag.WEAKMAP ? Warning.WEAKMAP : Warning.WEAKSET;}
             
             // If object defines its own means of getting cloned, use it
             else if (typeof value[CLONE] === "function" 
@@ -327,25 +326,25 @@ export function cloneDeepInternal(_value,
                 const result = value[CLONE]();
                 
                 if (result.propsToIgnore !== undefined)
-                    if (Array.isArray(result.propsToIgnore) &&
+                    {if (Array.isArray(result.propsToIgnore) &&
                         result
                             .propsToIgnore
                             .every(
                                 /** @param {any} s */
-                                s => ["string", "symbol"].includes(typeof s))) 
-                        propsToIgnore.push(...result.propsToIgnore);
-                    else log(getWarning(
+                                s => {return ["string", "symbol"].includes(typeof s)})) 
+                        {propsToIgnore.push(...result.propsToIgnore);}
+                    else {log(getWarning(
                         "return value of CLONE method is an object whose " + 
                         "propsToIgnore property, if not undefined, is " + 
                         "expected to be an array of strings or symbols. The " + 
                         "given result is not this type of array so it will " + 
-                        "have no effect."));
+                        "have no effect."));}}
 
                 if (typeof result.ignoreProps === "boolean")
-                    ignoreProps = result.ignoreProps;
+                    {ignoreProps = result.ignoreProps;}
 
                 if (typeof result.ignoreProto === "boolean")
-                    ignoreProto = result.ignoreProto;
+                    {ignoreProto = result.ignoreProto;}
 
                 cloned = assign(result.clone, 
                                 parentOrAssigner, 
@@ -358,10 +357,10 @@ export function cloneDeepInternal(_value,
             // indicates that prototypes are instances of themselves.
             else if ([Tag.OBJECT, Tag.ARGUMENTS].includes(tag)
                      || supportedPrototypes.includes(value))
-                cloned = assign(Object.create(getPrototype(value)), 
+                {cloned = assign(Object.create(getPrototype(value)), 
                                 parentOrAssigner, 
                                 prop,
-                                metadata);
+                                metadata);}
 
             // We only copy functions if they are methods.
             else if (typeof value === "function") {
@@ -380,14 +379,14 @@ export function cloneDeepInternal(_value,
                                    "it will be copied directly. If this is " + 
                                    "the top-level object being cloned, then " + 
                                    "an empty object will be returned."));
-                if (parentOrAssigner === TOP_LEVEL) continue;
+                if (parentOrAssigner === TOP_LEVEL) {continue;}
             }
             
             else if (Array.isArray(value))
-                cloned = assign(new Array(value.length), 
+                {cloned = assign(new Array(value.length), 
                                 parentOrAssigner, 
                                 prop, 
-                                metadata);
+                                metadata);}
 
             else if ([Tag.BOOLEAN, Tag.DATE].includes(tag)) {
                 /** @type {BooleanConstructor|DateConstructor} */
@@ -458,14 +457,14 @@ export function cloneDeepInternal(_value,
                         : [];
 
                     if (!isIterable(aggregateError.errors))
-                        log(getWarning("Cloning AggregateError with " + 
+                        {log(getWarning("Cloning AggregateError with " + 
                                        "non-iterable errors property. It " +
                                        "will be cloned into an " + 
                                        "AggregateError instance with an " + 
-                                       "empty aggregation."));
+                                       "empty aggregation."));}
                     
-                    const cause = aggregateError.cause;
-                    const message = aggregateError.message;
+                    const {cause} = aggregateError;
+                    const {message} = aggregateError;
                     clonedError = cause === undefined
                         ? new AggregateError(errors, message)
                         : new AggregateError(errors, message, { cause });
@@ -475,7 +474,7 @@ export function cloneDeepInternal(_value,
                     const ErrorConstructor = getAtomicErrorConstructor(error, 
                                                                        log);
 
-                    const cause = error.cause;
+                    const {cause} = error;
                     clonedError = cause === undefined
                         ? new ErrorConstructor(error.message)
                         : new ErrorConstructor(error.message, { cause });
@@ -495,7 +494,7 @@ export function cloneDeepInternal(_value,
                         isExtensibleSealFrozen.push([error.stack, cloned]);
                         Object.defineProperty(clonedError, "stack", {
                             enumerable: defaultDescriptor?.enumerable || false,
-                            get: () => cloned,
+                            get: () => {return cloned},
                             set
                         });
                     }
@@ -531,7 +530,7 @@ export function cloneDeepInternal(_value,
                     metadata);
                 
                 for (let n = 0; n < cloned.length; n++)
-                    propsToIgnore.push(String(n));
+                    {propsToIgnore.push(String(n));}
             }
 
             else if (Tag.MAP === tag) {
@@ -579,7 +578,7 @@ export function cloneDeepInternal(_value,
                 const promise = value;
 
                 cloned = new Promise((resolve, reject) => {
-                    promise.then(resolve).catch(reject);
+                    promise.then(resolve)["catch"](reject);
                 });
 
                 assign(cloned, parentOrAssigner, prop, metadata);
@@ -610,7 +609,7 @@ export function cloneDeepInternal(_value,
                 const files = [];
                 for (let index = 0; index < fileList.length; index++) {
                     const file = fileList.item(index);
-                    if (file !== null) files.push(cloneFile(file));
+                    if (file !== null) {files.push(cloneFile(file));}
                 }
 
                 cloned = createFileList(...files);
@@ -637,7 +636,7 @@ export function cloneDeepInternal(_value,
                         ]);
                         Object.defineProperty(clonedException, "stack", {
                             enumerable: descriptor?.enumerable || false,
-                            get: () => cloned
+                            get: () => {return cloned}
                         });
                     }
                 });
@@ -724,7 +723,7 @@ export function cloneDeepInternal(_value,
                 assign(cloned, parentOrAssigner, prop, metadata);
             }
 
-            else throw getWarning("Attempted to clone unsupported type.");
+            else {throw getWarning("Attempted to clone unsupported type.");}
         }
         catch(error) {
             const msg = "Encountered error while attempting to clone " + 
@@ -737,7 +736,7 @@ export function cloneDeepInternal(_value,
                 const stack = error.stack ? error.stack: undefined;
                 log(getWarning(error.message, cause, stack));
             } 
-            else log(getWarning(msg, { cause: error }));
+            else {log(getWarning(msg, { cause: error }));}
 
             cloned = assign({}, parentOrAssigner, prop, metadata);
 
@@ -748,7 +747,7 @@ export function cloneDeepInternal(_value,
 
         // If customizer returned a primitive, do not clone its properties.
         if (useCustomizerClone && cloned === null || typeof cloned !== "object")
-            continue;
+            {continue;}
 
         cloneStore.set(value, cloned);
 
@@ -757,13 +756,13 @@ export function cloneDeepInternal(_value,
         // Ensure clone has prototype of value
         if (ignoreProto !== true
             && getPrototype(cloned) !== getPrototype(value)) 
-            Object.setPrototypeOf(cloned, getPrototype(value));
+            {Object.setPrototypeOf(cloned, getPrototype(value));}
         
-        if (ignoreProps === true) continue;
+        if (ignoreProps === true) {continue;}
 
         // Now copy all enumerable and non-enumerable properties.
         forAllOwnProperties(value, key => {
-            if (propsToIgnore.includes(key)) return;
+            if (propsToIgnore.includes(key)) {return;}
             
             const metadata = Object.getOwnPropertyDescriptor(value, key);
 
@@ -771,16 +770,16 @@ export function cloneDeepInternal(_value,
                 value: !hasAccessor(metadata) ? value[key] : undefined, 
                 parentOrAssigner: cloned,
                 prop: key,
-                metadata: metadata
+                metadata
             });
         });
     }
 
     // Check extensible, seal, and frozen statuses.
     isExtensibleSealFrozen.forEach(([value, cloned]) => {
-        if (!Object.isExtensible(value)) Object.preventExtensions(cloned);
-        if (Object.isSealed(value)) Object.seal(cloned);
-        if (Object.isFrozen(value)) Object.freeze(cloned);
+        if (!Object.isExtensible(value)) {Object.preventExtensions(cloned);}
+        if (Object.isSealed(value)) {Object.seal(cloned);}
+        if (Object.isFrozen(value)) {Object.freeze(cloned);}
     });
 
     return result;

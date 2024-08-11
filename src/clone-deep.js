@@ -60,27 +60,26 @@ function cloneDeep(value, optionsOrCustomizer) {
     let ignoreCloningMethods = false;
 
     if (typeof optionsOrCustomizer === "function")
-        customizer = optionsOrCustomizer;
+        {customizer = optionsOrCustomizer;}
     else if (typeof optionsOrCustomizer === "object") {
         ({ 
+            customizer, 
             log, 
             prioritizePerformance, 
             logMode,
             ignoreCloningMethods,
             letCustomizerThrow 
         } = optionsOrCustomizer);
-        
-        customizer = optionsOrCustomizer.customizer;
     }
 
-    if (typeof log !== "function") log = console.warn;
+    if (typeof log !== "function") {log = console.warn;}
 
     if (typeof logMode === "string")
-        if (logMode.toLowerCase() === "silent")
-            log = () => {};
+        {if (logMode.toLowerCase() === "silent")
+            {log = () => {};}
         else if (logMode.toLowerCase() === "quiet")
             /** @type {Log} */
-            log = error => console.warn(error.message);
+            {log = error => {return console.warn(error.message)};}}
     
     return cloneDeepInternal(value, 
                              customizer, 

@@ -11,13 +11,17 @@
     "deep"
   ],
   "scripts": {
+    "fix": "npx eslint --fix",
+    "lint": "npx eslint",
+    "serve": "node .\\benchmark\\serve.js",
     "test": "node --test",
-    "test-coverage": "node --test --experimental-test-coverage",
-    "serve": "node .\\benchmark\\serve.js"
+    "test-coverage": "node --test --experimental-test-coverage"
   },
   "author": "Caleb Sword",
   "license": "MIT",
   "devDependencies": {
+    "eslint": "^9.9.0",
+    "globals": "^15.9.0",
     "typescript": "^5.3.3"
   }
 }

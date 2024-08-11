@@ -39,10 +39,10 @@ import { hasMethods } from "./utils/metadata.js";
  */
 export default function cloneDeepFully(value, options) {
     if (typeof options !== "object" && typeof options !== "function") 
-        options = {};
+        {options = {};}
     if (typeof options === "object" 
         && typeof options.force !== "boolean") 
-        options.force = false;
+        {options.force = false;}
     
     let customizer;
     let log;
@@ -50,14 +50,14 @@ export default function cloneDeepFully(value, options) {
     let ignoreCloningMethods;
     let letCustomizerThrow;
 
-    if (typeof options === "function") customizer = options;
-    else ({
+    if (typeof options === "function") {customizer = options;}
+    else {({
         customizer, 
         log, 
         prioritizePerformance, 
         ignoreCloningMethods, 
         letCustomizerThrow
-    } = options);
+    } = options);}
 
     /** @type {U} */
     const clone = cloneDeep(value, options);
@@ -68,7 +68,7 @@ export default function cloneDeepFully(value, options) {
     /** @type {any} */
     let tempOrig = value;
     
-    let parentObjectRegistry = ignoreCloningMethods !== true 
+    const parentObjectRegistry = ignoreCloningMethods !== true 
         ? new Set() 
         : undefined;
 
@@ -80,7 +80,7 @@ export default function cloneDeepFully(value, options) {
         const defaultLog = console.warn;
 
         if (ignoreCloningMethods !== true) 
-            parentObjectRegistry?.add(tempOrig);
+            {parentObjectRegistry?.add(tempOrig);}
 
         const newProto = cloneDeepInternal(
             Object.getPrototypeOf(tempOrig), 

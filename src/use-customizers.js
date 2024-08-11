@@ -9,8 +9,8 @@
  */
 export default function useCustomizers(customizers) {
     if (!Array.isArray(customizers)
-        || customizers.some(element => typeof element !== "function"))
-        throw new Error("useCustomizers must receive an array of functions");
+        || customizers.some(element => {return typeof element !== "function"}))
+        {throw new Error("useCustomizers must receive an array of functions");}
     
     /**
      * @param {any} value
@@ -19,7 +19,7 @@ export default function useCustomizers(customizers) {
     return function combinedCustomizer(value) {
         for (const customizer of customizers) {
             const result = customizer(value);
-            if (typeof result === "object") return result;
+            if (typeof result === "object") {return result;}
         }
     }
 }

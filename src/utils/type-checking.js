@@ -56,11 +56,11 @@ function getGeometryCheckers(webApiString, methodOrProp, property) {
      */
     function isSubclass(value) {
         const WebApi = getWebApiFromString(webApiString);
-        if (!isCallable(WebApi)) return false;
+        if (!isCallable(WebApi)) {return false;}
         
         if (registry.has(value)) {
             const result = registry.get(value);
-            if (typeof result === "boolean") return result;
+            if (typeof result === "boolean") {return result;}
         }
 
         const descriptors = getDescriptors(getPrototype(new WebApi));
@@ -87,8 +87,8 @@ function getGeometryCheckers(webApiString, methodOrProp, property) {
 
     /** @type {(value?: any) => boolean} */
     const isMutable = typeof methodOrProp === "object"
-        ? value => !isReadOnly(value, methodOrProp.name)
-        : value => !isReadOnly(value, property);
+        ? value => {return !isReadOnly(value, methodOrProp.name)}
+        : value => {return !isReadOnly(value, property)};
 
 
     /** @type {(value: any) => boolean} */
@@ -133,7 +133,7 @@ const lastModifiedGetter = getDescriptors(File.prototype).lastModified.get;
  * @returns {boolean}
  */
 export function isFile(value) {
-    if (!(value instanceof File)) return false;
+    if (!(value instanceof File)) {return false;}
     try {
         lastModifiedGetter?.call(value);
         return true;
@@ -267,15 +267,15 @@ const typeCheckers = [
  */
 export function getTag(value, prioritizePerformance) {
 
-    if (prioritizePerformance) return Object.prototype.toString.call(value);
+    if (prioritizePerformance) {return Object.prototype.toString.call(value);}
 
     /** @type {undefined|string} */
     let result;
 
     classesToTypeCheck.some(([Class, method, tag, ...args]) => {
-        if(typeof Class === "string") Class = getWebApiFromString(Class)
+        if(typeof Class === "string") {Class = getWebApiFromString(Class)}
         
-        if (Class === undefined || !(value instanceof Class)) return;
+        if (Class === undefined || !(value instanceof Class)) {return;}
         
         try {
             Class.prototype[method].call(value, ...args);
@@ -305,7 +305,7 @@ export function getTag(value, prioritizePerformance) {
  * @returns {boolean}
  */
 export function isIterable(value) {
-    if (value === null || value === undefined ) return false;
+    if (value === null || value === undefined ) {return false;}
     return typeof value[Symbol.iterator] === "function";
 }
 
@@ -337,13 +337,13 @@ const typedArrayTags = Object.freeze([
  * @returns {boolean}
  */
 export function isTypedArray(value, prioritizePerformance, tag) {
-    if (prioritizePerformance) return typedArrayTags.includes(tag);
+    if (prioritizePerformance) {return typedArrayTags.includes(tag);}
 
     try {
         TypedArrayProto.lastIndexOf.call(value);
         return true;
     }
-    catch(_) {
+    catch {
         return false;
     }
 }

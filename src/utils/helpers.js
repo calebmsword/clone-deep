@@ -53,7 +53,7 @@ export function getTypedArrayConstructor(tag, log) {
  * @returns {import("./types").AtomicErrorConstructor}
  */
 export function getAtomicErrorConstructor(value, log) {
-    const name = value.name;
+    const {name} = value;
     switch (name) {
         case "Error":
             return Error;
@@ -71,9 +71,9 @@ export function getAtomicErrorConstructor(value, log) {
             return URIError;
         default:
             if (log !== undefined)
-                log(getWarning("Cloning error with unrecognized name " + 
+                {log(getWarning("Cloning error with unrecognized name " + 
                                 `${name}! It will be cloned into an ` + 
-                                "ordinary Error object."))
+                                "ordinary Error object."))}
             return Error;
     }
 }
@@ -86,11 +86,11 @@ export function getAtomicErrorConstructor(value, log) {
  */
 export function createFileList(...files) {
     if (!isCallable(globalThis.DataTransfer))
-        throw getWarning("Cannot create FileList in this runtime.");
+        {throw getWarning("Cannot create FileList in this runtime.");}
 
     const dataTransfer = new DataTransfer;
 
-    for (const file of files) dataTransfer.items.add(file);
+    for (const file of files) {dataTransfer.items.add(file);}
 
     return dataTransfer.files;
 }
@@ -137,7 +137,7 @@ export function getSupportedPrototypes() {
         const WebApi = getWebApiFromString(webApiString);
 
         if (WebApi !== undefined && isCallable(WebApi)) 
-            webApiPrototypes.push(WebApi.prototype);
+            {webApiPrototypes.push(WebApi.prototype);}
     });
 
     return supportedPrototypes.concat(webApiPrototypes);

@@ -59,8 +59,8 @@ export function hasAccessor(metadata) {
  */
 export function hasMethods(o) {
     // We cannot access some properties of Function.prototype in strict mode
-    if (o === Function.prototype) return true;
-    return getAllPropertiesOf(o).some(key => typeof o[key] === "function");
+    if (o === Function.prototype) {return true;}
+    return getAllPropertiesOf(o).some(key => {return typeof o[key] === "function"});
 }
 
 /**

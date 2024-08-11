@@ -10,7 +10,7 @@ class CloneDeepWarning extends Error {
     constructor(message, cause, stack) {
         super(message, cause);
         this.name = CloneDeepWarning.name;
-        if (typeof stack === "string") this.stack = stack;
+        if (typeof stack === "string") {this.stack = stack;}
     }
 }
 
