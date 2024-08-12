@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 import { assign, TOP_LEVEL } from './assign.js';
 import {
     CLONE,
@@ -148,6 +149,20 @@ export const cloneDeepInternal = (_value,
          */
         let ignoreCloningMethodsThisLoop = false;
 
+        /**
+         * A shortcut for conveniently using {@link assign}.
+         * @param {any} clonedValue
+         * @returns {any}
+         */
+        const saveClone = (clonedValue) => {
+            return assign(container,
+                          log,
+                          clonedValue,
+                          parentOrAssigner,
+                          prop,
+                          metadata);
+        };
+
         // Perform user-injected logic if applicable.
         if (typeof customizer === 'function') {
 
@@ -177,12 +192,7 @@ export const cloneDeepInternal = (_value,
                     if (ignore === true) {
                         ignoreThisLoop = true;
                     } else {
-                        cloned = assign(container,
-                                        log,
-                                        clone,
-                                        parentOrAssigner,
-                                        prop,
-                                        metadata);
+                        cloned = saveClone(clone);
 
                         if (Array.isArray(additionalValues)) {
                             additionalValues.forEach((object) => {
@@ -252,7 +262,7 @@ export const cloneDeepInternal = (_value,
             // If value is primitive, just assign it directly.
             } else if (value === null || !['object', 'function']
                 .includes(typeof value)) {
-                assign(container, log, value, parentOrAssigner, prop, metadata);
+                saveClone(value);
 
             // We won't clone weakmaps or weaksets (or their prototypes).
             } else if ([Tag.WEAKMAP, Tag.WEAKSET].includes(tag)) {
@@ -306,23 +316,13 @@ export const cloneDeepInternal = (_value,
             // indicates that prototypes are instances of themselves.
             } else if ([Tag.OBJECT, Tag.ARGUMENTS].includes(tag)
                        || supportedPrototypes.includes(value)) {
-                cloned = assign(container,
-                                log,
-                                Object.create(getPrototype(value)),
-                                parentOrAssigner,
-                                prop,
-                                metadata);
+                cloned = saveClone(Object.create(getPrototype(value)));
 
             // We only copy functions if they are methods.
             } else if (typeof value === 'function') {
-                cloned = assign(container,
-                                log,
-                                parentOrAssigner !== TOP_LEVEL
-                                    ? value
-                                    : Object.create(Function.prototype),
-                                parentOrAssigner,
-                                prop,
-                                metadata);
+                cloned = saveClone(parentOrAssigner !== TOP_LEVEL
+                    ? value
+                    : Object.create(Function.prototype));
                 log(getWarning(
                     `Attempted to clone function` +
                     `${typeof prop === 'string'
@@ -334,12 +334,7 @@ export const cloneDeepInternal = (_value,
                 [ignoreProps, ignoreProto] = [true, true];
 
             } else if (Array.isArray(value)) {
-                cloned = assign(container,
-                                log,
-                                new Array(value.length),
-                                parentOrAssigner,
-                                prop,
-                                metadata);
+                cloned = saveClone(new Array(value.length));
 
             } else if ([Tag.BOOLEAN, Tag.DATE].includes(tag)) {
                 /** @type {BooleanConstructor|DateConstructor} */
@@ -347,12 +342,7 @@ export const cloneDeepInternal = (_value,
                     ? Date
                     : Boolean;
 
-                cloned = assign(container,
-                                log,
-                                new BooleanOrDateConstructor(Number(value)),
-                                parentOrAssigner,
-                                prop,
-                                metadata);
+                cloned = saveClone(new BooleanOrDateConstructor(Number(value)));
 
             } else if ([Tag.NUMBER, Tag.STRING].includes(tag)) {
                 /** @type {NumberConstructor|StringConstructor} */
@@ -360,44 +350,29 @@ export const cloneDeepInternal = (_value,
                     ? Number
                     : String;
 
-                cloned = assign(container,
-                                log,
-                                new NumberOrStringConstructor(value),
-                                parentOrAssigner,
-                                prop,
-                                metadata);
+                cloned = saveClone(new NumberOrStringConstructor(value));
 
             // `typeof Object(Symbol("foo"))` is `"object"
             } else if (Tag.SYMBOL === tag) {
                 /** @type {Symbol} */
                 const symbol = value;
 
-                cloned = assign(
-                    container,
-                    log,
-                    Object(Symbol.prototype.valueOf.call(symbol)),
-                    parentOrAssigner,
-                    prop,
-                    metadata);
+                cloned = saveClone(
+                    Object(Symbol.prototype.valueOf.call(symbol)));
 
             // `typeof Object(BigInt(3))` is `"object"
             } else if (Tag.BIGINT === tag) {
                 /** @type {BigInt} */
                 const bigint = value;
 
-                cloned = assign(container,
-                                log,
-                                Object(BigInt.prototype.valueOf.call(bigint)),
-                                parentOrAssigner,
-                                prop,
-                                metadata);
+                cloned = saveClone(
+                    Object(BigInt.prototype.valueOf.call(bigint)));
 
             } else if (Tag.REGEXP === tag) {
                 /** @type {RegExp} */
                 const regExp = value;
 
-                cloned = new RegExp(regExp.source, regExp.flags);
-                assign(container, log, cloned, parentOrAssigner, prop, metadata);
+                cloned = saveClone(new RegExp(regExp.source, regExp.flags));
 
             } else if (Tag.ERROR === tag) {
                 /** @type {Error} */
@@ -461,12 +436,7 @@ export const cloneDeepInternal = (_value,
                     }
                 });
 
-                cloned = assign(container,
-                                log,
-                                clonedError,
-                                parentOrAssigner,
-                                prop,
-                                metadata);
+                cloned = saveClone(clonedError);
 
                 propsToIgnore.push('stack');
 
@@ -474,12 +444,7 @@ export const cloneDeepInternal = (_value,
                 const arrayBuffer = new ArrayBuffer(value.byteLength);
                 new Uint8Array(arrayBuffer).set(new Uint8Array(value));
 
-                cloned = assign(container,
-                                log,
-                                arrayBuffer,
-                                parentOrAssigner,
-                                prop,
-                                metadata);
+                cloned = saveClone(arrayBuffer);
 
             } else if (isTypedArray(value, prioritizePerformance, tag)
                      || Tag.DATAVIEW === tag) {
@@ -492,14 +457,9 @@ export const cloneDeepInternal = (_value,
                     value.buffer.byteLength);
                 new Uint8Array(buffer).set(new Uint8Array(value.buffer));
 
-                cloned = assign(container,
-                                log,
-                                new TypedArray(buffer,
-                                               value.byteOffset,
-                                               value.length),
-                                parentOrAssigner,
-                                prop,
-                                metadata);
+                cloned = saveClone(new TypedArray(buffer,
+                                                  value.byteOffset,
+                                                  value.length));
 
                 for (let index = 0; index < cloned.length; index++) {
                     propsToIgnore.push(String(index));
@@ -510,12 +470,7 @@ export const cloneDeepInternal = (_value,
                 const originalMap = value;
 
                 const cloneMap = new Map();
-                cloned = assign(container,
-                                log,
-                                cloneMap,
-                                parentOrAssigner,
-                                prop,
-                                metadata);
+                cloned = saveClone(cloneMap);
 
                 originalMap.forEach((subValue, key) => {
                     queue.push({
@@ -536,12 +491,7 @@ export const cloneDeepInternal = (_value,
                 const originalSet = value;
 
                 const cloneSet = new Set();
-                cloned = assign(container,
-                                log,
-                                cloneSet,
-                                parentOrAssigner,
-                                prop,
-                                metadata);
+                cloned = saveClone(cloneSet);
 
                 originalSet.forEach((subValue) => {
                     queue.push({
@@ -565,12 +515,7 @@ export const cloneDeepInternal = (_value,
                     promise.then(resolve)['catch'](reject);
                 });
 
-                assign(container,
-                       log,
-                       cloned,
-                       parentOrAssigner,
-                       prop,
-                       metadata);
+                saveClone(cloned);
 
                 log(Warning.PROMISE);
 
@@ -578,24 +523,13 @@ export const cloneDeepInternal = (_value,
                 /** @type {Blob} */
                 const blob = value;
 
-                cloned = assign(container,
-                                log,
-                                blob.slice(),
-                                parentOrAssigner,
-                                prop,
-                                metadata);
+                cloned = saveClone(blob.slice());
 
             } else if (Tag.FILE === tag) {
                 /** @type {File} */
                 const file = value;
 
-                cloned = cloneFile(file);
-                assign(container,
-                       log,
-                       cloned,
-                       parentOrAssigner,
-                       prop,
-                       metadata);
+                cloned = saveClone(cloneFile(file));
 
             } else if (Tag.FILELIST === tag) {
                 /** @type {FileList} */
@@ -610,13 +544,7 @@ export const cloneDeepInternal = (_value,
                     }
                 }
 
-                cloned = createFileList(...files);
-                assign(container,
-                       log,
-                       cloned,
-                       parentOrAssigner,
-                       prop,
-                       metadata);
+                cloned = saveClone(createFileList(...files));
 
             } else if (Tag.DOMEXCEPTION === tag) {
                 /** @type {DOMException} */
@@ -645,12 +573,7 @@ export const cloneDeepInternal = (_value,
                     }
                 });
 
-                cloned = assign(container,
-                                log,
-                                clonedException,
-                                parentOrAssigner,
-                                prop,
-                                metadata);
+                cloned = saveClone(clonedException);
 
                 propsToIgnore.push('stack');
 
@@ -658,12 +581,7 @@ export const cloneDeepInternal = (_value,
                 /** @type {DOMMatrix} */
                 const matrix = value;
 
-                assign(container,
-                       log,
-                       matrix.scale(1),
-                       parentOrAssigner,
-                       prop,
-                       metadata);
+                cloned = saveClone(matrix.scale(1));
 
             } else if (Tag.DOMMATRIXREADONLY === tag) {
                 /** @type {DOMMatrixReadOnly} */
@@ -679,12 +597,7 @@ export const cloneDeepInternal = (_value,
                         matrix.m31, matrix.m32, matrix.m33, matrix.m34,
                         matrix.m41, matrix.m42, matrix.m43, matrix.m44
                     ]);
-                assign(container,
-                       log,
-                       cloned,
-                       parentOrAssigner,
-                       prop,
-                       metadata);
+                saveClone(cloned);
 
             } else if ([Tag.DOMPOINT, Tag.DOMPOINTREADONLY].includes(tag)) {
                 /** @type {DOMPoint} */
@@ -694,13 +607,7 @@ export const cloneDeepInternal = (_value,
                     ? DOMPoint
                     : DOMPointReadOnly;
 
-                cloned = Class.fromPoint(domPoint);
-                assign(container,
-                       log,
-                       cloned,
-                       parentOrAssigner,
-                       prop,
-                       metadata);
+                cloned = saveClone(Class.fromPoint(domPoint));
 
             } else if (Tag.DOMQUAD === tag) {
                 /** @type {import("../utils/types").DOMQuadExtended} */
@@ -726,12 +633,7 @@ export const cloneDeepInternal = (_value,
                     });
                 });
 
-                assign(container,
-                       log,
-                       cloned,
-                       parentOrAssigner,
-                       prop,
-                       metadata);
+                saveClone(cloned);
 
             } else if ([Tag.DOMRECT, Tag.DOMRECTREADONLY].includes(tag)) {
                 /** @type {DOMRect|DOMRectReadOnly} */
@@ -739,13 +641,7 @@ export const cloneDeepInternal = (_value,
 
                 const Class = tag === Tag.DOMRECT ? DOMRect : DOMRectReadOnly;
 
-                cloned = Class.fromRect(domRect);
-                assign(container,
-                       log,
-                       cloned,
-                       parentOrAssigner,
-                       prop,
-                       metadata);
+                cloned = saveClone(Class.fromRect(domRect));
 
             } else {
                 throw getWarning('Attempted to clone unsupported type.');
@@ -764,12 +660,7 @@ export const cloneDeepInternal = (_value,
                 log(getWarning(msg, { cause: error }));
             }
 
-            cloned = assign(container,
-                            log,
-                            {},
-                            parentOrAssigner,
-                            prop,
-                            metadata);
+            cloned = saveClone({});
 
             // We don't want the prototype if we failed and set the value to an
             // empty object.

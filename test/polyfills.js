@@ -15,12 +15,6 @@ const proto = x => Object.getPrototypeOf(x);
  */
 export function polyfill() {
     
-    // This is far overcomplicated in an attempt to preserve functionality 
-    // that isn't necessary for the shim. (That is, calling  
-    // metadata(proto(proto(domMatrix))).m11.get.call(domMatrix) is the same as
-    // just doing domMatrix.m11.) My apologies.
-    // This property isn't even part of the specification and is an 
-    // implmentation detail of V8 so it was frankly a waste of time.
     if (typeof globalThis.DOMMatrixReadOnly !== "function") {
 
         globalThis.DOMMatrixReadOnly = class DOMMatrixReadOnly {
@@ -28,6 +22,10 @@ export function polyfill() {
 
             #m11;
             
+            get m11() {
+                return this.#m11;
+            }
+
             #is2D;
 
             get is2D() {
@@ -49,14 +47,9 @@ export function polyfill() {
                 
                 DOMMatrixReadOnly.#registry.add(this);
 
-                /** @type {(x: number) => void} */
-                function setM11(m11) { 
-                    this.#m11 = m11;
-                }
-
                 if (array === undefined) {
                     this.#is2D = true;
-                    setM11.call(this, 1);
+                    this.#m11 = 1;
                     this.m12 = 0;
                     this.m13 = 0;
                     this.m14 = 0;
@@ -78,7 +71,7 @@ export function polyfill() {
                     
                     this.#is2D = true;
 
-                    setM11.call(this, m11);
+                    this.#m11 = m11;
                     this.m12 = m12;
                     this.m13 = 0;
                     this.m14 = 0;
@@ -102,7 +95,7 @@ export function polyfill() {
                         
                         this.#is2D = true;
     
-                        setM11.call(this, m11);
+                        this.#m11 = m11;
                         this.m12 = m12;
                         this.m13 = m13;
                         this.m14 = m14;
@@ -127,49 +120,6 @@ export function polyfill() {
                 this.d = this.m22;
                 this.e = this.m41;
                 this.f = this.m42;
-
-                if (!Object.getOwnPropertyNames(DOMMatrixReadOnly.prototype)
-                        .includes("m11"))
-                    Object.defineProperty(DOMMatrixReadOnly.prototype, "m11", {
-                        configurable: "true",
-                        enumerable: "true",
-                        /** @this DOMMatrixReadOnly */
-                        get() {
-                            if (!DOMMatrixReadOnly.#registry.has(this)) 
-                                throw new TypeError(msg);
-                            return this.#m11;
-                        }
-                    });
-
-                globalThis.DOMMatrix = class DOMMatrix extends 
-                    DOMMatrixReadOnly {
-                    static #registry = new WeakSet;
-        
-                    constructor(arg) {
-                        super(arg);
-                        DOMMatrix.#registry.add(this);
-                        
-                        if (!Object.getOwnPropertyNames(DOMMatrix.prototype)
-                                .includes("m11"))
-                            Object.defineProperty(DOMMatrix.prototype, "m11", {
-                                configurable: "true",
-                                enumerable: "true",
-                                get() {
-                                    return metadata(proto(proto(this)))
-                                        .m11
-                                        .get
-                                        .call(this);
-                                },
-                                set(m11) {
-                                    if (!DOMMatrix.#registry.has(this)) 
-                                        throw new TypeError(msg);
-                                    setM11.call(this, m11);
-                                }
-                            });
-                    }
-                }
-
-                DOMMatrix.prototype[Symbol.toStringTag] = "DOMMatrix";
             }
 
             scale() {
@@ -187,15 +137,44 @@ export function polyfill() {
             }
         };
 
-        new DOMMatrixReadOnly;
-
         DOMMatrixReadOnly.prototype[Symbol.toStringTag] = "DOMMatrixReadOnly";
+    }
+
+    if (typeof globalThis.DOMMatrix !== "function") {
+        globalThis.DOMMatrix = class DOMMatrix extends DOMMatrixReadOnly {
+        
+            static #registry = new WeakSet;
+
+            #m11;
+
+            get m11() {
+                return this.#m11;
+            }
+
+            set m11(newM11) {
+                this.#m11 = newM11;
+            }
+
+            constructor(domInit) {
+                super(domInit);
+
+                if (domInit === undefined) {
+                    this.#m11 = 1;
+                } else {
+                    [this.#m11] = domInit;
+                }
+
+                DOMMatrix.#registry.add(this);
+            }
+        }
+
+        DOMMatrix.prototype[Symbol.toStringTag] = "DOMMatrix";
     }
     
     if (typeof globalThis.DOMPointReadOnly !== "function") {
 
         globalThis.DOMPointReadOnly = class DOMPointReadOnly {
-            static #registry = new WeakSet;
+            static #registry = new WeakSet();
 
             #x;
 
