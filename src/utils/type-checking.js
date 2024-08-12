@@ -6,9 +6,9 @@ const { toString } = Object.prototype;
 
 /**
  * Gets the tag using `Object.prototype.toString`.
- * Since we cache the lookup for Object.prototype.toString in the implementation
- * of this function, this is slightly more performant than calling
- * `Object.prototype.toString.call` explicitly.
+ * Since we cache the lookup for `Object.prototype.toString` in the
+ * implementation of this function, this is slightly more performant than
+ * calling `Object.prototype.toString.call` explicitly.
  * @param {any} value
  * @returns {string}
  */

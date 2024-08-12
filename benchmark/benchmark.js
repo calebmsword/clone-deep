@@ -1,4 +1,4 @@
-import cloneDeep from "../src/clone-deep.js";
+import cloneDeep from "../src/clone-deep/clone-deep.js";
 
 /**
  * This script is meant to be run as the script for the benchmark UI. The 

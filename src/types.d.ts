@@ -1,4 +1,4 @@
-import { ValueTransform } from "./utils/types";
+import { Assigner, ValueTransform } from "./utils/types";
 
 export type Customizer = (value: any) => ValueTransform|void;
 
@@ -15,4 +15,11 @@ export interface CloneDeepOptions {
 
 export interface CloneDeepFullyOptions extends CloneDeepOptions {
     force?: boolean
+}
+
+export interface SyncQueueItem {
+    value: any,
+    parentOrAssigner?: symbol|Object|Assigner,
+    prop?: string | symbol,
+    metadata?: PropertyDescriptor
 }

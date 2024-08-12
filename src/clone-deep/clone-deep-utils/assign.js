@@ -1,5 +1,5 @@
-import { getWarning } from '../utils/clone-deep-warning.js';
-import { hasAccessor, isDefaultDescriptor } from '../utils/metadata.js';
+import { getWarning } from '../../utils/clone-deep-warning.js';
+import { hasAccessor, isDefaultDescriptor } from '../../utils/metadata.js';
 
 /**
  * This symbol is used to indicate that the cloned value is the top-level object
@@ -12,7 +12,7 @@ export const TOP_LEVEL = Symbol('TOP_LEVEL');
  * Handles the task of assigning a cloned result using a property descriptor.
  * @template [T=any]
  * The type of th cloned value.
- * @param {import("../types").Log} log
+ * @param {import("../../types.js").Log} log
  * A logger.
  * @param {T} cloned
  * The resultant cloned value.
@@ -54,14 +54,14 @@ const handleMetadata = (log, cloned, parent, prop, metadata) => {
     Object.defineProperty(parent, prop, clonedMetadata);
 };
 
-/** @typedef {import("../utils/types").Assigner} Assigner */
+/** @typedef {import("../../utils/types.js").Assigner} Assigner */
 
 /**
  * Handles the assignment of the cloned value to some persistent place.
  * @param {{ result: any }} container
  * Object containing the top-level object that will be returned by
  * cloneDeepInternal.
- * @param {import("../types").Log} log
+ * @param {import("../../types.js").Log} log
  * A logger.
  * @param {any} cloned
  * The cloned value.

@@ -80,10 +80,7 @@ export const cloneDeep = (value, optionsOrCustomizer) => {
         if (logMode.toLowerCase() === 'silent') {
             log = () => {};
         } else if (logMode.toLowerCase() === 'quiet') {
-            /** @type {Log} */
-            log = (error) => {
-                return console.warn(error.message);
-            };
+            log = console.warn;
         }
     }
 

@@ -7,7 +7,7 @@
  * @returns {import("./types").Customizer}
  * A new customizer which composes the provided customizers.
  */
-export default function useCustomizers(customizers) {
+const useCustomizers = (customizers) => {
     if (!Array.isArray(customizers)
         || customizers.some((func) => {
             return typeof func !== 'function';
@@ -27,4 +27,6 @@ export default function useCustomizers(customizers) {
             }
         }
     };
-}
+};
+
+export default useCustomizers;

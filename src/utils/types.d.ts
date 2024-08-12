@@ -55,13 +55,6 @@ export type Assigner = (
     metadata: PropertyDescriptor | undefined
 ) => void;
 
-export interface QueueElement {
-    value: any,
-    parentOrAssigner?: symbol|Object|Assigner,
-    prop?: string | symbol,
-    metadata?: PropertyDescriptor
-}
-
 export type TypedArrayConstructor =
     DataViewConstructor |
     Float32ArrayConstructor |
