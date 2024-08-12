@@ -21,19 +21,20 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
 /** @typedef {import('../../utils/types').Assigner} Assigner */
 
 /**
- * @param {any} value
- * @param {symbol|object|Assigner|undefined} parentOrAssigner
- * @param {string|symbol|undefined} prop
- * @param {string} tag
- * @param {boolean} prioritizePerformance
- * @param {import('../../types').SyncQueueItem[]} syncQueue
- * @param {[any, any][]} isExtensibleSealFrozen
- * @param {any[]} supportedPrototypes
- * @param {boolean} ignoreCloningMethods
- * @param {boolean} ignoreCloningMethodsThisLoop
- * @param {(string|symbol)[]} propsToIgnore
- * @param {import('../../types').Log} log
- * @param {(clone: any) => any} saveClone
+ * @param {Object} spec
+ * @param {any} spec.value
+ * @param {symbol|object|Assigner|undefined} spec.parentOrAssigner
+ * @param {string|symbol|undefined} spec.prop
+ * @param {string} spec.tag
+ * @param {boolean} spec.prioritizePerformance
+ * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
+ * @param {[any, any][]} spec.isExtensibleSealFrozen
+ * @param {any[]} spec.supportedPrototypes
+ * @param {boolean} spec.ignoreCloningMethods
+ * @param {boolean} spec.ignoreCloningMethodsThisLoop
+ * @param {(string|symbol)[]} spec.propsToIgnore
+ * @param {import('../../types').Log} spec.log
+ * @param {(clone: any) => any} spec.saveClone
  * @returns {{
  *     cloned: any,
  *     ignoreProps: boolean,
@@ -41,19 +42,21 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
  *     syncTypeDetected: boolean
  * }}
  */
-export const handleSupportedSyncTypes = (value,
-                                         parentOrAssigner,
-                                         prop,
-                                         tag,
-                                         prioritizePerformance,
-                                         syncQueue,
-                                         isExtensibleSealFrozen,
-                                         supportedPrototypes,
-                                         ignoreCloningMethods,
-                                         ignoreCloningMethodsThisLoop,
-                                         propsToIgnore,
-                                         log,
-                                         saveClone) => {
+export const handleSupportedSyncTypes = ({
+    value,
+    parentOrAssigner,
+    prop,
+    tag,
+    prioritizePerformance,
+    syncQueue,
+    isExtensibleSealFrozen,
+    supportedPrototypes,
+    ignoreCloningMethods,
+    ignoreCloningMethodsThisLoop,
+    propsToIgnore,
+    log,
+    saveClone
+}) => {
 
     /** @type {any} */
     let cloned;
@@ -77,7 +80,7 @@ export const handleSupportedSyncTypes = (value,
             && ignoreCloningMethods !== true
             && ignoreCloningMethodsThisLoop === false) {
 
-        /** @type {import("../../utils/types.js").CloneMethodResult<any>} */
+        /** @type {import('../../utils/types').CloneMethodResult<any>} */
         const result = value[CLONE]();
 
         if (result.propsToIgnore !== undefined) {
@@ -203,7 +206,7 @@ export const handleSupportedSyncTypes = (value,
                 : new AggregateError(errors, message, { cause });
 
         } else {
-            /** @type {import("../../utils/types.js").AtomicErrorConstructor} */
+            /** @type {import('../../utils/types').AtomicErrorConstructor} */
             const ErrorConstructor = getAtomicErrorConstructor(error, log);
 
             const { cause } = error;
@@ -247,7 +250,7 @@ export const handleSupportedSyncTypes = (value,
     } else if (isTypedArray(value, prioritizePerformance, tag)
             || Tag.DATAVIEW === tag) {
 
-        /** @type {import("../../utils/types.js").TypedArrayConstructor} */
+        /** @type {import('../../utils/types').TypedArrayConstructor} */
         const TypedArray = getTypedArrayConstructor(tag, log);
 
         // copy data over to clone
@@ -407,14 +410,14 @@ export const handleSupportedSyncTypes = (value,
         cloned = saveClone(Class.fromPoint(domPoint));
 
     } else if (Tag.DOMQUAD === tag) {
-        /** @type {import("../../utils/types.js").DOMQuadExtended} */
+        /** @type {import('../../utils/types').DOMQuadExtended} */
         const quad = value;
 
-        /** @type {import("../../utils/types.js").DOMQuadExtended} */
+        /** @type {import('../../utils/types').DOMQuadExtended} */
         cloned = new DOMQuad(quad.p1, quad.p2, quad.p3, quad.p4);
 
         ['p1', 'p2', 'p3', 'p4'].forEach((pointProperty) => {
-            /** @type {import("../../utils/types.js").DOMPointExtended} */
+            /** @type {import('../../utils/types').DOMPointExtended} */
             const point = quad[pointProperty];
 
             forAllOwnProperties(point, (key) => {

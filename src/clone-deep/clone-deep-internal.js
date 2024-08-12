@@ -9,30 +9,33 @@ import { getSupportedPrototypes } from '../utils/helpers.js';
  * See CloneDeep.
  * @template [U = T]
  * See CloneDeep.
- * @param {T} _value
+ * @param {Object} spec
+ * @param {T} spec.value
  * The value to clone.
- * @param {import("../types").Customizer|undefined} customizer
+ * @param {import('../types').Customizer|undefined} spec.customizer
  * A customizer function.
- * @param {import("../types").Log} log
+ * @param {import('../types').Log} spec.log
  * Receives an error object for logging.
- * @param {boolean} prioritizePerformance
+ * @param {boolean} spec.prioritizePerformance
  * Whether or not type-checking will be more performant.
- * @param {boolean} ignoreCloningMethods
+ * @param {boolean} spec.ignoreCloningMethods
  * Whether cloning methods will be observed.
- * @param {boolean} doThrow
+ * @param {boolean} spec.doThrow
  * Whether errors in the customizer should cause the function to throw.
- * @param {Set<any>} [parentObjectRegistry]
+ * @param {Set<any>} [spec.parentObjectRegistry]
  * This is used by cloneDeepFully to check if an object with a cloning method is
  * in the prototype of an object that was cloned earlier in the chain.
  * @returns {U}
  */
-export const cloneDeepInternal = (_value,
-                                  customizer,
-                                  log,
-                                  prioritizePerformance,
-                                  ignoreCloningMethods,
-                                  doThrow,
-                                  parentObjectRegistry) => {
+export const cloneDeepInternal = ({
+    value,
+    customizer,
+    log,
+    prioritizePerformance,
+    ignoreCloningMethods,
+    doThrow,
+    parentObjectRegistry
+}) => {
 
     /**
      * Contains the cloned value.
@@ -50,7 +53,7 @@ export const cloneDeepInternal = (_value,
      * A queue so we can avoid recursion.
      * @type {import('../types').SyncQueueItem[]}
      */
-    const syncQueue = [{ value: _value, parentOrAssigner: TOP_LEVEL }];
+    const syncQueue = [{ value, parentOrAssigner: TOP_LEVEL }];
 
     /**
      * We will do a second pass through everything to check Object.isExtensible,
@@ -64,17 +67,19 @@ export const cloneDeepInternal = (_value,
     const supportedPrototypes = getSupportedPrototypes();
 
     while (syncQueue.length > 0) {
-        iterateSyncQueue(syncQueue,
-                         container,
-                         log,
-                         customizer,
-                         cloneStore,
-                         prioritizePerformance,
-                         supportedPrototypes,
-                         ignoreCloningMethods,
-                         doThrow,
-                         parentObjectRegistry,
-                         isExtensibleSealFrozen);
+        iterateSyncQueue({
+            syncQueue,
+            container,
+            log,
+            customizer,
+            cloneStore,
+            prioritizePerformance,
+            supportedPrototypes,
+            ignoreCloningMethods,
+            doThrow,
+            parentObjectRegistry,
+            isExtensibleSealFrozen
+        });
     }
 
     handleMetadata(isExtensibleSealFrozen);

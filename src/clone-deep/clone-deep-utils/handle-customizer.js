@@ -5,12 +5,13 @@ import { getWarning, Warning } from '../../utils/clone-deep-warning.js';
  * This may have the side effect of saving the cloned value to some persistent
  * place, as well as pushing more elements in the appropriate queue if
  * necessary. Errors from the customizers are also handled here.
- * @param {import('../../types').Log} log
- * @param {import('../../types').SyncQueueItem[]} syncQueue
- * @param {import('../../types').Customizer} customizer
- * @param {any} value
- * @param {(clone: any) => any} saveClone
- * @param {boolean} doThrow
+ * @param {Object} spec
+ * @param {import('../../types').Log} spec.log
+ * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
+ * @param {import('../../types').Customizer} spec.customizer
+ * @param {any} spec.value
+ * @param {(clone: any) => any} spec.saveClone
+ * @param {boolean} spec.doThrow
  * @returns {{
  *     cloned: any,
  *     useCustomizerClone: boolean,
@@ -19,12 +20,8 @@ import { getWarning, Warning } from '../../utils/clone-deep-warning.js';
  *     ignoreThisLoop: boolean
  * }}
  */
-export const handleCustomizer = (log,
-                                 syncQueue,
-                                 customizer,
-                                 value,
-                                 saveClone,
-                                 doThrow) => {
+export const handleCustomizer = (
+    { log, syncQueue, customizer, value, saveClone, doThrow }) => {
 
     /** @type {any} */
     let cloned;
@@ -32,7 +29,7 @@ export const handleCustomizer = (log,
     /** @type {boolean} */
     let useCustomizerClone = false;
 
-    /** @type {import("../../utils/types.js").AdditionalValue[]|undefined} */
+    /** @type {import('../../utils/types').AdditionalValue[]|undefined} */
     let additionalValues;
 
     /** @type {boolean|undefined} */

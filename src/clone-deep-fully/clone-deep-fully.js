@@ -1,10 +1,10 @@
 import { cloneDeepFullyInternal } from './clone-deep-fully-internal.js';
 
-/** @typedef {import("../types.js").CloneDeepFullyOptions} CloneDeepFullyOptions */
+/** @typedef {import('../types').CloneDeepFullyOptions} CloneDeepFullyOptions */
 
-/** @typedef {import("../types.js").Customizer} Customizer */
+/** @typedef {import('../types').Customizer} Customizer */
 
-/** @typedef {import("../types.js").Log} Log */
+/** @typedef {import('../types').Log} Log */
 
 /**
  * Deeply clones the provided object and its prototype chain.
@@ -63,14 +63,16 @@ const cloneDeepFully = (value, options) => {
         } = options);
     }
 
-    return cloneDeepFullyInternal(value,
-                                  customizer,
-                                  log || console.warn,
-                                  logMode,
-                                  prioritizePerformance || false,
-                                  ignoreCloningMethods || false,
-                                  letCustomizerThrow || false,
-                                  force || false);
+    return cloneDeepFullyInternal({
+        value,
+        customizer,
+        log: log || console.warn,
+        logMode,
+        prioritizePerformance: prioritizePerformance || false,
+        ignoreCloningMethods: ignoreCloningMethods || false,
+        letCustomizerThrow: letCustomizerThrow || false,
+        force: force || false
+    });
 };
 
 export default cloneDeepFully;

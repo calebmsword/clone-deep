@@ -8,9 +8,9 @@ greater than 10. There is no point in chunking this function up further. */
  * Gets the appropriate TypedArray constructor for the given object tag.
  * @param {string} tag
  * The tag for the object.
- * @param {import("../types").Log} log
+ * @param {import('../types').Log} log
  * A logging function.
- * @returns {import("./types").TypedArrayConstructor}
+ * @returns {import('./types').TypedArrayConstructor}
  */
 export const getTypedArrayConstructor = (tag, log) => {
     switch (tag) {
@@ -51,9 +51,9 @@ export const getTypedArrayConstructor = (tag, log) => {
  * @param {Error} value
  * The object itself. This is necessary to correctly find constructors for
  * various Error subclasses.
- * @param {import("../types").Log} [log]
+ * @param {import('../types').Log} [log]
  * An optional logging function.
- * @returns {import("./types").AtomicErrorConstructor}
+ * @returns {import('./types').AtomicErrorConstructor}
  */
 export const getAtomicErrorConstructor = (value, log) => {
     const { name } = value;

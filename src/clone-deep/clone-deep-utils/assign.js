@@ -11,19 +11,20 @@ export const TOP_LEVEL = Symbol('TOP_LEVEL');
 /**
  * Handles the task of assigning a cloned result using a property descriptor.
  * @template [T=any]
- * The type of th cloned value.
- * @param {import("../../types.js").Log} log
+ * The type of the cloned value.
+ * @param {Object} spec
+ * @param {import('../../types').Log} spec.log
  * A logger.
- * @param {T} cloned
+ * @param {T} spec.cloned
  * The resultant cloned value.
- * @param {object} parent
+ * @param {object} spec.parent
  * The object that will have a property assigned the cloned value.
- * @param {PropertyKey} prop
+ * @param {PropertyKey} spec.prop
  * The property of the parent object that will hold the cloned value.
- * @param {PropertyDescriptor} metadata
+ * @param {PropertyDescriptor} spec.metadata
  * The property descriptor.
  */
-const handleMetadata = (log, cloned, parent, prop, metadata) => {
+const handleMetadata = ({ log, cloned, parent, prop, metadata }) => {
     /** @type {PropertyDescriptor} */
     const clonedMetadata = {
         configurable: metadata.configurable,
@@ -54,36 +55,33 @@ const handleMetadata = (log, cloned, parent, prop, metadata) => {
     Object.defineProperty(parent, prop, clonedMetadata);
 };
 
-/** @typedef {import("../../utils/types.js").Assigner} Assigner */
+/** @typedef {import('../../utils/types').Assigner} Assigner */
 
 /**
  * Handles the assignment of the cloned value to some persistent place.
- * @param {{ result: any }} container
+ * @param {Object} spec
+ * @param {{ result: any }} spec.container
  * Object containing the top-level object that will be returned by
  * cloneDeepInternal.
- * @param {import("../../types.js").Log} log
+ * @param {import('../../types').Log} spec.log
  * A logger.
- * @param {any} cloned
+ * @param {any} spec.cloned
  * The cloned value.
- * @param {Assigner|symbol|object} [parentOrAssigner]
+ * @param {Assigner|symbol|object} [spec.parentOrAssigner]
  * Either the parent object that the cloned value will be assigned to, or a
  * function which assigns the value itself. If equal to `TOP_LEVEL`, then it
  * is the value that will be returned by the algorithm.
- * @param {PropertyKey} [prop]
+ * @param {PropertyKey} [spec.prop]
  * If `parentOrAssigner` is a parent object, then `parentOrAssigner[prop]`
  * will be assigned `cloned`.
- * @param {PropertyDescriptor} [metadata]
+ * @param {PropertyDescriptor} [spec.metadata]
  * The property descriptor for the object. If not an object, then this is
  * ignored.
  * @returns {any}
  * The cloned value.
  */
-export const assign = (container,
-                       log,
-                       cloned,
-                       parentOrAssigner,
-                       prop,
-                       metadata) => {
+export const assign = (
+    { container, log, cloned, parentOrAssigner, prop, metadata }) => {
     if (parentOrAssigner === TOP_LEVEL) {
         container.result = cloned;
     } else if (typeof parentOrAssigner === 'function') {
@@ -99,7 +97,8 @@ export const assign = (container,
     } else if (typeof parentOrAssigner === 'object'
                && typeof prop !== 'undefined'
                && typeof metadata === 'object') {
-        handleMetadata(log, cloned, parentOrAssigner, prop, metadata);
+        handleMetadata(
+            { log, cloned, parent: parentOrAssigner, prop, metadata });
     }
     return cloned;
 };

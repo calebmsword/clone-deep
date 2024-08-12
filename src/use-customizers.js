@@ -2,9 +2,9 @@
  * Creates a customizer which composes other customizers.
  * The customizers are executed in order. The first to return an object is used
  * as the result. If no customizer returns an object, undefined is returned.
- * @param {import("./types").Customizer[]} customizers
+ * @param {import('./types').Customizer[]} customizers
  * An array of customizer functions.
- * @returns {import("./types").Customizer}
+ * @returns {import('./types').Customizer}
  * A new customizer which composes the provided customizers.
  */
 const useCustomizers = (customizers) => {

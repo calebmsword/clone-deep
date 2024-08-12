@@ -3,9 +3,9 @@ import { cloneDeepInternal } from '../clone-deep/clone-deep-internal.js';
 import { hasMethods } from '../utils/metadata.js';
 
 
-/** @typedef {import("../types.js").Customizer} Customizer */
+/** @typedef {import('../types').Customizer} Customizer */
 
-/** @typedef {import("../types.js").Log} Log */
+/** @typedef {import('../types').Log} Log */
 
 /**
  * Handles internal logic for the full deep clone.
@@ -14,24 +14,27 @@ import { hasMethods } from '../utils/metadata.js';
  * @template [U=T]
  * The return type of the clone.
  *
- * @param {T} value n
- * @param {Customizer|undefined} customizer
- * @param {Log} log
- * @param {string|undefined} logMode
- * @param {boolean} prioritizePerformance
- * @param {boolean} ignoreCloningMethods
- * @param {boolean} letCustomizerThrow
- * @param {boolean} force
+ * @param {Object} spec
+ * @param {T} spec.value
+ * @param {Customizer|undefined} spec.customizer
+ * @param {Log} spec.log
+ * @param {string|undefined} spec.logMode
+ * @param {boolean} spec.prioritizePerformance
+ * @param {boolean} spec.ignoreCloningMethods
+ * @param {boolean} spec.letCustomizerThrow
+ * @param {boolean} spec.force
  * @returns {U}
  */
-export const cloneDeepFullyInternal = (value,
-                                       customizer,
-                                       log,
-                                       logMode,
-                                       prioritizePerformance,
-                                       ignoreCloningMethods,
-                                       letCustomizerThrow,
-                                       force) => {
+export const cloneDeepFullyInternal = ({
+    value,
+    customizer,
+    log,
+    logMode,
+    prioritizePerformance,
+    ignoreCloningMethods,
+    letCustomizerThrow,
+    force
+}) => {
     /** @type {U} */
     const clone = cloneDeep(value, {
         customizer,
@@ -60,13 +63,15 @@ export const cloneDeepFullyInternal = (value,
             parentObjectRegistry?.add(tempOrig);
         }
 
-        const newProto = cloneDeepInternal(Object.getPrototypeOf(tempOrig),
-                                           customizer,
-                                           log,
-                                           prioritizePerformance,
-                                           ignoreCloningMethods,
-                                           letCustomizerThrow,
-                                           parentObjectRegistry);
+        const newProto = cloneDeepInternal({
+            value: Object.getPrototypeOf(tempOrig),
+            customizer,
+            log,
+            prioritizePerformance,
+            ignoreCloningMethods,
+            doThrow: letCustomizerThrow,
+            parentObjectRegistry
+        });
 
         Object.setPrototypeOf(tempClone, newProto);
 

@@ -120,19 +120,23 @@ export const ensurePrototypesMatch = (cloned, value) => {
  * Updates the synchronous queue with the properties of the given value.
  * This will use all "owned" properties of value. This includes non-enumerable
  * and symbol properties, and excludes properties from value's prototype chain.
- * @param {any} value
+ * @param {Object} spec
+ * @param {any} spec.value
  * The value whose properties will be iterated over.
- * @param {any} clone
+ * @param {any} spec.clone
  * The clone that will inherit clones of `value`'s properties.
- * @param {(string|symbol)[]} propsToIgnore
+ * @param {(string|symbol)[]} spec.propsToIgnore
  * A list of properties of `value` to skip.
- * @param {import('../../types').SyncQueueItem[]} syncQueue
+ * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
  * The queue representing future values to clone synchronously.
  */
-export const addOwnPropertiesToQueue = (value,
-                                        clone,
-                                        propsToIgnore,
-                                        syncQueue) => {
+export const addOwnPropertiesToQueue = ({
+    value,
+    clone,
+    propsToIgnore,
+    syncQueue
+}) => {
+
     forAllOwnProperties(value, (key) => {
         if (propsToIgnore.includes(key)) {
             return;
@@ -154,25 +158,29 @@ export const addOwnPropertiesToQueue = (value,
  * This function stores the cloned value in the clone store, check that
  * prototype is the same as the original value, and adds properties of the
  * original value to the queue.
- * @param {any} value
- * @param {any} cloned
- * @param {boolean} cloneIsCached
- * @param {boolean|undefined} ignoreProto
- * @param {boolean|undefined} ignoreProps
- * @param {boolean} ignoreThisLoop
- * @param {(string|symbol)[]} propsToIgnore
- * @param {Map<any, any>} cloneStore
- * @param {import('../../types').SyncQueueItem[]} syncQueue
+ * @param {Object} spec
+ * @param {any} spec.value
+ * @param {any} spec.cloned
+ * @param {boolean} spec.cloneIsCached
+ * @param {boolean|undefined} spec.ignoreProto
+ * @param {boolean|undefined} spec.ignoreProps
+ * @param {boolean} spec.ignoreThisLoop
+ * @param {(string|symbol)[]} spec.propsToIgnore
+ * @param {Map<any, any>} spec.cloneStore
+ * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
  */
-export const finalizeClone = (value,
-                              cloned,
-                              cloneIsCached,
-                              ignoreProto,
-                              ignoreProps,
-                              ignoreThisLoop,
-                              propsToIgnore,
-                              cloneStore,
-                              syncQueue) => {
+export const finalizeClone = ({
+    value,
+    cloned,
+    cloneIsCached,
+    ignoreProto,
+    ignoreProps,
+    ignoreThisLoop,
+    propsToIgnore,
+    cloneStore,
+    syncQueue
+}) => {
+
     if (cloned !== null && typeof cloned === 'object'
         && !cloneIsCached
         && !ignoreThisLoop) {
@@ -183,7 +191,12 @@ export const finalizeClone = (value,
         }
 
         if (!ignoreProps) {
-            addOwnPropertiesToQueue(value, cloned, propsToIgnore, syncQueue);
+            addOwnPropertiesToQueue({
+                value,
+                clone: cloned,
+                propsToIgnore,
+                syncQueue
+            });
         }
     }
 };

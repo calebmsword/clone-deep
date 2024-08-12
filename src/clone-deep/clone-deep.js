@@ -1,10 +1,10 @@
 import { cloneDeepInternal } from './clone-deep-internal.js';
 
-/** @typedef {import("../types").CloneDeepOptions} CloneDeepOptions */
+/** @typedef {import('../types').CloneDeepOptions} CloneDeepOptions */
 
-/** @typedef {import("../types").Customizer} Customizer */
+/** @typedef {import('../types').Customizer} Customizer */
 
-/** @typedef {import("../types").Log} Log */
+/** @typedef {import('../types').Log} Log */
 
 /**
  * @template T
@@ -84,12 +84,14 @@ export const cloneDeep = (value, optionsOrCustomizer) => {
         }
     }
 
-    return cloneDeepInternal(value,
-                             customizer,
-                             log,
-                             prioritizePerformance || false,
-                             ignoreCloningMethods || false,
-                             letCustomizerThrow || false);
+    return cloneDeepInternal({
+        value,
+        customizer,
+        log,
+        prioritizePerformance: prioritizePerformance || false,
+        ignoreCloningMethods: ignoreCloningMethods || false,
+        doThrow: letCustomizerThrow || false
+    });
 };
 
 export default cloneDeep;

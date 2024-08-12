@@ -11,11 +11,14 @@
     "deep"
   ],
   "scripts": {
+    "delete-tsdist": "node scripts/delete-tsdist.js",
     "fix": "npx eslint --fix",
     "lint": "npx eslint",
     "serve": "node .\\benchmark\\serve.js",
     "test": "node --test",
-    "test-coverage": "node --test --experimental-test-coverage"
+    "test-coverage": "node --test --experimental-test-coverage",
+    "tsc": "node -e \"console.log('Transpiling codebase; result will be in tsdist/')\" && npx tsc && npm run delete-tsdist",
+    "verify-project": "node -e \"console.log('Running test suite:')\" && npm test && npm run tsc && node -e \"console.log('\\n\\nRunning linter:')\" &&npm run lint"
   },
   "author": "Caleb Sword",
   "license": "MIT",

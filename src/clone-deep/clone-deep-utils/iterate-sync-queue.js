@@ -10,29 +10,33 @@ import { handleTag } from './handle-tag.js';
 
 /**
  * Iterate through all items in the sync queue.
- * @param {import('../../types').SyncQueueItem[]} syncQueue
- * @param {{ result: any }} container
- * @param {import('../../types').Log} log
- * @param {import('../../types').Customizer|undefined} customizer
- * @param {Map<any, any>} cloneStore
- * @param {boolean} prioritizePerformance
- * @param {any[]} supportedPrototypes
- * @param {boolean} ignoreCloningMethods
- * @param {boolean} doThrow
- * @param {Set<any>|undefined} parentObjectRegistry
- * @param {[any, any][]} isExtensibleSealFrozen
+ * @param {Object} spec
+ * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
+ * @param {{ result: any }} spec.container
+ * @param {import('../../types').Log} spec.log
+ * @param {import('../../types').Customizer|undefined} spec.customizer
+ * @param {Map<any, any>} spec.cloneStore
+ * @param {boolean} spec.prioritizePerformance
+ * @param {any[]} spec.supportedPrototypes
+ * @param {boolean} spec.ignoreCloningMethods
+ * @param {boolean} spec.doThrow
+ * @param {Set<any>|undefined} spec.parentObjectRegistry
+ * @param {[any, any][]} spec.isExtensibleSealFrozen
  */
-export const iterateSyncQueue = (syncQueue,
-                                 container,
-                                 log,
-                                 customizer,
-                                 cloneStore,
-                                 prioritizePerformance,
-                                 supportedPrototypes,
-                                 ignoreCloningMethods,
-                                 doThrow,
-                                 parentObjectRegistry,
-                                 isExtensibleSealFrozen) => {
+export const iterateSyncQueue = ({
+    syncQueue,
+    container,
+    log,
+    customizer,
+    cloneStore,
+    prioritizePerformance,
+    supportedPrototypes,
+    ignoreCloningMethods,
+    doThrow,
+    parentObjectRegistry,
+    isExtensibleSealFrozen
+}) => {
+
     const item = syncQueue.shift();
 
     const value = item?.value;
@@ -46,12 +50,14 @@ export const iterateSyncQueue = (syncQueue,
      * @returns {any}
      */
     const saveClone = (clonedValue) => {
-        return assign(container,
-                      log,
-                      clonedValue,
-                      parentOrAssigner,
-                      prop,
-                      metadata);
+        return assign({
+            container,
+            log,
+            cloned: clonedValue,
+            parentOrAssigner,
+            prop,
+            metadata
+        });
     };
 
     /**
@@ -117,12 +123,14 @@ export const iterateSyncQueue = (syncQueue,
             ignoreProto,
             ignoreProps,
             ignoreThisLoop
-        } = handleCustomizer(log,
-                             syncQueue,
-                             customizer,
-                             value,
-                             saveClone,
-                             doThrow));
+        } = handleCustomizer({
+            log,
+            syncQueue,
+            customizer,
+            value,
+            saveClone,
+            doThrow
+        }));
     }
 
     ignoreCloningMethodsThisLoop = checkParentObjectRegistry(
@@ -133,31 +141,34 @@ export const iterateSyncQueue = (syncQueue,
             cloned,
             ignoreProps,
             ignoreProto
-        } = handleTag(value,
-                      parentOrAssigner,
-                      prop,
-                      tag,
-                      prioritizePerformance,
-                      log,
-                      syncQueue,
-                      isExtensibleSealFrozen,
-                      supportedPrototypes,
-                      ignoreCloningMethods,
-                      ignoreCloningMethodsThisLoop,
-                      propsToIgnore,
-                      saveClone
-        ));
+        } = handleTag({
+            value,
+            parentOrAssigner,
+            prop,
+            tag,
+            prioritizePerformance,
+            log,
+            syncQueue,
+            isExtensibleSealFrozen,
+            supportedPrototypes,
+            ignoreCloningMethods,
+            ignoreCloningMethodsThisLoop,
+            propsToIgnore,
+            saveClone
+        }));
     }
 
     isExtensibleSealFrozen.push([value, cloned]);
 
-    finalizeClone(value,
-                  cloned,
-                  cloneIsCached,
-                  ignoreProto,
-                  ignoreProps,
-                  ignoreThisLoop,
-                  propsToIgnore,
-                  cloneStore,
-                  syncQueue);
+    finalizeClone({
+        value,
+        cloned,
+        cloneIsCached,
+        ignoreProto,
+        ignoreProps,
+        ignoreThisLoop,
+        propsToIgnore,
+        cloneStore,
+        syncQueue
+    });
 };
