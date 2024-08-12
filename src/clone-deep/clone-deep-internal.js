@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import { assign, TOP_LEVEL } from './assign.js';
 import {
     CLONE,

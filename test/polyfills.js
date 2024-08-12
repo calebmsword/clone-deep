@@ -1,10 +1,10 @@
 /* node:coverage disable */
 
+import { isCallable } from "../src/utils/type-checking.js";
+
 const msg = "Illegal invocation";
 
-const metadata = x => Object.getOwnPropertyDescriptors(x);
-
-const proto = x => Object.getPrototypeOf(x);
+const global = globalThis;
 
 /**
  * Polyfills unsupported web APIs for a Node environment.
@@ -15,20 +15,26 @@ const proto = x => Object.getPrototypeOf(x);
  */
 export function polyfill() {
     
-    if (typeof globalThis.DOMMatrixReadOnly !== "function") {
+    if (!isCallable(global.DOMMatrixReadOnly)) {
 
-        globalThis.DOMMatrixReadOnly = class DOMMatrixReadOnly {
+        global.DOMMatrixReadOnly = class DOMMatrixReadOnly {
             static #registry = new WeakSet;
 
             #m11;
             
             get m11() {
+                if (!DOMMatrixReadOnly.#registry.has(this)) {
+                    throw new TypeError(msg);
+                }
                 return this.#m11;
             }
 
             #is2D;
 
             get is2D() {
+                if (!DOMMatrixReadOnly.#registry.has(this)) {
+                    throw new TypeError(msg);
+                }
                 return this.#is2D;
             }
 
@@ -138,20 +144,24 @@ export function polyfill() {
         };
 
         DOMMatrixReadOnly.prototype[Symbol.toStringTag] = "DOMMatrixReadOnly";
-    }
 
-    if (typeof globalThis.DOMMatrix !== "function") {
-        globalThis.DOMMatrix = class DOMMatrix extends DOMMatrixReadOnly {
+        global.DOMMatrix = class DOMMatrix extends DOMMatrixReadOnly {
         
             static #registry = new WeakSet;
 
             #m11;
 
             get m11() {
+                if (!DOMMatrix.#registry.has(this)) {
+                    throw new TypeError(msg);
+                }
                 return this.#m11;
             }
 
             set m11(newM11) {
+                if (!DOMMatrix.#registry.has(this)) {
+                    throw new TypeError(msg);
+                }
                 this.#m11 = newM11;
             }
 
@@ -171,9 +181,9 @@ export function polyfill() {
         DOMMatrix.prototype[Symbol.toStringTag] = "DOMMatrix";
     }
     
-    if (typeof globalThis.DOMPointReadOnly !== "function") {
+    if (!isCallable(global.DOMPointReadOnly)) {
 
-        globalThis.DOMPointReadOnly = class DOMPointReadOnly {
+        global.DOMPointReadOnly = class DOMPointReadOnly {
             static #registry = new WeakSet();
 
             #x;
@@ -205,7 +215,7 @@ export function polyfill() {
 
         DOMPointReadOnly.prototype[Symbol.toStringTag] = "DOMPointReadOnly";
 
-        globalThis.DOMPoint = class DOMPoint extends DOMPointReadOnly {
+        global.DOMPoint = class DOMPoint extends DOMPointReadOnly {
             static #registry = new WeakSet;
 
             #x;
@@ -244,9 +254,9 @@ export function polyfill() {
         DOMPoint.prototype[Symbol.toStringTag] = "DOMPoint";
     }
 
-    if (typeof globalThis.DOMRectReadOnly !== "function") {
+    if (!isCallable(global.DOMRectReadOnly)) {
         
-        globalThis.DOMRectReadOnly = class DOMRectReadOnly {
+        global.DOMRectReadOnly = class DOMRectReadOnly {
             static #registry = new WeakSet;
 
             #x;
@@ -270,7 +280,7 @@ export function polyfill() {
 
         DOMRectReadOnly.prototype[Symbol.toStringTag] = "DOMRectReadOnly";
 
-        globalThis.DOMRect = class DOMRect extends DOMRectReadOnly {
+        global.DOMRect = class DOMRect extends DOMRectReadOnly {
             static #registry = new WeakSet;
 
             #x;
@@ -301,8 +311,8 @@ export function polyfill() {
         DOMRect.prototype[Symbol.toStringTag] = "DOMRect";
     }
 
-    if (typeof globalThis.DOMQuad !== "function") {
-        globalThis.DOMQuad = class DOMQuad {
+    if (!isCallable(global.DOMQuad)) {
+        global.DOMQuad = class DOMQuad {
             static #registry = new WeakSet;
 
             /** @type {DOMPoint} */
@@ -368,8 +378,8 @@ export function polyfill() {
         DOMQuad.prototype[Symbol.toStringTag] = "DOMQuad";
     }
 
-    if (typeof globalThis.FileList !== "function") {
-        globalThis.FileList = class FileList {
+    if (!isCallable(global.FileList)) {
+        global.FileList = class FileList {
             static #registry = new WeakSet;
 
             [Symbol.toStringTag] = "FileList";
@@ -402,7 +412,7 @@ export function polyfill() {
         FileList.prototype[Symbol.toStringTag] = "FileList";
     }
 
-    if (typeof globalThis.DataTransfer !== "function") {
+    if (!isCallable(global.DataTransfer)) {
 
         class DataTransferItemList {
             /** @type {File[]} */
@@ -418,7 +428,7 @@ export function polyfill() {
             }
         }
 
-        globalThis.DataTransfer = class DataTransfer {
+        global.DataTransfer = class DataTransfer {
             #items = new DataTransferItemList;
             
             get items() {
@@ -439,11 +449,11 @@ polyfill();
  * Clear all polyfills.
  */
 export function clearPolyfills() {
-    globalThis.DOMMatrixReadOnly = undefined;
-    globalThis.DOMMatrix = undefined;
-    globalThis.DOMPointReadOnly = undefined;
-    globalThis.DOMPoint = undefined;
-    globalThis.DOMQuad = undefined;
-    globalThis.FileList = undefined;
-    globalThis.DataTransfer = undefined;
+    global.DOMMatrixReadOnly = undefined;
+    global.DOMMatrix = undefined;
+    global.DOMPointReadOnly = undefined;
+    global.DOMPoint = undefined;
+    global.DOMQuad = undefined;
+    global.FileList = undefined;
+    global.DataTransfer = undefined;
 }
