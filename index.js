@@ -1,4 +1,4 @@
-import _cloneDeep from "./src/clone-deep.js";
+import _cloneDeep from "./src/clone-deep/clone-deep.js";
 import _cloneDeepFully from "./src/clone-deep-fully.js";
 import _useCustomizers from "./src/use-customizers.js";
 

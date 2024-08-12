@@ -49,7 +49,7 @@ export type Tag = Readonly<{
     FILELIST: string
 }>
 
-export type assigner = (
+export type Assigner = (
     value: any,
     prop: PropertyKey | undefined,
     metadata: PropertyDescriptor | undefined
@@ -57,7 +57,7 @@ export type assigner = (
 
 export interface QueueElement {
     value: any,
-    parentOrAssigner?: symbol|Object|assigner,
+    parentOrAssigner?: symbol|Object|Assigner,
     prop?: string | symbol,
     metadata?: PropertyDescriptor
 }

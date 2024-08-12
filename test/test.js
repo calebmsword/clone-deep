@@ -7,7 +7,7 @@ import { describe, mock, test } from "node:test";
 
 import { clearPolyfills, polyfill } from "./polyfills.js";
 
-import  cloneDeep from "../src/clone-deep.js";
+import  cloneDeep from "../src/clone-deep/clone-deep.js";
 import cloneDeepFully from "../src/clone-deep-fully.js";
 import useCustomizers from "../src/use-customizers.js";
 

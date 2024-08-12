@@ -1,8 +1,77 @@
 import globals from "globals";
+import stylisticJs from "@stylistic/eslint-plugin-js";
 
 export default [{
     files: ["src/**/*.js"],
+    plugins: {
+        "@s": stylisticJs
+    },
     rules: {
+        // https://eslint.style/rules
+        "@s/array-bracket-spacing": ["error", "never"], 
+        "@s/arrow-parens": ["error", "always"], 
+        "@s/arrow-spacing": "error", 
+        "@s/block-spacing": "error", 
+        "@s/brace-style": "error", 
+        "@s/comma-dangle": ["error", "never"], 
+        "@s/comma-spacing": "error", 
+        "@s/comma-style": "error", 
+        "@s/computed-property-spacing": "error", 
+        "@s/dot-location": ["error", "property"], 
+        "@s/eol-last": "error", 
+        "@s/function-call-spacing": "error", 
+        "@s/function-call-argument-newline": ["error", "consistent"], 
+        "@s/indent": ["error", 4, {
+            FunctionExpression: {
+                parameters: "first"
+            }, 
+            CallExpression: {
+                arguments: "first"
+            }, 
+            offsetTernaryExpressions: false, 
+            ignoreComments: false, 
+            ignoredNodes: ["IfStatement"]
+        }], 
+        "@s/key-spacing": "error", 
+        "@s/keyword-spacing": "error", 
+        "@s/lines-between-class-members": "error", 
+        "@s/max-len": ["error", { 
+            code: 81, 
+            ignoreUrls: true, 
+            // This will match jsdoc annotations of the sort: 
+            //    @<annotation> {<Type>}
+            // Typing in jsdoc can get very verbose so allow flexibility there
+            ignorePattern: "[\\w\\W]*\\s*@[\\w\\W]*\\s*\\{"
+        }], 
+        "@s/new-parens": ["error", "always"],
+        "@s/no-extra-parens": "error", 
+        "@s/no-floating-decimal": "error", 
+        "@s/no-mixed-operators": "error", 
+        "@s/no-mixed-spaces-and-tabs": "error", 
+        "@s/no-multi-spaces": "error", 
+        "@s/no-multiple-empty-lines": "error", 
+        "@s/no-trailing-spaces": "error", 
+        "@s/no-whitespace-before-property": "error", 
+        "@s/object-curly-spacing": ["error", "always", {
+            objectsInObjects: false
+        }],
+        "@s/quote-props": ["error", "as-needed"], 
+        "@s/quotes": ["error", "single", {
+            allowTemplateLiterals: true
+        }], 
+        "@s/rest-spread-spacing": "error", 
+        "@s/semi": ["error", "always"], 
+        "@s/semi-spacing": "error", 
+        "@s/space-before-blocks": "error", 
+        "@s/space-before-function-paren": ["error", "never"],
+        "@s/space-in-parens": "error",
+        "@s/space-infix-ops": "error",
+        "@s/space-unary-ops": "error",
+        "@s/spaced-comment": ["error", "always"],
+        "@s/switch-colon-spacing": "error",
+        "@s/template-curly-spacing": "error",
+        "@s/template-tag-spacing": "error",
+        "@s/wrap-iife": "error",
 
         // https://eslint.org/docs/latest/rules/#possible-problems
         "array-callback-return": "error", 
@@ -63,7 +132,13 @@ export default [{
         // https://eslint.org/docs/latest/rules/#suggestions
         "arrow-body-style": ["error", "always"], 
         camelcase: "error", 
-        complexity: ["error", 15], 
+
+        // It can be hard to come up with a good cutoff for complexity. It 
+        // really can depend on the use case. Hence I won't make it error out 
+        // on high complexity. I just want to know if I have started writing 
+        // something complex and, if I have, I will decide for myself if I 
+        // should start re-engineering.  
+        complexity: ["warn", 10], 
         curly: "error", 
         "default-case": "error", 
         "default-case-last": "error", 
@@ -131,22 +206,13 @@ export default [{
         "prefer-promise-reject-errors": "error", 
         "prefer-rest-params": "error", 
         "prefer-spread": "error", 
-        "require-yield": "error", 
-        "sort-imports": ["error", {
-            ignoreCase: true, 
-            ignoreDeclarationSort: false, 
-            ignoreMemberSort: false, 
-            memberSyntaxSortOrder: ["none", "all", "multiple", "single"], 
-            allowSeparatedGroups: false
-        }], 
+        "require-yield": "error",  
         strict: ["error", "never"], 
-        "symbol-description": "error", 
-
+        "symbol-description": "error"
     },
     languageOptions: { 
-        globals: {
-        ...globals.browser, 
-        ...globals.node
-        }
+        sourceType: "module", 
+        globals: { ...globals.browser },
+        ecmaVersion: 2022
     },
 }];
