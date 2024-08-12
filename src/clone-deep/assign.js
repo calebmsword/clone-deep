@@ -54,7 +54,7 @@ const handleMetadata = (log, cloned, parent, prop, metadata) => {
     Object.defineProperty(parent, prop, clonedMetadata);
 };
 
-/** @typedef {import("../utils/types.js").Assigner} Assigner */
+/** @typedef {import("../utils/types").Assigner} Assigner */
 
 /**
  * Handles the assignment of the cloned value to some persistent place.

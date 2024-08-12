@@ -33,9 +33,9 @@ import {
  * See CloneDeep.
  * @param {T} _value
  * The value to clone.
- * @param {import("../types.js").Customizer|undefined} customizer
+ * @param {import("../types").Customizer|undefined} customizer
  * A customizer function.
- * @param {import("../types.js").Log} log
+ * @param {import("../types").Log} log
  * Receives an error object for logging.
  * @param {boolean} prioritizePerformance
  * Whether or not type-checking will be more performant.
@@ -70,7 +70,7 @@ export const cloneDeepInternal = (_value,
 
     /**
      * A queue so we can avoid recursion.
-     * @type {import("../utils/types.js").QueueElement[]}
+     * @type {import("../utils/types").QueueElement[]}
      */
     const queue = [{ value: _value, parentOrAssigner: TOP_LEVEL }];
 
@@ -154,7 +154,7 @@ export const cloneDeepInternal = (_value,
             /** @type {any} */
             let clone;
 
-            /** @type {import("../utils/types.js").AdditionalValue[]|undefined} */
+            /** @type {import("../utils/types").AdditionalValue[]|undefined} */
             let additionalValues;
 
             /** @type {boolean|undefined} */
@@ -263,7 +263,7 @@ export const cloneDeepInternal = (_value,
                      && ignoreCloningMethods !== true
                      && ignoreCloningMethodsThisLoop === false) {
 
-                /** @type {import("../utils/types.js").CloneMethodResult<any>} */
+                /** @type {import("../utils/types").CloneMethodResult<any>} */
                 const result = value[CLONE]();
 
                 if (result.propsToIgnore !== undefined) {
@@ -429,7 +429,7 @@ export const cloneDeepInternal = (_value,
                         : new AggregateError(errors, message, { cause });
 
                 } else {
-                    /** @type {import("../utils/types.js").AtomicErrorConstructor} */
+                    /** @type {import("../utils/types").AtomicErrorConstructor} */
                     const ErrorConstructor = getAtomicErrorConstructor(error,
                                                                        log);
 
@@ -484,7 +484,7 @@ export const cloneDeepInternal = (_value,
             } else if (isTypedArray(value, prioritizePerformance, tag)
                      || Tag.DATAVIEW === tag) {
 
-                /** @type {import("../utils/types.js").TypedArrayConstructor} */
+                /** @type {import("../utils/types").TypedArrayConstructor} */
                 const TypedArray = getTypedArrayConstructor(tag, log);
 
                 // copy data over to clone
@@ -703,14 +703,14 @@ export const cloneDeepInternal = (_value,
                        metadata);
 
             } else if (Tag.DOMQUAD === tag) {
-                /** @type {import("../utils/types.js").DOMQuadExtended} */
+                /** @type {import("../utils/types").DOMQuadExtended} */
                 const quad = value;
 
-                /** @type {import("../utils/types.js").DOMQuadExtended} */
+                /** @type {import("../utils/types").DOMQuadExtended} */
                 cloned = new DOMQuad(quad.p1, quad.p2, quad.p3, quad.p4);
 
                 ['p1', 'p2', 'p3', 'p4'].forEach((pointProperty) => {
-                    /** @type {import("../utils/types.js").DOMPointExtended} */
+                    /** @type {import("../utils/types").DOMPointExtended} */
                     const point = quad[pointProperty];
 
                     forAllOwnProperties(point, (key) => {

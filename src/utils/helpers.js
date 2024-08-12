@@ -10,7 +10,7 @@ greater than 10. There is no point in chunking this function up further. */
  * The tag for the object.
  * @param {import("../types").Log} log
  * A logging function.
- * @returns {import("./types.js").TypedArrayConstructor}
+ * @returns {import("./types").TypedArrayConstructor}
  */
 export const getTypedArrayConstructor = (tag, log) => {
     switch (tag) {
@@ -53,7 +53,7 @@ export const getTypedArrayConstructor = (tag, log) => {
  * various Error subclasses.
  * @param {import("../types").Log} [log]
  * An optional logging function.
- * @returns {import("./types.js").AtomicErrorConstructor}
+ * @returns {import("./types").AtomicErrorConstructor}
  */
 export const getAtomicErrorConstructor = (value, log) => {
     const { name } = value;

@@ -1,10 +1,10 @@
 import { cloneDeepInternal } from './clone-deep-internal.js';
 
-/** @typedef {import("../types.js").CloneDeepOptions} CloneDeepOptions */
+/** @typedef {import("../types").CloneDeepOptions} CloneDeepOptions */
 
-/** @typedef {import("../types.js").Customizer} Customizer */
+/** @typedef {import("../types").Customizer} Customizer */
 
-/** @typedef {import("../types.js").Log} Log */
+/** @typedef {import("../types").Log} Log */
 
 /**
  * @template T
