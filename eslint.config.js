@@ -29,9 +29,8 @@ export default [{
                 arguments: "first"
             }, 
             offsetTernaryExpressions: false, 
-            ignoreComments: false, 
-            ignoredNodes: ["IfStatement"]
-        }], 
+            ignoreComments: false,
+        }],
         "@s/key-spacing": "error", 
         "@s/keyword-spacing": "error", 
         "@s/lines-between-class-members": "error", 
