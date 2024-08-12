@@ -1,27 +1,27 @@
 /* node:coverage disable */
 
-import { isCallable } from "../src/utils/type-checking.js";
+import { isCallable } from '../src/utils/type-checking.js';
 
-const msg = "Illegal invocation";
+const msg = 'Illegal invocation';
 
 const global = globalThis;
 
 /**
  * Polyfills unsupported web APIs for a Node environment.
- * This does NOT fully implement the web APIs. Not even close. The goal is to 
- * implement the subset of functionality required for the testing for this 
- * project and nothing more. None of these classes suffice as a genuine polyfill 
- * for actual use. 
+ * This does NOT fully implement the web APIs. Not even close. The goal is to
+ * implement the subset of functionality required for the testing for this
+ * project and nothing more. None of these classes suffice as a genuine polyfill
+ * for actual use.
  */
-export function polyfill() {
-    
+export const polyfill = () => {
+
     if (!isCallable(global.DOMMatrixReadOnly)) {
 
         global.DOMMatrixReadOnly = class DOMMatrixReadOnly {
-            static #registry = new WeakSet;
+            static #registry = new WeakSet();
 
             #m11;
-            
+
             get m11() {
                 if (!DOMMatrixReadOnly.#registry.has(this)) {
                     throw new TypeError(msg);
@@ -44,13 +44,14 @@ export function polyfill() {
 
             /** @param {DOMMatrixInit | undefined} array */
             constructor(array) {
-                if (array !== undefined && 
-                    (!Array.isArray(array) || ![6, 16].includes(array.length)))
+                if (array !== undefined &&
+                    (!Array.isArray(array) || ![6, 16].includes(array.length))) {
                     throw new TypeError(
-                        "TypeError: Failed to construct 'DOMMatrix': The " + 
-                        "sequence must contain 6 elements for a 2D matrix or " + 
-                        "16 elements for a 3D matrix.");
-                
+                        'TypeError: Failed to construct \'DOMMatrix\': The ' +
+                        'sequence must contain 6 elements for a 2D matrix or ' +
+                        '16 elements for a 3D matrix.');
+                }
+
                 DOMMatrixReadOnly.#registry.add(this);
 
                 if (array === undefined) {
@@ -71,10 +72,9 @@ export function polyfill() {
                     this.m42 = 0;
                     this.m43 = 0;
                     this.m44 = 1;
-                }
-                else if (array.length === 6) {
+                } else if (array.length === 6) {
                     const [m11, m12, m21, m22, m41, m42] = array;
-                    
+
                     this.#is2D = true;
 
                     this.#m11 = m11;
@@ -93,61 +93,61 @@ export function polyfill() {
                     this.m42 = m42;
                     this.m43 = 0;
                     this.m44 = 1;
-                }
-                else {
-                    if (array.length === 6) {
-                        const [m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, 
-                               m33, m34, m41, m42, m43, m44] = array;
-                        
-                        this.#is2D = true;
-    
-                        this.#m11 = m11;
-                        this.m12 = m12;
-                        this.m13 = m13;
-                        this.m14 = m14;
-                        this.m21 = m21;
-                        this.m22 = m22;
-                        this.m23 = m23;
-                        this.m24 = m24;
-                        this.m31 = m31;
-                        this.m32 = m32;
-                        this.m33 = m33;
-                        this.m34 = m34;
-                        this.m41 = m41;
-                        this.m42 = m42;
-                        this.m43 = m43;
-                        this.m44 = m44;
-                    }
+                } else if (array.length === 16) {
+                    const [m11, m12, m13, m14, m21, m22, m23, m24, m31, m32,
+                        m33, m34, m41, m42, m43, m44] = array;
+
+                    this.#is2D = true;
+
+                    this.#m11 = m11;
+                    this.m12 = m12;
+                    this.m13 = m13;
+                    this.m14 = m14;
+                    this.m21 = m21;
+                    this.m22 = m22;
+                    this.m23 = m23;
+                    this.m24 = m24;
+                    this.m31 = m31;
+                    this.m32 = m32;
+                    this.m33 = m33;
+                    this.m34 = m34;
+                    this.m41 = m41;
+                    this.m42 = m42;
+                    this.m43 = m43;
+                    this.m44 = m44;
                 }
 
+                /* eslint-disable id-length */
                 this.a = this.#m11;
                 this.b = this.m12;
                 this.c = this.m21;
                 this.d = this.m22;
                 this.e = this.m41;
                 this.f = this.m42;
+                /* eslint-enable id-length */
             }
 
             scale() {
-                if (!DOMMatrixReadOnly.#registry.has(this)) 
+                if (!DOMMatrixReadOnly.#registry.has(this)) {
                     throw new TypeError(msg);
-                if (this.is2D)
+                }
+                if (this.is2D) {
                     return new DOMMatrix([
                         this.a, this.b, this.c, this.d, this.e, this.f]);
-                else 
-                    return new DOMMatrix([
-                        this.m11, this.m12, this.m13, this.m14, 
-                        this.m21, this.m22, this.m23, this.m24, 
-                        this.m31, this.m32, this.m33, this.m34, 
-                        this.m41, this.m42, this.m43, this.m44]);
+                }
+                return new DOMMatrix([
+                    this.m11, this.m12, this.m13, this.m14,
+                    this.m21, this.m22, this.m23, this.m24,
+                    this.m31, this.m32, this.m33, this.m34,
+                    this.m41, this.m42, this.m43, this.m44]);
             }
         };
 
-        DOMMatrixReadOnly.prototype[Symbol.toStringTag] = "DOMMatrixReadOnly";
+        DOMMatrixReadOnly.prototype[Symbol.toStringTag] = 'DOMMatrixReadOnly';
 
         global.DOMMatrix = class DOMMatrix extends DOMMatrixReadOnly {
-        
-            static #registry = new WeakSet;
+
+            static #registry = new WeakSet();
 
             #m11;
 
@@ -176,11 +176,11 @@ export function polyfill() {
 
                 DOMMatrix.#registry.add(this);
             }
-        }
+        };
 
-        DOMMatrix.prototype[Symbol.toStringTag] = "DOMMatrix";
+        DOMMatrix.prototype[Symbol.toStringTag] = 'DOMMatrix';
     }
-    
+
     if (!isCallable(global.DOMPointReadOnly)) {
 
         global.DOMPointReadOnly = class DOMPointReadOnly {
@@ -189,21 +189,25 @@ export function polyfill() {
             #x;
 
             get x() {
-                if (!DOMPointReadOnly.#registry.has(this)) 
+                if (!DOMPointReadOnly.#registry.has(this)) {
                     throw new TypeError(msg);
+                }
                 return this.#x;
             }
 
             constructor(x = 0) {
                 DOMPointReadOnly.#registry.add(this);
 
-                if (typeof x !== "number") x = 0;
+                if (typeof x !== 'number') {
+                    x = 0;
+                }
                 this.#x = x;
             }
 
             toJSON() {
-                if (!DOMPointReadOnly.#registry.has(this)) 
+                if (!DOMPointReadOnly.#registry.has(this)) {
                     throw new TypeError(msg);
+                }
                 return { x: this.x };
             }
 
@@ -211,24 +215,26 @@ export function polyfill() {
             static fromPoint(domPoint) {
                 return new DOMPointReadOnly(domPoint.x);
             }
-        }
+        };
 
-        DOMPointReadOnly.prototype[Symbol.toStringTag] = "DOMPointReadOnly";
+        DOMPointReadOnly.prototype[Symbol.toStringTag] = 'DOMPointReadOnly';
 
         global.DOMPoint = class DOMPoint extends DOMPointReadOnly {
-            static #registry = new WeakSet;
+            static #registry = new WeakSet();
 
             #x;
 
             get x() {
-                if (!DOMPoint.#registry.has(this)) 
+                if (!DOMPoint.#registry.has(this)) {
                     throw new TypeError(msg);
+                }
                 return this.#x;
             }
 
             set x(newX) {
-                if (!DOMPoint.#registry.has(this)) 
+                if (!DOMPoint.#registry.has(this)) {
                     throw new TypeError(msg);
+                }
                 this.#x = newX;
             }
 
@@ -237,27 +243,29 @@ export function polyfill() {
 
                 DOMPoint.#registry.add(this);
 
-                if (typeof x !== "number") x = 0;
+                if (typeof x !== 'number') {
+                    x = 0;
+                }
                 this.#x = x;
             }
 
-            /** 
+            /**
              * @param {DOMPoint|DOMPointReadOnly} domPoint
-             * @override 
+             * @override
              */
             static fromPoint(domPoint) {
                 return new DOMPoint(domPoint.x);
             }
 
-        }
+        };
 
-        DOMPoint.prototype[Symbol.toStringTag] = "DOMPoint";
+        DOMPoint.prototype[Symbol.toStringTag] = 'DOMPoint';
     }
 
     if (!isCallable(global.DOMRectReadOnly)) {
-        
+
         global.DOMRectReadOnly = class DOMRectReadOnly {
-            static #registry = new WeakSet;
+            static #registry = new WeakSet();
 
             #x;
 
@@ -268,7 +276,9 @@ export function polyfill() {
             constructor(x) {
                 DOMRectReadOnly.#registry.add(this);
 
-                if (typeof x !== "number") x = 0;
+                if (typeof x !== 'number') {
+                    x = 0;
+                }
                 this.#x = x;
             }
 
@@ -278,10 +288,10 @@ export function polyfill() {
             }
         };
 
-        DOMRectReadOnly.prototype[Symbol.toStringTag] = "DOMRectReadOnly";
+        DOMRectReadOnly.prototype[Symbol.toStringTag] = 'DOMRectReadOnly';
 
         global.DOMRect = class DOMRect extends DOMRectReadOnly {
-            static #registry = new WeakSet;
+            static #registry = new WeakSet();
 
             #x;
 
@@ -294,11 +304,13 @@ export function polyfill() {
             }
 
             constructor(x) {
-                super(x)
+                super(x);
 
                 DOMRect.#registry.add(this);
 
-                if (typeof x !== "number") x = 0;
+                if (typeof x !== 'number') {
+                    x = 0;
+                }
                 this.#x = x;
             }
 
@@ -308,12 +320,12 @@ export function polyfill() {
             }
         };
 
-        DOMRect.prototype[Symbol.toStringTag] = "DOMRect";
+        DOMRect.prototype[Symbol.toStringTag] = 'DOMRect';
     }
 
     if (!isCallable(global.DOMQuad)) {
         global.DOMQuad = class DOMQuad {
-            static #registry = new WeakSet;
+            static #registry = new WeakSet();
 
             /** @type {DOMPoint} */
             #p1;
@@ -328,67 +340,72 @@ export function polyfill() {
             #p4;
 
             get p1() {
-                if (!DOMQuad.#registry.has(this))
+                if (!DOMQuad.#registry.has(this)) {
                     throw new TypeError(msg);
+                }
                 return this.#p1;
             }
 
             get p2() {
-                if (!DOMQuad.#registry.has(this))
+                if (!DOMQuad.#registry.has(this)) {
                     throw new TypeError(msg);
+                }
                 return this.#p2;
             }
 
             get p3() {
-                if (!DOMQuad.#registry.has(this))
+                if (!DOMQuad.#registry.has(this)) {
                     throw new TypeError(msg);
+                }
                 return this.#p3;
             }
 
             get p4() {
-                if (!DOMQuad.#registry.has(this))
+                if (!DOMQuad.#registry.has(this)) {
                     throw new TypeError(msg);
+                }
                 return this.#p4;
             }
 
-            [Symbol.toStringTag] = "DOMQuad";
+            [Symbol.toStringTag] = 'DOMQuad';
 
             /**
-             * @param {DOMPoint|DOMPointReadOnly} p1 
-             * @param {DOMPoint|DOMPointReadOnly} p2 
-             * @param {DOMPoint|DOMPointReadOnly} p3 
-             * @param {DOMPoint|DOMPointReadOnly} p4 
+             * @param {DOMPoint|DOMPointReadOnly} p1
+             * @param {DOMPoint|DOMPointReadOnly} p2
+             * @param {DOMPoint|DOMPointReadOnly} p3
+             * @param {DOMPoint|DOMPointReadOnly} p4
              */
             constructor(p1, p2, p3, p4) {
                 DOMQuad.#registry.add(this);
 
-                this.#p1 = p1 ? DOMPoint.fromPoint(p1) : new DOMPoint;
-                this.#p2 = p2 ? DOMPoint.fromPoint(p2) : new DOMPoint;
-                this.#p3 = p3 ? DOMPoint.fromPoint(p3) : new DOMPoint;
-                this.#p4 = p4 ? DOMPoint.fromPoint(p4) : new DOMPoint;
+                this.#p1 = p1 ? DOMPoint.fromPoint(p1) : new DOMPoint();
+                this.#p2 = p2 ? DOMPoint.fromPoint(p2) : new DOMPoint();
+                this.#p3 = p3 ? DOMPoint.fromPoint(p3) : new DOMPoint();
+                this.#p4 = p4 ? DOMPoint.fromPoint(p4) : new DOMPoint();
             }
 
             toJSON() {
-                if (!DOMQuad.#registry.has(this))
+                if (!DOMQuad.#registry.has(this)) {
                     throw new TypeError(msg);
+                }
                 return {};
             }
-        }
+        };
 
-        DOMQuad.prototype[Symbol.toStringTag] = "DOMQuad";
+        DOMQuad.prototype[Symbol.toStringTag] = 'DOMQuad';
     }
 
     if (!isCallable(global.FileList)) {
         global.FileList = class FileList {
-            static #registry = new WeakSet;
+            static #registry = new WeakSet();
 
-            [Symbol.toStringTag] = "FileList";
+            [Symbol.toStringTag] = 'FileList';
 
             /** @type {File[]} */
             #items;
 
             /**
-             * @param {File[]} items 
+             * @param {File[]} items
              */
             constructor(items) {
                 FileList.#registry.add(this);
@@ -397,19 +414,21 @@ export function polyfill() {
 
             /** @type {(index: number) => File} */
             item(index) {
-                if (!FileList.#registry.has(this))
+                if (!FileList.#registry.has(this)) {
                     throw new TypeError(msg);
+                }
                 return this.#items[index];
             }
 
             get length() {
-                if (!FileList.#registry.has(this))
+                if (!FileList.#registry.has(this)) {
                     throw new TypeError(msg);
+                }
                 return this.#items.length;
             }
-        }
+        };
 
-        FileList.prototype[Symbol.toStringTag] = "FileList";
+        FileList.prototype[Symbol.toStringTag] = 'FileList';
     }
 
     if (!isCallable(global.DataTransfer)) {
@@ -420,7 +439,7 @@ export function polyfill() {
 
             /** @type {(item: File) => void} */
             add(item) {
-                this.#items.push(item)
+                this.#items.push(item);
             }
 
             getAll() {
@@ -429,8 +448,8 @@ export function polyfill() {
         }
 
         global.DataTransfer = class DataTransfer {
-            #items = new DataTransferItemList;
-            
+            #items = new DataTransferItemList();
+
             get items() {
                 return this.#items;
             }
@@ -438,9 +457,9 @@ export function polyfill() {
             get files() {
                 return new FileList(this.items.getAll());
             }
-        }
+        };
     }
-}
+};
 
 // Causes this module to have side effect of populating polyfills.
 polyfill();
@@ -448,7 +467,7 @@ polyfill();
 /**
  * Clear all polyfills.
  */
-export function clearPolyfills() {
+export const clearPolyfills = () => {
     global.DOMMatrixReadOnly = undefined;
     global.DOMMatrix = undefined;
     global.DOMPointReadOnly = undefined;
@@ -456,4 +475,4 @@ export function clearPolyfills() {
     global.DOMQuad = undefined;
     global.FileList = undefined;
     global.DataTransfer = undefined;
-}
+};

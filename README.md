@@ -308,7 +308,7 @@ There are some features which are only accessible by cloning the repository. Thi
 
 ## TypeScript & JSDoc
 
-This repository uses type annotations in [JSDoc](https://jsdoc.app/) to add type-checking to JavaScript. While this requires the `typescript` module, there is no compilation step. The codebase is entirely JavaScript, but VSCode will still highlight errors like it would for TypeScript files. If you are using an IDE which cannot conveniently highlight TypeScript errors, then you can use the TypeScript compiler to check typing (`npm i -g typescript`, then run `npx tsc` in the repository).
+This repository uses type annotations in [JSDoc](https://jsdoc.app/) to add type-checking to JavaScript. While this requires the `typescript` module, there is no compilation step. The codebase is entirely JavaScript, but VSCode will still highlight errors like it would for TypeScript files. If you are using an IDE which cannot conveniently highlight TypeScript errors, then you can use the TypeScript compiler to check typing (`npm i -g typescript`, then execute `npm run tsc`).
 
 ## testing
 
@@ -316,7 +316,7 @@ The file `clone-deep.test.js` contains all unit tests. Execute `npm test` to run
 
 ## linting 
 
-We use eslint to lint this project. All merge requests to the dev and main branches must be made with code that throws no errors when linted. To run the linter, execute `npm run lint`. To auto-format as much code as possible and then run the linter, execute `npm run lint`. Note that the formatter is not guaranteed to force the code to pass the linter.
+We use eslint to lint this project. All merge requests to the dev and main branches must be made with code that throws no errors when linted. To run the linter, execute `npm run lint`. To auto-format as much code as possible and then run the linter, execute `npm run fix`. Note that the formatter is not guaranteed to force the code to pass the linter.
 
 ## benchmarking
 
@@ -326,6 +326,7 @@ Some rudimentary benchmarking can be done within the repository. In the director
 
   - If you notice a bug or have a feature request, please raise an issue. Follow the default template provided for bug reports or feature requests, respectively.
   - If you would like to implement a bug fix or feature request from an issue, please create a branch from the `dev` branch with a descriptive name relevant to the issue title. Once you are finished with the implementation, create a pull request to the `dev` branch.
+  - All merge requests undergo a build pipeline that runs the full test suite, runs the linter, and runs the typescript compiler. Code cannot be merged into the dev or main branches without passing this pipeline. For convenience, run `npm run verify-project` to check if the codebase will pass these three requirements. 
 
 ## acknowledgements
 
@@ -343,3 +344,4 @@ Some rudimentary benchmarking can be done within the repository. In the director
  - Thanks to [clone](https://www.npmjs.com/package/clone) for its implementation of cloning Promises.
  - Thanks to [this](https://stackoverflow.com/a/62491100/22334683) stackoverflow answer for its suggestion for cloning Files.
  - Thanks to [fisker](https://github.com/fisker) and their [package](https://github.com/fisker/create-file-list) for its implementation of creating FileList instances.
+ - Thanks to [this](https://stackoverflow.com/a/52526549/22334683) stackexchange post, which helped me implement the `run-verify` npm script.
