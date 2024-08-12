@@ -314,6 +314,10 @@ This repository uses type annotations in [JSDoc](https://jsdoc.app/) to add type
 
 The file `clone-deep.test.js` contains all unit tests. Execute `npm test` to run them. If you are using node v20.1.0 or higher, execute `npm run test-coverage` to see coverage results.
 
+## linting 
+
+We use eslint to lint this project. All merge requests to the dev and main branches must be made with code that throws no errors when linted. To run the linter, execute `npm run lint`. To auto-format as much code as possible and then run the linter, execute `npm run lint`. Note that the formatter is not guaranteed to force the code to pass the linter.
+
 ## benchmarking
 
 Some rudimentary benchmarking can be done within the repository. In the directory containing the source code, execute `npm run serve -- <PORT>`, where the `-- <PORT>` command line option is optional and defaults to `8787`, and visit `http://localhost:<PORT>` to see the benchmarking UI. You can use your favorite browser's dev tools to profile the result.
