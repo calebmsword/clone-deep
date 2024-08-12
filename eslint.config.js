@@ -7,6 +7,8 @@ export default [{
         "@s": stylisticJs
     },
     rules: {
+
+
         // https://eslint.style/rules
         "@s/array-bracket-spacing": ["error", "never"], 
         "@s/arrow-parens": ["error", "always"], 
@@ -35,6 +37,8 @@ export default [{
         "@s/keyword-spacing": "error", 
         "@s/lines-between-class-members": "error", 
         "@s/max-len": ["error", { 
+            // the limit is really 80 characters, but using 81 will allow a 
+            // semicolon to "not count" in the limit
             code: 81, 
             ignoreUrls: true, 
             // This will match jsdoc annotations of the sort: 
@@ -71,6 +75,7 @@ export default [{
         "@s/template-curly-spacing": "error",
         "@s/template-tag-spacing": "error",
         "@s/wrap-iife": "error",
+
 
         // https://eslint.org/docs/latest/rules/#possible-problems
         "array-callback-return": "error", 
@@ -128,16 +133,18 @@ export default [{
         "use-isnan": "error", 
         "valid-typeof": "error", 
 
+
         // https://eslint.org/docs/latest/rules/#suggestions
         "arrow-body-style": ["error", "always"], 
         camelcase: "error", 
-
-        // It can be hard to come up with a good cutoff for complexity. It 
-        // really can depend on the use case. Hence I won't make it error out 
-        // on high complexity. I just want to know if I have started writing 
-        // something complex and, if I have, I will decide for myself if I 
-        // should start re-engineering.  
-        complexity: ["warn", 10], 
+        complexity: [
+            // It can be hard to come up with a good cutoff for complexity. It 
+            // really depends on the use case. Hence I won't make it error out 
+            // on high complexity. I just want to know if I have started writing 
+            // something complex and, if I have, I will decide for myself if I 
+            // should start re-engineering.
+            "warn", 
+            10], 
         curly: "error", 
         "default-case": "error", 
         "default-case-last": "error", 
