@@ -14,7 +14,7 @@
     "delete-tsdist": "node scripts/delete-tsdist.js",
     "fix": "npx eslint --fix",
     "lint": "npx eslint",
-    "serve": "node .\\benchmark\\serve.js",
+    "serve": "node .\\scripts\\serve.js",
     "test": "node --test",
     "test-coverage": "node --test --experimental-test-coverage",
     "tsc": "node -e \"console.log('Transpiling codebase; result will be in tsdist/')\" && npx tsc && npm run delete-tsdist",

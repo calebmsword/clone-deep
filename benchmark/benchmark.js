@@ -8,6 +8,7 @@
 const DECIMAL_PLACES = 4;
 const worker = new Worker('benchmark/worker.js');
 
+
 // -- stateful variables
 let numIterations = 1000;
 let benchmarking = false;
