@@ -64,7 +64,11 @@ export default [{
         '@s/semi': ['error', 'always'],
         '@s/semi-spacing': 'error',
         '@s/space-before-blocks': 'error',
-        '@s/space-before-function-paren': ['error', 'never'],
+        '@s/space-before-function-paren': ['error', {
+            anonymous: 'never',
+            named: 'never',
+            asyncArrow: 'always'
+        }],
         '@s/space-in-parens': 'error',
         '@s/space-infix-ops': 'error',
         '@s/space-unary-ops': 'error',

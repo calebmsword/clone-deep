@@ -115,7 +115,7 @@ html, body {
     border-radius: 5px;
 }
 
-.button:hover {
+.button.pressable:hover {
     background-color: var(--button-hover-color);
     cursor: pointer;
 }

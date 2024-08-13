@@ -1,11 +1,17 @@
-import cloneDeep from '../src/clone-deep/clone-deep.js';
+// This script is meant to be run as the script for the benchmark UI. The
+// associated HTML is in index.html. Run `node benchmark\serve.js` in the
+// directory containing index.html and the UI will be hosted at
+// http://localhost:8787.
 
-/**
- * This script is meant to be run as the script for the benchmark UI. The
- * associated HTML is in index.html. Run `node benchmark\serve.js` in the
- * directory containing index.html and the UI will be hosted at
- * http://localhost:8787.
- */
+
+// -- constant variables
+const DECIMAL_PLACES = 4;
+const worker = new Worker('benchmark/worker.js');
+
+// -- stateful variables
+let numIterations = 1000;
+let benchmarking = false;
+
 
 // -- DOM elements
 const structuredCloneResult = document.querySelector('.top .result-text');
@@ -17,65 +23,14 @@ const deeplyNestedButton = document.querySelector('.button.deeply-nested');
 
 const textinput = document.querySelector('.iterations');
 
-
-// -- constant variables
-const DECIMAL_PLACES = 4;
-
-
-// -- stateful variables
-let numIterations = 1000;
-let currentHovered; // the DOM element that is currently being hovered over
+const buttons = [
+    primitivesOnlyButton,
+    ordinaryObjectButton,
+    deeplyNestedButton
+];
 
 
 // -- helper functions
-const getPrimitivesOnlyObject = () => {
-    return {
-        string: 'string',
-        number: 123456789,
-        boolean: true,
-        array: ['string', 123456789, false]
-    };
-};
-
-const getOrdinaryObject = () => {
-    const map = new Map();
-    map.set('p', { p_: 'p', g_: { h_: 'h' }});
-    map.prop = 'property on map';
-    map.set('test', 3);
-
-    const error = new Error('error');
-    const number = 3;
-    Object.freeze(number);
-
-    const object = {
-        f_: 'string',
-        map,
-        error,
-        uint: new Uint8Array(new ArrayBuffer(8), 1, 4),
-        date: new Date(Date.now()),
-        frozen: Object.freeze({ test: 3 }),
-        sealed: Object.seal({ test: 3 }),
-        number,
-        bigint: BigInt(1)
-
-    };
-
-    map.set('g', object);
-    object.circular = object;
-
-    return object;
-};
-
-const getNestedObject = () => {
-    const obj = {};
-    let next = obj;
-    for (let number = 0; number < 1000; number++) {
-        next.property = {};
-        next = next.property;
-    }
-    return obj;
-};
-
 const assignValues = (values) => {
     const [sc, cd] = values.map((number) => {
         return number.toFixed(DECIMAL_PLACES);
@@ -84,64 +39,52 @@ const assignValues = (values) => {
     cloneDeepResult.textContent = String(cd);
 };
 
-const doBenchmark = (object) => {
+const doBenchmark = (type) => {
+    benchmarking = true;
+
     document.body.style.cssText = 'cursor: wait !important';
 
-    const temp = currentHovered?.style?.cursor;
-    const wasHovered = currentHovered;
-    if (wasHovered) {
-        wasHovered.style.cssText = 'cursor: wait !important';
-    }
+    buttons.forEach((element) => {
+        element.classList.remove('pressable');
+    });
 
-    const useCloneDeep = (obj) => {
-        return cloneDeep(obj, { logMode: 'silent' });
-    };
+    worker.onmessage = ({ data }) => {
+        const { result } = data;
 
-    const useStructuredClone = (obj) => {
-        return structuredClone(obj);
-    };
+        document.body.style.cssText = 'auto';
 
-    setTimeout(() => {
-        const result = [];
-
-        [useStructuredClone, useCloneDeep].forEach((func) => {
-            const before = Date.now();
-            for (let number = 0; number < numIterations; number++) {
-                func(object);
-            }
-            const after = Date.now();
-            result.push((after - before) / numIterations);
+        buttons.forEach((element) => {
+            element.classList.add('pressable');
         });
 
-        document.body.style.cursor = 'auto';
-        if (wasHovered) {
-            wasHovered.style.cursor = temp;
-        }
         assignValues(result);
 
-    // Give browser time to repaint so cursor changes before expensive
-    // synchronous JavaScript causes browser to freeze
-    }, 500);
+        benchmarking = false;
+    };
+
+    worker.postMessage({ type, numIterations });
 };
 
 
-// add event listeners
-document.onmousemove = (event) => {
-    currentHovered = event.target;
-};
-
+// -- event listeners
 textinput.addEventListener('input', (event) => {
     numIterations = event.target.value || 1000;
 });
 
 primitivesOnlyButton.addEventListener('click', () => {
-    doBenchmark(getPrimitivesOnlyObject());
+    if (!benchmarking) {
+        doBenchmark('primitives');
+    }
 });
 
 ordinaryObjectButton.addEventListener('click', () => {
-    doBenchmark(getOrdinaryObject());
+    if (!benchmarking) {
+        doBenchmark('ordinary');
+    }
 });
 
 deeplyNestedButton.addEventListener('click', () => {
-    doBenchmark(getNestedObject());
+    if (!benchmarking) {
+        doBenchmark('nested');
+    }
 });
