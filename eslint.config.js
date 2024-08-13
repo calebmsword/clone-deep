@@ -3,6 +3,7 @@ import stylisticJs from '@stylistic/eslint-plugin-js';
 
 export default [{
     files: ['**/*.js'],
+    ignores: ['tsdist/**/*.js'],
     plugins: {
         '@s': stylisticJs
     },

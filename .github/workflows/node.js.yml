@@ -31,5 +31,5 @@ jobs:
     - run: npm ci
     - run: npm i -g typescript
     - run: npx tsc
-    - run: npm run lint
+    - run: npm run lint -- --quiet
     - run: npm run test
