@@ -84,9 +84,13 @@ const getNestedObject = () => {
         if (object !== undefined) {
             [useStructuredClone, useCloneDeep].forEach((func) => {
                 const before = Date.now();
+
+                console.profile();
                 for (let number = 0; number < numIterations; number++) {
                     func(object);
                 }
+                console.profileEnd();
+
                 const after = Date.now();
                 result.push((after - before) / numIterations);
             });
