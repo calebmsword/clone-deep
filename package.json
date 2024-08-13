@@ -11,13 +11,21 @@
     "deep"
   ],
   "scripts": {
+    "delete-tsdist": "node scripts/delete-tsdist.js",
+    "fix": "npx eslint --fix",
+    "lint": "npx eslint",
+    "serve": "node .\\benchmark\\serve.js",
     "test": "node --test",
     "test-coverage": "node --test --experimental-test-coverage",
-    "serve": "node .\\benchmark\\serve.js"
+    "tsc": "node -e \"console.log('Transpiling codebase; result will be in tsdist/')\" && npx tsc && npm run delete-tsdist",
+    "verify-project": "node -e \"console.log('Running test suite:')\" && npm test && npm run tsc && node -e \"console.log('\\n\\nRunning linter:')\" &&npm run lint"
   },
   "author": "Caleb Sword",
   "license": "MIT",
   "devDependencies": {
+    "@stylistic/eslint-plugin-js": "^2.6.2",
+    "eslint": "^9.9.0",
+    "globals": "^15.9.0",
     "typescript": "^5.3.3"
   }
 }

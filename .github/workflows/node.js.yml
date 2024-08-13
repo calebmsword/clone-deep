@@ -1,4 +1,8 @@
-# This workflow will do a clean installation of node dependencies, ensure the code survives the TypeScript compiler, and run tests on node version 20.x.
+# This workflow will:
+#    - do a clean installation of node dependencies, 
+#    - ensure the code survives the linter, 
+#    - ensure the code survives the TypeScript compiler, and 
+#    - run tests on node version 20.x.
 
 name: Node.js CI
 
@@ -27,4 +31,5 @@ jobs:
     - run: npm ci
     - run: npm i -g typescript
     - run: npx tsc
-    - run: node --test
+    - run: npm run lint -- --quiet
+    - run: npm run test

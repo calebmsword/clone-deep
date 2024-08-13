@@ -49,18 +49,11 @@ export type Tag = Readonly<{
     FILELIST: string
 }>
 
-export type assigner = (
+export type Assigner = (
     value: any,
     prop: PropertyKey | undefined,
     metadata: PropertyDescriptor | undefined
 ) => void;
-
-export interface QueueElement {
-    value: any,
-    parentOrAssigner?: symbol|Object|assigner,
-    prop?: string | symbol,
-    metadata?: PropertyDescriptor
-}
 
 export type TypedArrayConstructor =
     DataViewConstructor |
