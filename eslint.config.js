@@ -155,7 +155,6 @@ export default [{
         eqeqeq: ['error', 'always'],
         'func-names': ['error', 'as-needed'],
         'func-style': ['error', 'expression', { allowArrowFunctions: true }],
-        'id-length': ['error', { min: 2, exceptions: ['x', 'y', 'z'] }],
         'logical-assignment-operators': ['error', 'never'],
         'new-cap': ['error', { newIsCap: true }],
         'no-bitwise': ['error', { int32Hint: true }],
