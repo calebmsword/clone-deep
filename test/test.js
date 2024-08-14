@@ -1296,7 +1296,6 @@ try {
 
         test('If customizer returns improperly formatted additionalValues, ' +
              'they are ignored and warnings are logged ', () => {
-            /* eslint-disable id-length */
             // -- arrange
             const log = mock.fn(() => {});
 
@@ -1361,11 +1360,9 @@ try {
             assert.notStrictEqual(cloned[0], newValue1);
             assert.notStrictEqual(cloned[1], newValue2);
             assert.notStrictEqual(cloned[2], newValue2);
-            /* eslint-enable id-length */
         });
 
         test('Customizer can cause value to be ignored', () => {
-            /* eslint-disable id-length */
             // -- arrange
             const a = 'a';
             const b = 'b';
@@ -1381,11 +1378,9 @@ try {
             assert.strictEqual(cloned.a, a);
             assert.notStrictEqual(cloned.b, b);
             assert.strictEqual(cloned.b, undefined);
-            /* eslint-enable id-length */
         });
 
         test('Customizer can cause properties to be ignored', () => {
-            /* eslint-disable id-length */
             // -- arrange
             const nested = { a: 'a', b: 'b' };
             const original = { nested };
@@ -1404,11 +1399,9 @@ try {
             assert.strictEqual(Object.hasOwn(cloned, 'nested'), true);
             assert.strictEqual(cloned.nested.a, undefined);
             assert.strictEqual(cloned.nested.b, undefined);
-            /* eslint-enable id-length */
         });
 
         test('Warning logged, cloneDeep continues if customizer throws', () => {
-            /* eslint-disable id-length */
             // -- arrange
             const log = mock.fn(() => {});
             const a = 'a';
@@ -1428,7 +1421,6 @@ try {
             assert.strictEqual(calls.length, 2);
             assert.strictEqual(calls[0].arguments[0] instanceof Error, true);
             assert.strictEqual(cloned.a, a);
-            /* eslint-enable id-length */
         });
 
         test('Customizer can cause cloneDeep to throw an error', () => {
@@ -1692,7 +1684,6 @@ try {
         });
 
         test('useCustomizers can combine functionality', () => {
-            /* eslint-disable id-length */
             // -- arrange
             const a = 'a';
             const b = 'b';
@@ -1721,7 +1712,6 @@ try {
 
             // -- assert
             assert.deepEqual(cloned, { a: 'z', b: 'y' });
-            /* eslint-enable id-length */
         });
 
         test('useCustomizers calls each of its functions in order', () => {
@@ -1795,7 +1785,6 @@ try {
 
         test('cloning methods can cause the algorithm to not recurse on ' +
              'specific properties on the clone', () => {
-            /* eslint-disable id-length */
             // -- arrange
             class Test {
                 a = 'a';
@@ -1817,12 +1806,10 @@ try {
 
             // -- assert
             assert.deepEqual(cloned, { a: 'a' });
-            /* eslint-enable id-length */
         });
 
         test('cloning methods can be fully responsible for cloning all ' +
              'properties of the resultant clone', () => {
-            /* eslint-disable id-length */
             // -- arrange
             class Test {
                 a = 'a';
@@ -1842,7 +1829,6 @@ try {
 
             // -- assert
             assert.deepEqual(cloned, {});
-            /* eslint-enable id-length */
         });
 
         test('cloning methods can be fully responsible for the prototype of ' +
@@ -1914,7 +1900,6 @@ try {
              'methods, then any prototype containing a cloning method used ' +
              'for an instance cloned previously in the chain will not be ' +
              'cloned using its cloning method', () => {
-            /* eslint-disable id-length */
             // -- arrange
             class Test {
                 [CLONE]() {
@@ -1941,13 +1926,11 @@ try {
             assert.strictEqual('test', cloned2.test);
             assert.strictEqual(getProto(cloned2).a, 'a');
             assert.strictEqual(getProto(cloned2).test, undefined);
-            /* eslint-enable id-length */
         });
 
         test('If using cloneDeepFully in force mode and observing cloning ' +
              'methods, objects NOT instantiated as a class will have their ' +
              'prototype use its cloning method', () => {
-            /* eslint-disable id-length */
             // -- arrange
             const c = {
                 [CLONE]() {
@@ -1971,7 +1954,6 @@ try {
             assert.strictEqual('test', cloned.test);
             assert.strictEqual(getProto(cloned).test, 'test');
             assert.strictEqual(getProto(getProto(cloned)).test, 'test');
-            /* eslint-enable id-length */
         });
     });
 

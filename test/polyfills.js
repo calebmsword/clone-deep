@@ -117,14 +117,13 @@ export const polyfill = () => {
                     this.m44 = m44;
                 }
 
-                /* eslint-disable id-length */
                 this.a = this.#m11;
                 this.b = this.m12;
                 this.c = this.m21;
                 this.d = this.m22;
                 this.e = this.m41;
                 this.f = this.m42;
-                /* eslint-enable id-length */
+
             }
 
             scale() {
