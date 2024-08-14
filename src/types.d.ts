@@ -17,9 +17,13 @@ export interface CloneDeepFullyOptions extends CloneDeepOptions {
     force?: boolean
 }
 
-export interface SyncQueueItem {
+export interface QueueItem {
     value: any,
     parentOrAssigner?: symbol|Object|Assigner,
     prop?: string | symbol,
     metadata?: PropertyDescriptor
+}
+
+export interface AsyncCloneItem {
+    [key: string|number|symbol]: any;
 }

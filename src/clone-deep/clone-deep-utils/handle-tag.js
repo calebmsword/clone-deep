@@ -12,7 +12,7 @@ import { getWarning } from '../../utils/clone-deep-warning.js';
  * @param {string} spec.tag
  * @param {boolean} spec.prioritizePerformance
  * @param {import('../../types').Log} spec.log
- * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
+ * @param {import('../../types').QueueItem[]} spec.queue
  * @param {[any, any][]} spec.isExtensibleSealFrozen
  * @param {any[]} spec.supportedPrototypes
  * @param {boolean} spec.ignoreCloningMethods
@@ -32,7 +32,7 @@ export const handleTag = ({
     tag,
     prioritizePerformance,
     log,
-    syncQueue,
+    queue,
     isExtensibleSealFrozen,
     supportedPrototypes,
     ignoreCloningMethods,
@@ -60,7 +60,7 @@ export const handleTag = ({
             prop,
             tag,
             prioritizePerformance,
-            syncQueue,
+            queue,
             isExtensibleSealFrozen,
             supportedPrototypes,
             ignoreCloningMethods,

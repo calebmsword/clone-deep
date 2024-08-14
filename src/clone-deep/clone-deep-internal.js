@@ -1,6 +1,6 @@
 import { TOP_LEVEL } from './clone-deep-utils/assign.js';
 import { handleMetadata } from './clone-deep-utils/misc.js';
-import { iterateSyncQueue } from './clone-deep-utils/iterate-sync-queue.js';
+import { processQueue } from './clone-deep-utils/process-queue.js';
 import { getSupportedPrototypes } from '../utils/helpers.js';
 
 /**
@@ -25,7 +25,7 @@ import { getSupportedPrototypes } from '../utils/helpers.js';
  * @param {Set<any>} [spec.parentObjectRegistry]
  * This is used by cloneDeepFully to check if an object with a cloning method is
  * in the prototype of an object that was cloned earlier in the chain.
- * @returns {U}
+ * @returns {U|Promise<{ result: U }>}
  */
 export const cloneDeepInternal = ({
     value,
@@ -51,9 +51,12 @@ export const cloneDeepInternal = ({
 
     /**
      * A queue so we can avoid recursion.
-     * @type {import('../types').SyncQueueItem[]}
+     * @type {import('../types').QueueItem[]}
      */
-    const syncQueue = [{ value, parentOrAssigner: TOP_LEVEL }];
+    const queue = [{ value, parentOrAssigner: TOP_LEVEL }];
+
+    /** @type {import('../types').AsyncCloneItem[]} */
+    const asyncClones = [];
 
     /**
      * We will do a second pass through everything to check Object.isExtensible,
@@ -66,21 +69,19 @@ export const cloneDeepInternal = ({
     /** An array of all prototypes of supported types in this runtime. */
     const supportedPrototypes = getSupportedPrototypes();
 
-    while (syncQueue.length > 0) {
-        iterateSyncQueue({
-            syncQueue,
-            container,
-            log,
-            customizer,
-            cloneStore,
-            prioritizePerformance,
-            supportedPrototypes,
-            ignoreCloningMethods,
-            doThrow,
-            parentObjectRegistry,
-            isExtensibleSealFrozen
-        });
-    }
+    processQueue({
+        queue,
+        container,
+        log,
+        customizer,
+        cloneStore,
+        prioritizePerformance,
+        supportedPrototypes,
+        ignoreCloningMethods,
+        doThrow,
+        parentObjectRegistry,
+        isExtensibleSealFrozen
+    });
 
     handleMetadata(isExtensibleSealFrozen);
 

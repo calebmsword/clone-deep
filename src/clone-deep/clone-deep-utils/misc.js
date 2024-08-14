@@ -127,14 +127,14 @@ export const ensurePrototypesMatch = (cloned, value) => {
  * The clone that will inherit clones of `value`'s properties.
  * @param {(string|symbol)[]} spec.propsToIgnore
  * A list of properties of `value` to skip.
- * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
+ * @param {import('../../types').QueueItem[]} spec.queue
  * The queue representing future values to clone synchronously.
  */
 export const addOwnPropertiesToQueue = ({
     value,
     clone,
     propsToIgnore,
-    syncQueue
+    queue
 }) => {
 
     forAllOwnProperties(value, (key) => {
@@ -144,7 +144,7 @@ export const addOwnPropertiesToQueue = ({
 
         const meta = Object.getOwnPropertyDescriptor(value, key);
 
-        syncQueue.push({
+        queue.push({
             value: !hasAccessor(meta) ? value[key] : undefined,
             parentOrAssigner: clone,
             prop: key,
@@ -167,7 +167,7 @@ export const addOwnPropertiesToQueue = ({
  * @param {boolean} spec.ignoreThisLoop
  * @param {(string|symbol)[]} spec.propsToIgnore
  * @param {Map<any, any>} spec.cloneStore
- * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
+ * @param {import('../../types').QueueItem[]} spec.queue
  */
 export const finalizeClone = ({
     value,
@@ -178,7 +178,7 @@ export const finalizeClone = ({
     ignoreThisLoop,
     propsToIgnore,
     cloneStore,
-    syncQueue
+    queue
 }) => {
 
     if (cloned !== null && typeof cloned === 'object'
@@ -195,7 +195,7 @@ export const finalizeClone = ({
                 value,
                 clone: cloned,
                 propsToIgnore,
-                syncQueue
+                queue
             });
         }
     }

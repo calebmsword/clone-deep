@@ -47,7 +47,7 @@ export const isReadOnly = (value, property) => {
  * @returns {boolean}
  */
 export const isCallable = (value) => {
-    return value !== Function.prototype && typeof value === 'function';
+    return typeof value === 'function';
 };
 
 /**

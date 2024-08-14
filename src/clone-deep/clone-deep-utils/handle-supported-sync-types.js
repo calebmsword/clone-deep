@@ -27,7 +27,7 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
  * @param {string|symbol|undefined} spec.prop
  * @param {string} spec.tag
  * @param {boolean} spec.prioritizePerformance
- * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
+ * @param {import('../../types').QueueItem[]} spec.queue
  * @param {[any, any][]} spec.isExtensibleSealFrozen
  * @param {any[]} spec.supportedPrototypes
  * @param {boolean} spec.ignoreCloningMethods
@@ -48,7 +48,7 @@ export const handleSupportedSyncTypes = ({
     prop,
     tag,
     prioritizePerformance,
-    syncQueue,
+    queue,
     isExtensibleSealFrozen,
     supportedPrototypes,
     ignoreCloningMethods,
@@ -221,7 +221,7 @@ export const handleSupportedSyncTypes = ({
             ? defaultDescriptor.set
             : undefined;
 
-        syncQueue.push({
+        queue.push({
             value: error.stack,
 
             /** @param {any} clonedValue */
@@ -274,7 +274,7 @@ export const handleSupportedSyncTypes = ({
         cloned = saveClone(cloneMap);
 
         originalMap.forEach((subValue, key) => {
-            syncQueue.push({
+            queue.push({
                 value: subValue,
 
                 /** @param {any} clonedValue */
@@ -295,7 +295,7 @@ export const handleSupportedSyncTypes = ({
         cloned = saveClone(cloneSet);
 
         originalSet.forEach((subValue) => {
-            syncQueue.push({
+            queue.push({
                 value: subValue,
 
                 /** @param {any} clonedValue */
@@ -355,7 +355,7 @@ export const handleSupportedSyncTypes = ({
                                                  exception.name);
         const descriptor = Object.getOwnPropertyDescriptor(exception, 'stack');
 
-        syncQueue.push({
+        queue.push({
             value: exception.stack,
 
             /** @param {any} clonedValue */
@@ -423,7 +423,7 @@ export const handleSupportedSyncTypes = ({
             forAllOwnProperties(point, (key) => {
                 const meta = Object.getOwnPropertyDescriptor(point, key);
 
-                syncQueue.push({
+                queue.push({
                     value: !hasAccessor(meta) ? point[key] : null,
                     parentOrAssigner: cloned[pointProperty],
                     prop: key,
