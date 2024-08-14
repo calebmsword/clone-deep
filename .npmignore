@@ -1,6 +1,7 @@
 .github/
 node_modules/
 benchmark/
+scripts/
 test/
 tsdist/
 README.md
