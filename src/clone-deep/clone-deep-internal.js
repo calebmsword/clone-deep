@@ -85,4 +85,47 @@ export const cloneDeepInternal = ({
     handleMetadata(isExtensibleSealFrozen);
 
     return container.result;
+
+    // return new Promise(function iterateData(resolve, reject) {
+    //     try {
+    //         processQueue();
+
+    //         if (asyncClones.length > 0) {
+    //             Promise.allSettled(asyncClones).then((clones) => {
+    //                 clones.forEach(assignResolvedToParent);
+
+    //                 asyncClones.length = 0;
+
+    //                 iterateData(resolve, reject);
+    //             }).catch(reject);
+    //         } else {
+    //             handleMetadata(isExtensibleSealFrozen);
+
+    //             resolve(container);
+    //         }
+    //     } catch(reason) {
+    //         reject(reason);
+    //     }
+    // });
+
+    // return (async function iterateData() {
+    //     try {
+    //         processQueue();
+
+    //         if (asyncClones.length > 0) {
+    //             const clones = await Promise.allSettled(asyncClones);
+    //             clones.forEach(assignResolvedToParent);
+
+    //             asyncClones.length = 0;
+
+    //             return iterateData();
+    //         } else {
+    //             handleMetadata(isExtensibleSealFrozen);
+
+    //             return container;
+    //         }
+    //     } catch(reason) {
+    //         return Promise.reject(reason);
+    //     }
+    // })();
 };
