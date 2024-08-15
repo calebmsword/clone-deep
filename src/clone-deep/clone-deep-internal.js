@@ -7,7 +7,7 @@ import { getSupportedPrototypes } from '../utils/helpers.js';
  * Clones the provided value.
  * @template T
  * See CloneDeep.
- * @template [U = T]
+ * @template [U = T | Promise<{ result: T }>]
  * See CloneDeep.
  * @param {Object} spec
  * @param {T} spec.value
@@ -25,7 +25,9 @@ import { getSupportedPrototypes } from '../utils/helpers.js';
  * @param {Set<any>} [spec.parentObjectRegistry]
  * This is used by cloneDeepFully to check if an object with a cloning method is
  * in the prototype of an object that was cloned earlier in the chain.
- * @returns {U|Promise<{ result: U }>}
+ * @param {boolean} [spec.async]
+ * Whether or not the algorithm will return the clone asynchronously.
+ * @returns {U | Promise<{ result: U }>}
  */
 export const cloneDeepInternal = ({
     value,
@@ -34,7 +36,8 @@ export const cloneDeepInternal = ({
     prioritizePerformance,
     ignoreCloningMethods,
     doThrow,
-    parentObjectRegistry
+    parentObjectRegistry,
+    async = false
 }) => {
 
     /**
@@ -69,64 +72,59 @@ export const cloneDeepInternal = ({
     /** An array of all prototypes of supported types in this runtime. */
     const supportedPrototypes = getSupportedPrototypes();
 
-    processQueue({
-        queue,
-        container,
-        log,
-        customizer,
-        cloneStore,
-        prioritizePerformance,
-        supportedPrototypes,
-        ignoreCloningMethods,
-        doThrow,
-        parentObjectRegistry,
-        isExtensibleSealFrozen
-    });
+    if (!async) {
+        processQueue({
+            queue,
+            container,
+            log,
+            customizer,
+            cloneStore,
+            prioritizePerformance,
+            supportedPrototypes,
+            ignoreCloningMethods,
+            doThrow,
+            parentObjectRegistry,
+            isExtensibleSealFrozen
+        });
 
-    handleMetadata(isExtensibleSealFrozen);
+        handleMetadata(isExtensibleSealFrozen);
 
-    return container.result;
+        return container.result;
+    }
 
-    // return new Promise(function iterateData(resolve, reject) {
-    //     try {
-    //         processQueue();
+    return (
+        /**
+         * @returns {Promise<{ result: U }>}
+         */
+        async function iterateData() {
+            try {
+                processQueue({
+                    queue,
+                    container,
+                    log,
+                    customizer,
+                    cloneStore,
+                    prioritizePerformance,
+                    supportedPrototypes,
+                    ignoreCloningMethods,
+                    doThrow,
+                    parentObjectRegistry,
+                    isExtensibleSealFrozen
+                });
 
-    //         if (asyncClones.length > 0) {
-    //             Promise.allSettled(asyncClones).then((clones) => {
-    //                 clones.forEach(assignResolvedToParent);
+                if (asyncClones.length > 0) {
+                    // const clones = await Promise.allSettled(asyncClones);
+                    // clones.forEach(assignResolvedToParent);
 
-    //                 asyncClones.length = 0;
+                    asyncClones.length = 0;
 
-    //                 iterateData(resolve, reject);
-    //             }).catch(reject);
-    //         } else {
-    //             handleMetadata(isExtensibleSealFrozen);
+                    return iterateData();
+                }
 
-    //             resolve(container);
-    //         }
-    //     } catch(reason) {
-    //         reject(reason);
-    //     }
-    // });
-
-    // return (async function iterateData() {
-    //     try {
-    //         processQueue();
-
-    //         if (asyncClones.length > 0) {
-    //             const clones = await Promise.allSettled(asyncClones);
-    //             clones.forEach(assignResolvedToParent);
-
-    //             asyncClones.length = 0;
-
-    //             return iterateData();
-    //         } else {
-    //             handleMetadata(isExtensibleSealFrozen);
-
-    //             return container;
-    //         }
-    //     } catch(reason) {
-    //         return Promise.reject(reason);
-    //     }
-    // })();
+                handleMetadata(isExtensibleSealFrozen);
+                return container;
+            } catch (reason) {
+                return Promise.reject(reason);
+            }
+        }());
 };

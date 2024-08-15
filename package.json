@@ -17,7 +17,7 @@
     "serve": "node .\\scripts\\serve.js",
     "test": "node --test",
     "test-coverage": "node --test --experimental-test-coverage",
-    "tsc": "node -e \"console.log('Transpiling codebase; result will be in tsdist/')\" && npx tsc && npm run delete-tsdist",
+    "tsc": "node -e \"console.log('Transpiling codebase; result will be in tsdist directory')\" && npx tsc && npm run delete-tsdist",
     "verify-project": "node -e \"console.log('Running test suite:')\" && npm test && npm run tsc && node -e \"console.log('\\n\\nRunning linter:')\" &&npm run lint"
   },
   "author": "Caleb Sword",

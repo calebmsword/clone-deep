@@ -59,8 +59,9 @@ const handleMetadata = ({ log, cloned, parent, prop, metadata }) => {
 
 /**
  * Handles the assignment of the cloned value to some persistent place.
+ * @template U
  * @param {Object} spec
- * @param {{ result: any }} spec.container
+ * @param {{ result?: U }} spec.container
  * Object containing the top-level object that will be returned by
  * cloneDeepInternal.
  * @param {import('../../types').Log} spec.log

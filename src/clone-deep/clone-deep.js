@@ -9,7 +9,7 @@ import { cloneDeepInternal } from './clone-deep-internal.js';
 /**
  * @template T
  * The type of the input value.
- * @template [U = T]
+ * @template [U = T | Promise<{ result: T }>]
  * The type of the return value. By default, it is the same as the input value.
  * Nefarious customizer usage could require them be distinct, however. Please do
  * not do this.
@@ -38,7 +38,7 @@ import { cloneDeepInternal } from './clone-deep-internal.js';
  * If `true`, errors thrown by the customizer will be thrown by `cloneDeep`. By
  * default, the error is logged and the algorithm proceeds with default
  * behavior.
- * @returns {U} The deep copy.
+ * @returns {U | Promise<{ result: U }> } The deep copy.
  */
 export const cloneDeep = (value, optionsOrCustomizer) => {
     /** @type {Customizer|undefined} */
@@ -84,6 +84,7 @@ export const cloneDeep = (value, optionsOrCustomizer) => {
         }
     }
 
+    /** @type {U | Promise<{ result: U }>} */
     return cloneDeepInternal({
         value,
         customizer,

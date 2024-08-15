@@ -10,9 +10,10 @@ import { handleTag } from './handle-tag.js';
 
 /**
  * Iterate through all items in the sync queue.
+ * @template U
  * @param {Object} spec
  * @param {import('../../types.js').QueueItem[]} spec.queue
- * @param {{ result: any }} spec.container
+ * @param {{ result?: U }} spec.container
  * @param {import('../../types.js').Log} spec.log
  * @param {import('../../types.js').Customizer|undefined} spec.customizer
  * @param {Map<any, any>} spec.cloneStore
