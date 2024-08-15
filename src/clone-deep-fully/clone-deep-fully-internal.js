@@ -1,6 +1,7 @@
 import cloneDeep from '../clone-deep/clone-deep.js';
 import { cloneDeepInternal } from '../clone-deep/clone-deep-internal.js';
 import { hasMethods } from '../utils/metadata.js';
+import { isObject } from '../utils/type-checking.js';
 
 
 /** @typedef {import('../types').Customizer} Customizer */
@@ -55,7 +56,7 @@ export const cloneDeepFullyInternal = ({
         ? new Set()
         : undefined;
 
-    while (tempOrig !== null && ['object', 'function'].includes(typeof tempOrig)
+    while (isObject(tempOrig)
            && Object.getPrototypeOf(tempOrig) !== null
            && (!hasMethods(Object.getPrototypeOf(tempOrig)) || force)) {
 

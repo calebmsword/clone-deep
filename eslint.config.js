@@ -132,7 +132,7 @@ export default [{
         'no-unused-vars': 'error',
         'no-use-before-define': 'error',
         'no-useless-backreference': 'error',
-        'require-atomic-updates': 'error',
+        'require-atomic-updates': ['error', { allowProperties: true }],
         'use-isnan': 'error',
         'valid-typeof': 'error',
 

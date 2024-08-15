@@ -196,7 +196,7 @@ declare module "cms-clone-deep" {
  * @returns {U} 
  * The deep copy.
  */
-export default function cloneDeep<T, U = T>(
+export default function cloneDeep<T, U = T | Promise<{ result: T }>>(
     value: T, 
     optionsOrCustomizer: CloneDeepOptions|Customizer|undefined
 ) : U | Promise<{ result: U }>;
@@ -234,7 +234,7 @@ export default function cloneDeep<T, U = T>(
  * @returns {U | Promise<{ result: T }>} 
  * The deep copy.
  */
-export function cloneDeepFully<T, U = T>(
+export function cloneDeepFully<T, U = T | Promise<{ result: T }>>(
     value: T,
     optionsOrCustomizer: CloneDeepFullyOptions|Customizer|undefined
 ) : U | Promise<{ result: U }>;

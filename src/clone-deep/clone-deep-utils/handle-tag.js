@@ -1,5 +1,6 @@
 import { handleError } from './misc.js';
-import { handleSupportedSyncTypes } from './handle-supported-sync-types.js';
+import { handleNativeTypes } from './handle-native-types.js';
+import { handleSyncWebTypes } from './handle-sync-web-types.js';
 import { getWarning } from '../../utils/clone-deep-warning.js';
 
 /** @typedef {import('../../utils/types').Assigner} Assigner */
@@ -47,14 +48,17 @@ export const handleTag = ({
 
     try {
         /** @type {boolean|undefined} */
-        let syncTypeDetected;
+        let nativeTypeDetected;
+
+        /** @type {boolean|undefined} */
+        let webTypeDetected;
 
         ({
             cloned,
             ignoreProps,
             ignoreProto,
-            syncTypeDetected
-        } = handleSupportedSyncTypes({
+            nativeTypeDetected
+        } = handleNativeTypes({
             value,
             parentOrAssigner,
             prop,
@@ -70,7 +74,21 @@ export const handleTag = ({
             saveClone
         }));
 
-        if (!syncTypeDetected) {
+        if (!nativeTypeDetected) {
+            ({
+                cloned,
+                webTypeDetected
+            } = handleSyncWebTypes({
+                value,
+                queue,
+                tag,
+                isExtensibleSealFrozen,
+                propsToIgnore,
+                saveClone
+            }));
+        }
+
+        if (!(nativeTypeDetected || webTypeDetected)) {
             throw getWarning('Attempted to clone unsupported type.');
         }
     } catch (error) {

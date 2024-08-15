@@ -1,3 +1,5 @@
+/* eslint-disable complexity */
+
 import { assign } from './assign.js';
 import {
     checkCloneStore,
@@ -5,11 +7,12 @@ import {
     finalizeClone
 } from './misc.js';
 import { handleCustomizer } from './handle-customizer.js';
-import { getTag } from '../../utils/type-checking.js';
+import { getTag, isObject } from '../../utils/type-checking.js';
 import { handleTag } from './handle-tag.js';
+import { handleCloningMethods } from './handle-cloning-method.js';
 
 /**
- * Iterate through all items in the sync queue.
+ * Iterate through all items in the queue.
  * @template U
  * @param {Object} spec
  * @param {import('../../types.js').QueueItem[]} spec.queue
@@ -69,16 +72,10 @@ export const processQueue = ({
          */
         let cloned;
 
-        /**
-         * Whether the clone for this value has been cached in the clone store.
-         * @type {boolean}
-         */
+        /** Whether the clone for this value has been cached in the store. */
         let cloneIsCached = false;
 
-        /**
-         * Whether the current value should be ignored entirely.
-         * @type {boolean}
-         */
+        /** Whether the current value should be ignored entirely. */
         let ignoreThisLoop = false;
 
         /**
@@ -93,10 +90,13 @@ export const processQueue = ({
          */
         let ignoreProto = false;
 
-        /**
-         * Is true if the customizer determines the value of `cloned`.
-         * @type {boolean}
-         */
+        /** Whether the provided value is a non-object. */
+        const isPrimitive = !isObject(value);
+
+        /** Is true if the provided value has a valid cloning method. */
+        let useCloningMethod = false;
+
+        /** Is true if the customizer determines the value of `cloned`. */
         let useCustomizerClone = false;
 
         /**
@@ -105,16 +105,10 @@ export const processQueue = ({
          */
         const propsToIgnore = [];
 
-        /**
-         * Whether the cloning methods should be observed this loop.
-         * @type {boolean}
-         */
+        /** Whether the cloning methods should be observed this loop. */
         let ignoreCloningMethodsThisLoop = false;
 
-        /**
-         * Identifies the type of the value.
-         * @type {string}
-         */
+        /** Identifies the type of the value. */
         const tag = getTag(value, prioritizePerformance);
 
         cloneIsCached = checkCloneStore(value, cloneStore, saveClone);
@@ -136,10 +130,31 @@ export const processQueue = ({
             }));
         }
 
+        if (!useCustomizerClone && isPrimitive) {
+            saveClone(value);
+        }
+
         ignoreCloningMethodsThisLoop = checkParentObjectRegistry(
             value, parentObjectRegistry);
+        if (!(ignoreCloningMethods || ignoreCloningMethodsThisLoop)
+            && !isPrimitive) {
+            ({
+                cloned,
+                ignoreProps,
+                ignoreProto,
+                useCloningMethod
+            } = handleCloningMethods({
+                value,
+                ignoreCloningMethods,
+                ignoreCloningMethodsThisLoop,
+                propsToIgnore,
+                log,
+                saveClone
+            }));
+        }
 
-        if (!(useCustomizerClone || cloneIsCached || ignoreThisLoop)) {
+        if (!(cloneIsCached || useCustomizerClone || useCloningMethod
+              || ignoreThisLoop) && !isPrimitive) {
             ({
                 cloned,
                 ignoreProps,

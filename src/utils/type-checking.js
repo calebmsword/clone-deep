@@ -398,3 +398,12 @@ export const isTypedArray = (value, prioritizePerformance, tag) => {
         return false;
     }
 };
+
+/**
+ * Returns true if the provided value is an object, false otherwise.
+ * @param {any} value
+ * @returns {boolean}
+ */
+export const isObject = (value) => {
+    return value !== null && ['object', 'function'].includes(typeof value);
+};

@@ -113,8 +113,13 @@ export const cloneDeepInternal = ({
                 });
 
                 if (asyncClones.length > 0) {
-                    // const clones = await Promise.allSettled(asyncClones);
-                    // clones.forEach(assignResolvedToParent);
+                    const clones = await Promise.allSettled(asyncClones);
+                    clones.forEach((clone) => {
+                        console.log(clone);
+                        // if rejected, log the error
+
+                        // if
+                    });
 
                     asyncClones.length = 0;
 
