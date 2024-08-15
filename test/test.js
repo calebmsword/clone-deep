@@ -45,20 +45,23 @@ try {
     console.warn = () => {};
 
     describe('index.js', () => {
-        test('exports cloneDeep as a default export. Also exports CLONE ' +
-             'symbol, cloneDeepFully, and useCustomizers as named exports', 
-             async () => {
+        test('exports cloneDeep as a default export. Also exports CLONE, ' +
+             'cloneDeepFully and useCustomizers as named exports', async () => {
             const module = await import('../index.js');
             const array = [];
-            const getPusher = n => () => array.push(n);
+            const getPusher = (n) => {
+                return () => {
+                    array.push(n);
+                };
+            };
 
             const clone = module['default']({ a: 'a' });
-            const fullClone = module['cloneDeepFully']({ a: 'a' });
-            module['useCustomizers']([
-                getPusher(1), 
+            const fullClone = module.cloneDeepFully({ a: 'a' });
+            module.useCustomizers([
+                getPusher(1),
                 getPusher(2)
             ])();
-            const symbol = module['CLONE'];
+            const symbol = module.CLONE;
 
             assert.strictEqual(4, Object.keys(module).length);
             assert.deepEqual(clone, { a: 'a' });

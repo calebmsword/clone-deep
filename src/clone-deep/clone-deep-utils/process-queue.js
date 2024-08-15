@@ -25,6 +25,7 @@ import { handleCloningMethods } from './handle-cloning-method.js';
  * @param {boolean} spec.ignoreCloningMethods
  * @param {boolean} spec.doThrow
  * @param {Set<any>|undefined} spec.parentObjectRegistry
+ * @param {import('../../types').AsyncResultItem[]} spec.pendingResults
  * @param {[any, any][]} spec.isExtensibleSealFrozen
  */
 export const processQueue = ({
@@ -38,7 +39,8 @@ export const processQueue = ({
     ignoreCloningMethods,
     doThrow,
     parentObjectRegistry,
-    isExtensibleSealFrozen
+    isExtensibleSealFrozen,
+    pendingResults
 }) => {
 
     for (let item = queue.shift(); item !== undefined; item = queue.shift()) {
@@ -134,10 +136,12 @@ export const processQueue = ({
             saveClone(value);
         }
 
+        const ignore = cloneIsCached || ignoreThisLoop || useCustomizerClone
+            || isPrimitive;
+
         ignoreCloningMethodsThisLoop = checkParentObjectRegistry(
             value, parentObjectRegistry);
-        if (!(ignoreCloningMethods || ignoreCloningMethodsThisLoop)
-            && !isPrimitive) {
+        if (!ignore && !ignoreCloningMethods && !ignoreCloningMethodsThisLoop) {
             ({
                 cloned,
                 ignoreProps,
@@ -153,8 +157,7 @@ export const processQueue = ({
             }));
         }
 
-        if (!(cloneIsCached || useCustomizerClone || useCloningMethod
-              || ignoreThisLoop) && !isPrimitive) {
+        if (!ignore && !useCloningMethod) {
             ({
                 cloned,
                 ignoreProps,

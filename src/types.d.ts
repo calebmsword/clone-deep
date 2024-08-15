@@ -24,6 +24,16 @@ export interface QueueItem {
     metadata?: PropertyDescriptor
 }
 
-export interface AsyncCloneItem {
-    [key: string|number|symbol]: any;
+export interface AsyncResultItem {
+    value: any,
+    parentOrAssigner?: symbol|Object|Assigner,
+    prop?: string | symbol,
+    metadata?: PropertyDescriptor,
+    promise: Promise<any>,
+    cloneIsCached: boolean,
+    ignoreProto: boolean,
+    ignoreProps: boolean,
+    ignoreThisLoop: boolean,
+    propsToIgnore: (string|symbol)[],
+    cloneStore: Map<any, any>
 }

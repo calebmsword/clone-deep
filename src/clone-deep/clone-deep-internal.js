@@ -2,6 +2,9 @@ import { TOP_LEVEL } from './clone-deep-utils/assign.js';
 import { handleMetadata } from './clone-deep-utils/misc.js';
 import { processQueue } from './clone-deep-utils/process-queue.js';
 import { getSupportedPrototypes } from '../utils/helpers.js';
+import {
+    processPendingResults
+} from './clone-deep-utils/process-pending-results.js';
 
 /**
  * Clones the provided value.
@@ -58,8 +61,8 @@ export const cloneDeepInternal = ({
      */
     const queue = [{ value, parentOrAssigner: TOP_LEVEL }];
 
-    /** @type {import('../types').AsyncCloneItem[]} */
-    const asyncClones = [];
+    /** @type import('../types').AsyncResultItem[]} */
+    const pendingResults = [];
 
     /**
      * We will do a second pass through everything to check Object.isExtensible,
@@ -72,7 +75,7 @@ export const cloneDeepInternal = ({
     /** An array of all prototypes of supported types in this runtime. */
     const supportedPrototypes = getSupportedPrototypes();
 
-    if (!async) {
+    const doProcessQueue = () => {
         processQueue({
             queue,
             container,
@@ -84,52 +87,42 @@ export const cloneDeepInternal = ({
             ignoreCloningMethods,
             doThrow,
             parentObjectRegistry,
-            isExtensibleSealFrozen
+            isExtensibleSealFrozen,
+            pendingResults
         });
+    };
+
+    if (!async) {
+        doProcessQueue();
 
         handleMetadata(isExtensibleSealFrozen);
 
         return container.result;
     }
 
-    return (
-        /**
-         * @returns {Promise<{ result: U }>}
-         */
-        async function iterateData() {
-            try {
-                processQueue({
-                    queue,
+    /** @returns {Promise<void>} */
+    const processData = async () => {
+        try {
+            doProcessQueue();
+
+            if (pendingResults.length > 0) {
+                await processPendingResults({
                     container,
                     log,
-                    customizer,
-                    cloneStore,
-                    prioritizePerformance,
-                    supportedPrototypes,
-                    ignoreCloningMethods,
-                    doThrow,
-                    parentObjectRegistry,
-                    isExtensibleSealFrozen
+                    queue,
+                    pendingResults
                 });
 
-                if (asyncClones.length > 0) {
-                    const clones = await Promise.allSettled(asyncClones);
-                    clones.forEach((clone) => {
-                        console.log(clone);
-                        // if rejected, log the error
-
-                        // if
-                    });
-
-                    asyncClones.length = 0;
-
-                    return iterateData();
-                }
-
-                handleMetadata(isExtensibleSealFrozen);
-                return container;
-            } catch (reason) {
-                return Promise.reject(reason);
+                return processData();
             }
-        }());
+
+            handleMetadata(isExtensibleSealFrozen);
+        } catch (reason) {
+            return Promise.reject(reason);
+        }
+    };
+
+    return processData().then(() => {
+        return container;
+    });
 };
