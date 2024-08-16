@@ -37,11 +37,6 @@ export const getWarning = (message, cause, stack) => {
 export const Warning = {
     WEAKMAP: getWarning('Attempted to clone unsupported type WeakMap.'),
     WEAKSET: getWarning('Attempted to clone unsupported type WeakSet.'),
-    FUNCTION_DOT_PROTOTYPE: getWarning(
-        'Attempted to clone Function.prototype. strict mode does not allow ' +
-        'the caller, callee or arguments properties to be accessed so those ' +
-        'properties will not be cloned. Also, native methods cannot be ' +
-        'cloned so all methods in Function.prototype will copied directly.'),
     IMPROPER_ADDITIONAL_VALUES: getWarning(
         'The additionalValue property must be an array of objects. The ' +
         'objects must have a `value` property and an `assigner` property ' +
@@ -49,5 +44,19 @@ export const Warning = {
     PROMISE: getWarning(
         'Attempted to clone a Promise. The cloned promise will settle when ' +
         'original Promise settles. It will fulfill or reject with the same ' +
-        'value as the original Promise.')
+        'value as the original Promise.'),
+    CUSTOMIZER_ASYNC_IN_SYNC_MODE: getWarning(
+        'Customizer attempted to asynchronously get the clone for an object, ' +
+        'but cloneDeep was not run in async mode.'),
+    ADDITIONAL_VALUES_ASYNC_IN_SYNC_MODE: getWarning(
+        'Customizer attempted to add additional values asynchronously, but ' +
+        'cloneDeep was not run in async mode.'),
+    CLONING_METHOD_ASYNC_IN_SYNC_MODE: getWarning(
+        'Cloning method attempted to asynchronously get the clone for an ' +
+        'object, but cloneDeep was not run in async mode.'),
+    CLONING_METHOD_IMPROPER_PROPS_TO_IGNORE: getWarning(
+        'return value of CLONE method is an object whose propsToIgnore ' +
+        'property, if not undefined, is expected to be an array of strings ' +
+        'or symbols. The given result is not this type of array so it will ' +
+        'have no effect.')
 };

@@ -1,6 +1,7 @@
 import cloneDeep from '../clone-deep/clone-deep.js';
 import { cloneDeepInternal } from '../clone-deep/clone-deep-internal.js';
 import { hasMethods } from '../utils/metadata.js';
+import { isObject } from '../utils/type-checking.js';
 
 
 /** @typedef {import('../types').Customizer} Customizer */
@@ -11,7 +12,7 @@ import { hasMethods } from '../utils/metadata.js';
  * Handles internal logic for the full deep clone.
  * @template [T=any]
  * The type of the input value.
- * @template [U=T]
+ * @template [U = T | Promise<{ clone: T }>]
  * The return type of the clone.
  *
  * @param {Object} spec
@@ -23,7 +24,7 @@ import { hasMethods } from '../utils/metadata.js';
  * @param {boolean} spec.ignoreCloningMethods
  * @param {boolean} spec.letCustomizerThrow
  * @param {boolean} spec.force
- * @returns {U}
+ * @returns {U | Promise<{ clone: U }>}
  */
 export const cloneDeepFullyInternal = ({
     value,
@@ -35,7 +36,7 @@ export const cloneDeepFullyInternal = ({
     letCustomizerThrow,
     force
 }) => {
-    /** @type {U} */
+    /** @type {U | Promise<{ clone: U }>} */
     const clone = cloneDeep(value, {
         customizer,
         log,
@@ -55,7 +56,7 @@ export const cloneDeepFullyInternal = ({
         ? new Set()
         : undefined;
 
-    while (tempOrig !== null && ['object', 'function'].includes(typeof tempOrig)
+    while (isObject(tempOrig)
            && Object.getPrototypeOf(tempOrig) !== null
            && (!hasMethods(Object.getPrototypeOf(tempOrig)) || force)) {
 

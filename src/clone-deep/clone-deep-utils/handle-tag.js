@@ -1,5 +1,6 @@
 import { handleError } from './misc.js';
-import { handleSupportedSyncTypes } from './handle-supported-sync-types.js';
+import { handleNativeTypes } from './handle-native-types.js';
+import { handleSyncWebTypes } from './handle-sync-web-types.js';
 import { getWarning } from '../../utils/clone-deep-warning.js';
 
 /** @typedef {import('../../utils/types').Assigner} Assigner */
@@ -12,13 +13,15 @@ import { getWarning } from '../../utils/clone-deep-warning.js';
  * @param {string} spec.tag
  * @param {boolean} spec.prioritizePerformance
  * @param {import('../../types').Log} spec.log
- * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
+ * @param {import('../../types').QueueItem[]} spec.queue
  * @param {[any, any][]} spec.isExtensibleSealFrozen
  * @param {any[]} spec.supportedPrototypes
  * @param {boolean} spec.ignoreCloningMethods
  * @param {boolean} spec.ignoreCloningMethodsThisLoop
  * @param {(string|symbol)[]} spec.propsToIgnore
  * @param {(clone: any) => any} spec.saveClone
+ * @param {import('../../types').AsyncResultItem[]} [spec.pendingResults]
+ * @param {boolean} [spec.async]
  * @returns {{
  *     cloned: any,
  *     ignoreProps: boolean|undefined,
@@ -32,7 +35,7 @@ export const handleTag = ({
     tag,
     prioritizePerformance,
     log,
-    syncQueue,
+    queue,
     isExtensibleSealFrozen,
     supportedPrototypes,
     ignoreCloningMethods,
@@ -47,20 +50,23 @@ export const handleTag = ({
 
     try {
         /** @type {boolean|undefined} */
-        let syncTypeDetected;
+        let nativeTypeDetected;
+
+        /** @type {boolean|undefined} */
+        let webTypeDetected;
 
         ({
             cloned,
             ignoreProps,
             ignoreProto,
-            syncTypeDetected
-        } = handleSupportedSyncTypes({
+            nativeTypeDetected
+        } = handleNativeTypes({
             value,
             parentOrAssigner,
             prop,
             tag,
             prioritizePerformance,
-            syncQueue,
+            queue,
             isExtensibleSealFrozen,
             supportedPrototypes,
             ignoreCloningMethods,
@@ -70,7 +76,21 @@ export const handleTag = ({
             saveClone
         }));
 
-        if (!syncTypeDetected) {
+        if (!nativeTypeDetected) {
+            ({
+                cloned,
+                webTypeDetected
+            } = handleSyncWebTypes({
+                value,
+                queue,
+                tag,
+                isExtensibleSealFrozen,
+                propsToIgnore,
+                saveClone
+            }));
+        }
+
+        if (!(nativeTypeDetected || webTypeDetected)) {
             throw getWarning('Attempted to clone unsupported type.');
         }
     } catch (error) {

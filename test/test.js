@@ -44,6 +44,33 @@ try {
     // There are so many warnings logged that it slows the test down
     console.warn = () => {};
 
+    describe('index.js', () => {
+        test('exports cloneDeep as a default export. Also exports CLONE, ' +
+             'cloneDeepFully and useCustomizers as named exports', async () => {
+            const module = await import('../index.js');
+            const array = [];
+            const getPusher = (n) => {
+                return () => {
+                    array.push(n);
+                };
+            };
+
+            const clone = module['default']({ a: 'a' });
+            const fullClone = module.cloneDeepFully({ a: 'a' });
+            module.useCustomizers([
+                getPusher(1),
+                getPusher(2)
+            ])();
+            const symbol = module.CLONE;
+
+            assert.strictEqual(4, Object.keys(module).length);
+            assert.deepEqual(clone, { a: 'a' });
+            assert.deepEqual(fullClone, { a: 'a' });
+            assert.deepEqual(array, [1, 2]);
+            assert.strictEqual('symbol', typeof symbol);
+        });
+    });
+
     describe('cloneDeep without customizer', () => {
 
         const number = 1234566;
@@ -1296,7 +1323,6 @@ try {
 
         test('If customizer returns improperly formatted additionalValues, ' +
              'they are ignored and warnings are logged ', () => {
-            /* eslint-disable id-length */
             // -- arrange
             const log = mock.fn(() => {});
 
@@ -1361,11 +1387,9 @@ try {
             assert.notStrictEqual(cloned[0], newValue1);
             assert.notStrictEqual(cloned[1], newValue2);
             assert.notStrictEqual(cloned[2], newValue2);
-            /* eslint-enable id-length */
         });
 
         test('Customizer can cause value to be ignored', () => {
-            /* eslint-disable id-length */
             // -- arrange
             const a = 'a';
             const b = 'b';
@@ -1381,11 +1405,9 @@ try {
             assert.strictEqual(cloned.a, a);
             assert.notStrictEqual(cloned.b, b);
             assert.strictEqual(cloned.b, undefined);
-            /* eslint-enable id-length */
         });
 
         test('Customizer can cause properties to be ignored', () => {
-            /* eslint-disable id-length */
             // -- arrange
             const nested = { a: 'a', b: 'b' };
             const original = { nested };
@@ -1404,11 +1426,9 @@ try {
             assert.strictEqual(Object.hasOwn(cloned, 'nested'), true);
             assert.strictEqual(cloned.nested.a, undefined);
             assert.strictEqual(cloned.nested.b, undefined);
-            /* eslint-enable id-length */
         });
 
         test('Warning logged, cloneDeep continues if customizer throws', () => {
-            /* eslint-disable id-length */
             // -- arrange
             const log = mock.fn(() => {});
             const a = 'a';
@@ -1428,7 +1448,6 @@ try {
             assert.strictEqual(calls.length, 2);
             assert.strictEqual(calls[0].arguments[0] instanceof Error, true);
             assert.strictEqual(cloned.a, a);
-            /* eslint-enable id-length */
         });
 
         test('Customizer can cause cloneDeep to throw an error', () => {
@@ -1692,7 +1711,6 @@ try {
         });
 
         test('useCustomizers can combine functionality', () => {
-            /* eslint-disable id-length */
             // -- arrange
             const a = 'a';
             const b = 'b';
@@ -1721,7 +1739,6 @@ try {
 
             // -- assert
             assert.deepEqual(cloned, { a: 'z', b: 'y' });
-            /* eslint-enable id-length */
         });
 
         test('useCustomizers calls each of its functions in order', () => {
@@ -1795,7 +1812,6 @@ try {
 
         test('cloning methods can cause the algorithm to not recurse on ' +
              'specific properties on the clone', () => {
-            /* eslint-disable id-length */
             // -- arrange
             class Test {
                 a = 'a';
@@ -1817,12 +1833,10 @@ try {
 
             // -- assert
             assert.deepEqual(cloned, { a: 'a' });
-            /* eslint-enable id-length */
         });
 
         test('cloning methods can be fully responsible for cloning all ' +
              'properties of the resultant clone', () => {
-            /* eslint-disable id-length */
             // -- arrange
             class Test {
                 a = 'a';
@@ -1842,7 +1856,6 @@ try {
 
             // -- assert
             assert.deepEqual(cloned, {});
-            /* eslint-enable id-length */
         });
 
         test('cloning methods can be fully responsible for the prototype of ' +
@@ -1914,7 +1927,6 @@ try {
              'methods, then any prototype containing a cloning method used ' +
              'for an instance cloned previously in the chain will not be ' +
              'cloned using its cloning method', () => {
-            /* eslint-disable id-length */
             // -- arrange
             class Test {
                 [CLONE]() {
@@ -1941,13 +1953,11 @@ try {
             assert.strictEqual('test', cloned2.test);
             assert.strictEqual(getProto(cloned2).a, 'a');
             assert.strictEqual(getProto(cloned2).test, undefined);
-            /* eslint-enable id-length */
         });
 
         test('If using cloneDeepFully in force mode and observing cloning ' +
              'methods, objects NOT instantiated as a class will have their ' +
              'prototype use its cloning method', () => {
-            /* eslint-disable id-length */
             // -- arrange
             const c = {
                 [CLONE]() {
@@ -1971,7 +1981,321 @@ try {
             assert.strictEqual('test', cloned.test);
             assert.strictEqual(getProto(cloned).test, 'test');
             assert.strictEqual(getProto(getProto(cloned)).test, 'test');
-            /* eslint-enable id-length */
+        });
+
+        test('if in "let customizers throw" mode, errors in cloning methods ' +
+             'will be thrown', () => {
+            // --act/assert
+            assert.throws(() => {
+                cloneDeep({
+                    [CLONE]() {
+                        throw new Error('fail');
+                    }
+                }, { letCustomizerThrow: true });
+            });
+        });
+
+        test('if not in "let customizers throw" mode, errors in cloning ' +
+             'methods will be logged', () => {
+            // -- arrange
+            const log = mock.fn(() => {});
+
+            // --act
+            cloneDeep({
+                [CLONE]() {
+                    throw new Error('fail');
+                }
+            }, { log });
+
+            // -- assert
+            // it complains a second time when it tries to clone cloning method
+            assert.strictEqual(2, log.mock.calls.length);
+        });
+    });
+
+    describe('async mode', () => {
+        test('Supported types are cloned into the correct type', async () => {
+            const getNew = (TypedArray) => {
+                return new TypedArray(new ArrayBuffer());
+            };
+
+            const type = {
+                // "standard" classes
+                args: [
+                    {
+                        callee: mock.fn(),
+                        length: 0,
+                        [Symbol.iterator]() {
+                            let index = 0;
+                            return {
+                                next: () => {
+                                    return this[index++];
+                                },
+                                done: () => {
+                                    return index >= this.length;
+                                }
+                            };
+                        },
+                        [Symbol.toStringTag]: 'Arguments'
+                    },
+                    Tag.ARGUMENTS
+                ],
+                array: [[], Tag.ARRAY],
+                bigint: [new Object(BigInt(0)), Tag.BIGINT],
+                // eslint-disable-next-line no-new-wrappers
+                boolean: [new Boolean(), Tag.BOOLEAN],
+                date: [new Date(), Tag.DATE],
+                error: [new Error(), Tag.ERROR],
+                map: [new Map(), Tag.MAP],
+                // eslint-disable-next-line no-new-wrappers
+                number: [new Number(), Tag.NUMBER],
+                object: [new Object(), Tag.OBJECT],
+                promise: [
+                    new Promise((resolve) => {
+                        resolve();
+                    }),
+                    Tag.PROMISE
+                ],
+                regexp: [/i/, Tag.REGEXP],
+                set: [new Set(), Tag.SET],
+                // eslint-disable-next-line no-new-wrappers
+                string: [new String(), Tag.STRING],
+                symbol: [new Object(Symbol('symbol')), Tag.SYMBOL],
+
+                // ArrayBuffer, DataView and TypedArrays
+                arraybuffer: [new ArrayBuffer(), Tag.ARRAYBUFFER],
+                dataview: [getNew(DataView), Tag.DATAVIEW],
+                float32: [getNew(Float32Array), Tag.FLOAT32],
+                float64: [getNew(Float64Array), Tag.FLOAT64],
+                int8: [getNew(Int8Array), Tag.INT8],
+                int16: [getNew(Int16Array), Tag.INT16],
+                int32: [getNew(Int32Array), Tag.INT32],
+                uint8: [getNew(Uint8Array), Tag.UINT8],
+                uint8Clamped: [getNew(Uint8ClampedArray), Tag.UINT8CLAMPED],
+                uint16: [getNew(Uint16Array), Tag.UINT16],
+                uint32: [getNew(Uint32Array), Tag.UINT32],
+                bigint64: [getNew(BigInt64Array), Tag.BIGINT64],
+                biguint64: [getNew(BigUint64Array), Tag.BIGUINT64],
+
+                // Web APIs
+                blob: [new Blob(), Tag.BLOB],
+                domexception: [new DOMException(), Tag.DOMEXCEPTION],
+                dommatrix: [new DOMMatrix(), Tag.DOMMATRIX],
+                dommatrixro: [new DOMMatrixReadOnly(), Tag.DOMMATRIXREADONLY],
+                dompoint: [new DOMPoint(), Tag.DOMPOINT],
+                dompointreadonly: [new DOMPointReadOnly(), Tag.DOMPOINTREADONLY],
+                domquad: [new DOMQuad(), Tag.DOMQUAD],
+                domrect: [new DOMRect(), Tag.DOMRECT],
+                domrectreadonly: [new DOMRectReadOnly(), Tag.DOMRECTREADONLY],
+                file: [new File([], ''), Tag.FILE],
+                filelist: [createFileList([]), Tag.FILELIST]
+            };
+
+            const promises = [];
+
+            for (const key of Object.keys(type)) {
+                const [value] = type[key];
+                promises.push(cloneDeep(value, { async: true }));
+            }
+
+            const settled = await Promise.all(promises);
+
+            settled.forEach(({ clone }, i) => {
+                const [, tag] = Object.values(type)[i];
+
+                assert.strictEqual(typeof clone, 'object');
+                assert.strictEqual(tagOf(clone), tag);
+            });
+        });
+
+        test('customizers can cause async results', async () => {
+            // -- arrange/act
+            const { clone } = await cloneDeep({
+                sync: 'sync',
+                async: 'not async'
+            }, {
+                customizer(value) {
+                    if (value === 'not async') {
+                        return {
+                            clone: Promise.resolve('async'),
+                            async: true
+                        };
+                    }
+                },
+                async: true
+            });
+
+            // -- assert
+            assert.deepEqual(clone, {
+                sync: 'sync',
+                async: 'async'
+            });
+        });
+
+        test('If the customizer returns an async clone that rejects, then ' +
+             'a warning is logged and the value is cloned into an empty ' +
+             'object', async () => {
+            // -- arrange
+            const log = mock.fn(() => {});
+            const map = new Date();
+            map.primProp = 'prop';
+            map.objProp = {};
+
+            // -- arrange/act
+            const { clone } = await cloneDeep(map, {
+                customizer(value) {
+                    if (typeof value !== 'object') {
+                        return;
+                    }
+                    return {
+                        clone: Promise.reject(new Error('reason')),
+                        async: true
+                    };
+                },
+                log,
+                async: true
+            });
+
+            // -- assert
+            assert.deepEqual(clone, { primProp: 'prop', objProp: {}});
+            assert.strictEqual(Tag.OBJECT, tagOf(clone));
+
+            // once for top-level object, a second time for objProp
+            assert.strictEqual(2, log.mock.calls.length);
+        });
+
+        test('uncaught errors result in rejected promise', async () => {
+            try {
+                // -- act/assert
+                await cloneDeep({}, {
+                    customizer() {
+                        throw new Error('fail');
+                    },
+                    letCustomizerThrow: true,
+                    async: true
+                });
+            } catch (error) {
+                // -- assert
+                assert.strictEqual(true, error instanceof Error);
+            }
+        });
+
+        test('customizer throws if async result returned from customizer ' +
+             'when cloneDeep is in sync mode', async () => {
+            // -- arrange
+            const log = mock.fn(() => {});
+
+            // -- act
+            await cloneDeep({}, {
+                customizer() {
+                    return {
+                        async: true
+                    };
+                },
+                async: false,
+                log
+            });
+
+            // -- assert
+            assert.strictEqual(1, log.mock.calls.length);
+        });
+
+        test('customizer additionalValues can add async data', async () => {
+            // -- arrange/act
+            const { clone } = await cloneDeep({}, {
+                async: true,
+                customizer(value) {
+                    if (typeof value !== 'object') {
+                        return;
+                    }
+
+                    const _clone = {};
+
+                    return {
+                        clone: _clone,
+                        additionalValues: [{
+                            async: true,
+                            value: 'beans',
+                            assigner: (cloned) => {
+                                _clone.beans = cloned;
+                            }
+                        }]
+                    };
+                }
+            });
+
+            // -- assert
+            assert.deepEqual(clone, { beans: 'beans' });
+        });
+
+        test('customizer additionalValues causes customizer to throw ' +
+             'if additionalValues adds async data in sync mode', async () => {
+            // -- arrange
+            const log = mock.fn(() => {});
+
+            // -- act
+            await cloneDeep({}, {
+                log,
+                customizer(value) {
+                    if (typeof value !== 'object') {
+                        return;
+                    }
+
+                    const _clone = {};
+
+                    return {
+                        clone: _clone,
+                        additionalValues: [{
+                            async: true,
+                            value: 'beans',
+                            assigner: (cloned) => {
+                                _clone.beans = cloned;
+                            }
+                        }]
+                    };
+                }
+            });
+
+            // -- assert
+            assert.strictEqual(1, log.mock.calls.length);
+        });
+
+        test('cloning methods can cause async results', async () => {
+            // -- arrange
+            const obj = {
+                [CLONE]() {
+                    return {
+                        async: true,
+                        clone: 'hijacked'
+                    };
+                }
+            };
+
+            // -- act
+            const { clone } = await cloneDeep(obj, { async: true });
+
+            // -- assert
+            assert.deepEqual(clone, 'hijacked');
+        });
+
+        test('cloning method complains when it returns async data while ' +
+             'cloneDeep is in sync mode', () => {
+            // -- arrange
+            const log = mock.fn(() => {});
+            const obj = {
+                [CLONE]() {
+                    return {
+                        async: true,
+                        clone: 'hijacked'
+                    };
+                }
+            };
+            // -- act
+            cloneDeep(obj, { log });
+
+            // -- assert
+            // it complains a second time when trying to clone cloning method
+            assert.strictEqual(2, log.mock.calls.length);
         });
     });
 

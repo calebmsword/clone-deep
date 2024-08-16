@@ -1,5 +1,5 @@
 /** Used to create methods for cloning objects.*/
-export const CLONE = Symbol('Clone');
+export const CLONE = Symbol('CLONE');
 
 /**
  * Contains the tag for various types.

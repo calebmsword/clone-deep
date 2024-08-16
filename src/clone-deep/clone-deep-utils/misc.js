@@ -4,6 +4,7 @@ import {
     getPrototype,
     hasAccessor
 } from '../../utils/metadata.js';
+import { isObject } from '../../utils/type-checking.js';
 
 /**
  * Checks the clone store to see if we the given value was already cloned.
@@ -104,6 +105,47 @@ export const handleError = (error, log, saveClone) => {
 };
 
 /**
+ * Error handler used for customizers or cloning methods.
+ * This method always returns the value `false`, in case you would like to flag
+ * that an error was thrown.
+ * @param {Object} spec
+ * @param {import('../../types').Log} spec.log
+ * @param {unknown} spec.error
+ * @param {boolean} [spec.doThrow]
+ * @param {string} spec.name
+ * @returns {boolean}
+ */
+export const handleCustomError = ({
+    log,
+    error,
+    doThrow,
+    name
+}) => {
+    if (doThrow === true) {
+        throw error;
+    }
+
+    const msg = `${name} encountered error. Its results will be ignored for ` +
+                'the current value and the algorithm will proceed with ' +
+                'default behavior. ';
+
+    if (error instanceof Error) {
+        error.message = `${msg}Error encountered: ${error.message}`;
+
+        const cause = error.cause
+            ? { cause: error.cause }
+            : undefined;
+
+        const stack = error.stack ? error.stack : undefined;
+        log(getWarning(error.message, cause, stack));
+    } else {
+        log(getWarning(msg, { cause: error }));
+    }
+
+    return false;
+};
+
+/**
  * Ensure that the cloned object shares a prototype with the original.
  * @param {any} cloned
  * The cloned object.
@@ -127,14 +169,14 @@ export const ensurePrototypesMatch = (cloned, value) => {
  * The clone that will inherit clones of `value`'s properties.
  * @param {(string|symbol)[]} spec.propsToIgnore
  * A list of properties of `value` to skip.
- * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
+ * @param {import('../../types').QueueItem[]} spec.queue
  * The queue representing future values to clone synchronously.
  */
 export const addOwnPropertiesToQueue = ({
     value,
     clone,
     propsToIgnore,
-    syncQueue
+    queue
 }) => {
 
     forAllOwnProperties(value, (key) => {
@@ -144,7 +186,7 @@ export const addOwnPropertiesToQueue = ({
 
         const meta = Object.getOwnPropertyDescriptor(value, key);
 
-        syncQueue.push({
+        queue.push({
             value: !hasAccessor(meta) ? value[key] : undefined,
             parentOrAssigner: clone,
             prop: key,
@@ -166,8 +208,11 @@ export const addOwnPropertiesToQueue = ({
  * @param {boolean|undefined} spec.ignoreProps
  * @param {boolean} spec.ignoreThisLoop
  * @param {(string|symbol)[]} spec.propsToIgnore
+ * @param {boolean} spec.useCustomizerClone
+ * @param {boolean} spec.useCloningMethod
  * @param {Map<any, any>} spec.cloneStore
- * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
+ * @param {import('../../types').QueueItem[]} spec.queue
+ * @param {boolean} [spec.asyncResult]
  */
 export const finalizeClone = ({
     value,
@@ -178,12 +223,10 @@ export const finalizeClone = ({
     ignoreThisLoop,
     propsToIgnore,
     cloneStore,
-    syncQueue
+    queue,
+    asyncResult
 }) => {
-
-    if (cloned !== null && typeof cloned === 'object'
-        && !cloneIsCached
-        && !ignoreThisLoop) {
+    if (isObject(cloned) && !cloneIsCached && !ignoreThisLoop && !asyncResult) {
         cloneStore.set(value, cloned);
 
         if (!ignoreProto) {
@@ -195,7 +238,7 @@ export const finalizeClone = ({
                 value,
                 clone: cloned,
                 propsToIgnore,
-                syncQueue
+                queue
             });
         }
     }

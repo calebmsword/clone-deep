@@ -97,7 +97,7 @@ export const polyfill = () => {
                     const [m11, m12, m13, m14, m21, m22, m23, m24, m31, m32,
                         m33, m34, m41, m42, m43, m44] = array;
 
-                    this.#is2D = true;
+                    this.#is2D = false;
 
                     this.#m11 = m11;
                     this.m12 = m12;
@@ -117,14 +117,13 @@ export const polyfill = () => {
                     this.m44 = m44;
                 }
 
-                /* eslint-disable id-length */
                 this.a = this.#m11;
                 this.b = this.m12;
                 this.c = this.m21;
                 this.d = this.m22;
                 this.e = this.m41;
                 this.f = this.m42;
-                /* eslint-enable id-length */
+
             }
 
             scale() {

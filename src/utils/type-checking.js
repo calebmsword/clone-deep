@@ -1,5 +1,5 @@
 import { Tag, WebApi } from './constants.js';
-import { getWebApiFromString } from './helpers.js';
+import { getConstructorFromString } from './helpers.js';
 import { getDescriptors, getPrototype } from './metadata.js';
 
 const { toString } = Object.prototype;
@@ -47,7 +47,7 @@ export const isReadOnly = (value, property) => {
  * @returns {boolean}
  */
 export const isCallable = (value) => {
-    return value !== Function.prototype && typeof value === 'function';
+    return typeof value === 'function';
 };
 
 /**
@@ -72,7 +72,7 @@ export const getGeometryCheckers = (webApiString, methodOrProp, property) => {
      * @returns {boolean}
      */
     const isSubclass = (value) => {
-        const PotentialWebApi = getWebApiFromString(webApiString);
+        const PotentialWebApi = getConstructorFromString(webApiString);
         if (!isCallable(PotentialWebApi)) {
             return false;
         }
@@ -177,23 +177,23 @@ export const isFile = (value) => {
  */
 const classesToTypeCheck = [
     // "standard" classes
-    [ArrayBuffer, 'slice', Tag.ARRAYBUFFER],
-    [BigInt, 'valueOf', Tag.BIGINT],
+    ['ArrayBuffer', 'slice', Tag.ARRAYBUFFER],
+    ['BigInt', 'valueOf', Tag.BIGINT],
     [Boolean, 'valueOf', Tag.BOOLEAN],
     [Date, 'getUTCMilliseconds', Tag.DATE],
     [Function, 'bind', Tag.FUNCTION],
     [Map, 'has', Tag.MAP],
     [Number, 'valueOf', Tag.NUMBER],
-    [Promise, 'then', Tag.PROMISE],
+    ['Promise', 'then', Tag.PROMISE],
     [RegExp, 'exec', Tag.REGEXP],
-    [Set, 'has', Tag.SET],
+    ['Set', 'has', Tag.SET],
     [String, 'valueOf', Tag.STRING],
-    [Symbol, 'valueOf', Tag.SYMBOL],
-    [WeakMap, 'has', Tag.WEAKMAP],
-    [WeakSet, 'has', Tag.WEAKSET],
+    ['Symbol', 'valueOf', Tag.SYMBOL],
+    ['WeakMap', 'has', Tag.WEAKMAP],
+    ['WeakSet', 'has', Tag.WEAKSET],
 
     // ArrayBuffer, DataView and TypedArrays
-    [DataView, 'getInt8', Tag.DATAVIEW],
+    ['DataView', 'getInt8', Tag.DATAVIEW],
 
     // Web APIs
     ['Blob', 'clone', Tag.BLOB],
@@ -316,7 +316,7 @@ export const getTag = (value, prioritizePerformance) => {
 
     classesToTypeCheck.some(([constructor, method, tag, ...args]) => {
         if (typeof constructor === 'string') {
-            constructor = getWebApiFromString(constructor);
+            constructor = getConstructorFromString(constructor);
         }
 
         if (constructor === undefined || !(value instanceof constructor)) {
@@ -397,4 +397,13 @@ export const isTypedArray = (value, prioritizePerformance, tag) => {
     } catch {
         return false;
     }
+};
+
+/**
+ * Returns true if the provided value is an object, false otherwise.
+ * @param {any} value
+ * @returns {boolean}
+ */
+export const isObject = (value) => {
+    return value !== null && ['object', 'function'].includes(typeof value);
 };

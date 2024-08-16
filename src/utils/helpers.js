@@ -122,7 +122,7 @@ export const cloneFile = (file) => {
  * @param {string} string
  * @returns {new (...args: any[]) => any | undefined}
  */
-export const getWebApiFromString = (string) => {
+export const getConstructorFromString = (string) => {
     /** @type {any} */
     const __global = globalThis;
 
@@ -141,7 +141,7 @@ export const getSupportedPrototypes = () => {
     const webApiPrototypes = [];
 
     Object.keys(WebApi).forEach((webApiString) => {
-        const PotentialWebApi = getWebApiFromString(webApiString);
+        const PotentialWebApi = getConstructorFromString(webApiString);
 
         if (PotentialWebApi !== undefined && isCallable(PotentialWebApi)) {
             webApiPrototypes.push(PotentialWebApi.prototype);

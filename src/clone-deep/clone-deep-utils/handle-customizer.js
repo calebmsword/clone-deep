@@ -1,4 +1,8 @@
-import { getWarning, Warning } from '../../utils/clone-deep-warning.js';
+import { Warning } from '../../utils/clone-deep-warning.js';
+import { isObject } from '../../utils/type-checking.js';
+import { handleCustomError } from './misc.js';
+
+/** @typedef {import('../../utils/types').Assigner} Assigner */
 
 /**
  * Processes the return value from the provided customizer.
@@ -7,21 +11,38 @@ import { getWarning, Warning } from '../../utils/clone-deep-warning.js';
  * necessary. Errors from the customizers are also handled here.
  * @param {Object} spec
  * @param {import('../../types').Log} spec.log
- * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
+ * @param {import('../../types').QueueItem[]} spec.queue
  * @param {import('../../types').Customizer} spec.customizer
  * @param {any} spec.value
+ * @param {symbol|object|Assigner} [spec.parentOrAssigner]
+ * @param {string|symbol} [spec.prop]
+ * @param {PropertyDescriptor} [spec.metadata]
  * @param {(clone: any) => any} spec.saveClone
  * @param {boolean} spec.doThrow
+ * @param {import('../../types').AsyncResultItem[]} [spec.pendingResults]
+ * @param {boolean} [spec.async]
  * @returns {{
  *     cloned: any,
  *     useCustomizerClone: boolean,
  *     ignoreProto: boolean|undefined,
  *     ignoreProps: boolean|undefined,
- *     ignoreThisLoop: boolean
+ *     ignoreThisLoop: boolean,
+ *     async?: boolean
  * }}
  */
-export const handleCustomizer = (
-    { log, syncQueue, customizer, value, saveClone, doThrow }) => {
+export const handleCustomizer = ({
+    log,
+    queue,
+    customizer,
+    value,
+    parentOrAssigner,
+    prop,
+    metadata,
+    saveClone,
+    doThrow,
+    pendingResults,
+    async: asyncMode
+}) => {
 
     /** @type {any} */
     let cloned;
@@ -41,6 +62,9 @@ export const handleCustomizer = (
     /** @type {boolean|undefined} */
     let ignoreThisLoop = false;
 
+    /** @type {boolean|undefined} */
+    let async;
+
     try {
         const customResult = customizer(value);
 
@@ -50,22 +74,52 @@ export const handleCustomizer = (
             ({
                 additionalValues,
                 ignoreProps,
-                ignoreProto
+                ignoreProto,
+                async
             } = customResult);
 
             if (customResult.ignore === true) {
                 ignoreThisLoop = true;
             } else {
-                cloned = saveClone(customResult.clone);
+                if (!asyncMode) {
+                    if (async) {
+                        throw Warning.CUSTOMIZER_ASYNC_IN_SYNC_MODE;
+                    }
+                    cloned = saveClone(customResult.clone);
+                } else {
+                    pendingResults?.push({
+                        value,
+                        parentOrAssigner,
+                        prop,
+                        metadata,
+                        promise: Promise.resolve(customResult.clone),
+                        ignoreProto,
+                        ignoreProps,
+                        propsToIgnore: []
+                    });
+                }
 
                 if (Array.isArray(additionalValues)) {
                     additionalValues.forEach((object) => {
-                        if (typeof object === 'object'
+                        if (object !== undefined && isObject(object)
                             && typeof object.assigner === 'function') {
-                            syncQueue.push({
-                                value: object.value,
-                                parentOrAssigner: object.assigner
-                            });
+                            if (object.async === true) {
+                                if (!asyncMode) {
+                                    throw Warning
+                                        .ADDITIONAL_VALUES_ASYNC_IN_SYNC_MODE;
+                                }
+                                pendingResults?.push({
+                                    value,
+                                    promise: Promise.resolve(object.value),
+                                    parentOrAssigner: object.assigner,
+                                    propsToIgnore: []
+                                });
+                            } else {
+                                queue.push({
+                                    value: object.value,
+                                    parentOrAssigner: object.assigner
+                                });
+                            }
                         } else {
                             throw Warning.IMPROPER_ADDITIONAL_VALUES;
                         }
@@ -76,28 +130,12 @@ export const handleCustomizer = (
             }
         }
     } catch (error) {
-        if (doThrow === true) {
-            throw error;
-        }
-
-        useCustomizerClone = false;
-
-        const msg = 'customizer encountered error. Its results will ' +
-                    'be ignored for the current value and the ' +
-                    'algorithm will proceed with default behavior. ';
-
-        if (error instanceof Error) {
-            error.message = `${msg}Error encountered: ${error.message}`;
-
-            const cause = error.cause
-                ? { cause: error.cause }
-                : undefined;
-
-            const stack = error.stack ? error.stack : undefined;
-            log(getWarning(error.message, cause, stack));
-        } else {
-            log(getWarning(msg, { cause: error }));
-        }
+        useCustomizerClone = handleCustomError({
+            log,
+            error,
+            doThrow,
+            name: 'Customizer'
+        });
     }
 
     return {
@@ -105,6 +143,7 @@ export const handleCustomizer = (
         useCustomizerClone,
         ignoreProto,
         ignoreProps,
-        ignoreThisLoop
+        ignoreThisLoop,
+        async
     };
 };

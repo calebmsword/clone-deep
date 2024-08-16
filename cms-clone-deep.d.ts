@@ -159,7 +159,7 @@ declare module "cms-clone-deep" {
  * 
  * @template T
  * The type of the input value.
- * @template [U = T]
+ * @template [U = T | Promise<{ clone: T }>]
  * The type of the return value. By default, it is the same as the input value. 
  * Nefarious customizer usage could require the be distinct, however. Please do 
  * not do this.
@@ -196,16 +196,16 @@ declare module "cms-clone-deep" {
  * @returns {U} 
  * The deep copy.
  */
-export default function cloneDeep<T, U = T>(
+export default function cloneDeep<T, U = T | Promise<{ clone: T }>>(
     value: T, 
     optionsOrCustomizer: CloneDeepOptions|Customizer|undefined
-) : U;
+) : U | Promise<{ clone: U }>;
     
 /**
  * Deeply clones the provided object and its prototype chain.
  * @template T
  * The type of the input value.
- * @template [U = T]
+ * @template [U = T | Promise<{ clone: T }>]
  * The type of the return value. By default, it is the same as the input value. 
  * Nefarious customizer usage could require the be distinct, however. Please do 
  * not do this.
@@ -231,13 +231,13 @@ export default function cloneDeep<T, U = T>(
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.letCustomizerThrow 
  * See the documentation for `cloneDeep`.
- * @returns {U} 
+ * @returns {U | Promise<{ clone: T }>} 
  * The deep copy.
  */
-export function cloneDeepFully<T, U = T>(
+export function cloneDeepFully<T, U = T | Promise<{ clone: T }>>(
     value: T,
     optionsOrCustomizer: CloneDeepFullyOptions|Customizer|undefined
-) : U;
+) : U | Promise<{ clone: U }>;
 
 /**
  * Creates a customizer which composes other customizers.

@@ -11,15 +11,27 @@ export interface CloneDeepOptions {
     ignoreCloningMethods?: boolean
     logMode?: string
     letCustomizerThrow?: boolean
+    async?: boolean
 }
 
 export interface CloneDeepFullyOptions extends CloneDeepOptions {
     force?: boolean
 }
 
-export interface SyncQueueItem {
+export interface QueueItem {
     value: any,
     parentOrAssigner?: symbol|Object|Assigner,
     prop?: string | symbol,
     metadata?: PropertyDescriptor
+}
+
+export interface AsyncResultItem {
+    value: any,
+    parentOrAssigner?: symbol|Object|Assigner,
+    prop?: string | symbol,
+    metadata?: PropertyDescriptor,
+    promise: Promise<any>,
+    ignoreProto?: boolean,
+    ignoreProps?: boolean,
+    propsToIgnore: (string|symbol)[]
 }

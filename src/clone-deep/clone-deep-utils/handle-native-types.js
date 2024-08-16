@@ -4,18 +4,12 @@ further. */
 
 import { TOP_LEVEL } from './assign.js';
 import { getWarning, Warning } from '../../utils/clone-deep-warning.js';
-import { CLONE, Tag } from '../../utils/constants.js';
+import { Tag } from '../../utils/constants.js';
 import {
-    cloneFile,
-    createFileList,
     getAtomicErrorConstructor,
     getTypedArrayConstructor
 } from '../../utils/helpers.js';
-import {
-    forAllOwnProperties,
-    getPrototype,
-    hasAccessor
-} from '../../utils/metadata.js';
+import { getPrototype } from '../../utils/metadata.js';
 import { isIterable, isTypedArray } from '../../utils/type-checking.js';
 
 /** @typedef {import('../../utils/types').Assigner} Assigner */
@@ -27,7 +21,7 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
  * @param {string|symbol|undefined} spec.prop
  * @param {string} spec.tag
  * @param {boolean} spec.prioritizePerformance
- * @param {import('../../types').SyncQueueItem[]} spec.syncQueue
+ * @param {import('../../types').QueueItem[]} spec.queue
  * @param {[any, any][]} spec.isExtensibleSealFrozen
  * @param {any[]} spec.supportedPrototypes
  * @param {boolean} spec.ignoreCloningMethods
@@ -39,20 +33,18 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
  *     cloned: any,
  *     ignoreProps: boolean,
  *     ignoreProto: boolean,
- *     syncTypeDetected: boolean
+ *     nativeTypeDetected: boolean
  * }}
  */
-export const handleSupportedSyncTypes = ({
+export const handleNativeTypes = ({
     value,
     parentOrAssigner,
     prop,
     tag,
     prioritizePerformance,
-    syncQueue,
+    queue,
     isExtensibleSealFrozen,
     supportedPrototypes,
-    ignoreCloningMethods,
-    ignoreCloningMethodsThisLoop,
     propsToIgnore,
     log,
     saveClone
@@ -65,53 +57,11 @@ export const handleSupportedSyncTypes = ({
 
     let ignoreProto = false;
 
-    let syncTypeDetected = true;
-
-    // If value is primitive, just assign it directly.
-    if (value === null || !['object', 'function'].includes(typeof value)) {
-        saveClone(value);
+    let nativeTypeDetected = true;
 
     // We won't clone weakmaps or weaksets (or their prototypes).
-    } else if ([Tag.WEAKMAP, Tag.WEAKSET].includes(tag)) {
+    if ([Tag.WEAKMAP, Tag.WEAKSET].includes(tag)) {
         throw tag === Tag.WEAKMAP ? Warning.WEAKMAP : Warning.WEAKSET;
-
-    // If object defines its own means of getting cloned, use it
-    } else if (typeof value[CLONE] === 'function'
-            && ignoreCloningMethods !== true
-            && ignoreCloningMethodsThisLoop === false) {
-
-        /** @type {import('../../utils/types').CloneMethodResult<any>} */
-        const result = value[CLONE]();
-
-        if (result.propsToIgnore !== undefined) {
-            if (Array.isArray(result.propsToIgnore)
-                && result
-                    .propsToIgnore
-                    .every(
-                        /** @param {any} string */
-                        (string) => {
-                            return ['string', 'symbol']
-                                .includes(typeof string);
-                        })) {
-                propsToIgnore.push(...result.propsToIgnore);
-            } else {
-                log(getWarning(
-                    'return value of CLONE method is an object whose ' +
-                'propsToIgnore property, if not undefined, is ' +
-                'expected to be an array of strings or symbols. The ' +
-                'given result is not this type of array so it will ' +
-                'have no effect.'));
-            }
-        }
-        if (typeof result.ignoreProps === 'boolean') {
-            ({ ignoreProps } = result);
-        }
-
-        if (typeof result.ignoreProto === 'boolean') {
-            ({ ignoreProto } = result);
-        }
-
-        cloned = saveClone(result.clone);
 
     // Ordinary objects, or the rare `arguments` clone.
     // Also, treat prototypes like ordinary objects. The tag wrongly
@@ -221,7 +171,7 @@ export const handleSupportedSyncTypes = ({
             ? defaultDescriptor.set
             : undefined;
 
-        syncQueue.push({
+        queue.push({
             value: error.stack,
 
             /** @param {any} clonedValue */
@@ -274,7 +224,7 @@ export const handleSupportedSyncTypes = ({
         cloned = saveClone(cloneMap);
 
         originalMap.forEach((subValue, key) => {
-            syncQueue.push({
+            queue.push({
                 value: subValue,
 
                 /** @param {any} clonedValue */
@@ -295,7 +245,7 @@ export const handleSupportedSyncTypes = ({
         cloned = saveClone(cloneSet);
 
         originalSet.forEach((subValue) => {
-            syncQueue.push({
+            queue.push({
                 value: subValue,
 
                 /** @param {any} clonedValue */
@@ -320,136 +270,14 @@ export const handleSupportedSyncTypes = ({
 
         log(Warning.PROMISE);
 
-    } else if (Tag.BLOB === tag) {
-        /** @type {Blob} */
-        const blob = value;
-
-        cloned = saveClone(blob.slice());
-
-    } else if (Tag.FILE === tag) {
-        /** @type {File} */
-        const file = value;
-
-        cloned = saveClone(cloneFile(file));
-
-    } else if (Tag.FILELIST === tag) {
-        /** @type {FileList} */
-        const fileList = value;
-
-        /** @type {File[]} */
-        const files = [];
-        for (let index = 0; index < fileList.length; index++) {
-            const file = fileList.item(index);
-            if (file !== null) {
-                files.push(cloneFile(file));
-            }
-        }
-
-        cloned = saveClone(createFileList(...files));
-
-    } else if (Tag.DOMEXCEPTION === tag) {
-        /** @type {DOMException} */
-        const exception = value;
-
-        const clonedException = new DOMException(exception.message,
-                                                 exception.name);
-        const descriptor = Object.getOwnPropertyDescriptor(exception, 'stack');
-
-        syncQueue.push({
-            value: exception.stack,
-
-            /** @param {any} clonedValue */
-            parentOrAssigner(clonedValue) {
-                isExtensibleSealFrozen.push([
-                    exception.stack,
-                    clonedValue
-                ]);
-                Object.defineProperty(clonedException, 'stack', {
-                    enumerable: descriptor?.enumerable || false,
-                    get: () => {
-                        return clonedValue;
-                    }
-                });
-            }
-        });
-
-        cloned = saveClone(clonedException);
-
-        propsToIgnore.push('stack');
-
-    } else if (Tag.DOMMATRIX === tag) {
-        /** @type {DOMMatrix} */
-        const matrix = value;
-
-        cloned = saveClone(matrix.scale(1));
-
-    } else if (Tag.DOMMATRIXREADONLY === tag) {
-        /** @type {DOMMatrixReadOnly} */
-        const matrix = value;
-
-        cloned = matrix.is2D
-            ? new DOMMatrixReadOnly([
-                matrix.a, matrix.b, matrix.c, matrix.d,
-                matrix.e, matrix.f])
-            : new DOMMatrixReadOnly([
-                matrix.m11, matrix.m12, matrix.m13, matrix.m14,
-                matrix.m21, matrix.m22, matrix.m23, matrix.m24,
-                matrix.m31, matrix.m32, matrix.m33, matrix.m34,
-                matrix.m41, matrix.m42, matrix.m43, matrix.m44
-            ]);
-        saveClone(cloned);
-
-    } else if ([Tag.DOMPOINT, Tag.DOMPOINTREADONLY].includes(tag)) {
-        /** @type {DOMPoint} */
-        const domPoint = value;
-
-        const Class = tag === Tag.DOMPOINT
-            ? DOMPoint
-            : DOMPointReadOnly;
-
-        cloned = saveClone(Class.fromPoint(domPoint));
-
-    } else if (Tag.DOMQUAD === tag) {
-        /** @type {import('../../utils/types').DOMQuadExtended} */
-        const quad = value;
-
-        /** @type {import('../../utils/types').DOMQuadExtended} */
-        cloned = new DOMQuad(quad.p1, quad.p2, quad.p3, quad.p4);
-
-        ['p1', 'p2', 'p3', 'p4'].forEach((pointProperty) => {
-            /** @type {import('../../utils/types').DOMPointExtended} */
-            const point = quad[pointProperty];
-
-            forAllOwnProperties(point, (key) => {
-                const meta = Object.getOwnPropertyDescriptor(point, key);
-
-                syncQueue.push({
-                    value: !hasAccessor(meta) ? point[key] : null,
-                    parentOrAssigner: cloned[pointProperty],
-                    prop: key,
-                    metadata: meta
-                });
-            });
-        });
-
-        saveClone(cloned);
-
-    } else if ([Tag.DOMRECT, Tag.DOMRECTREADONLY].includes(tag)) {
-        /** @type {DOMRect|DOMRectReadOnly} */
-        const domRect = value;
-
-        const Class = tag === Tag.DOMRECT ? DOMRect : DOMRectReadOnly;
-
-        cloned = saveClone(Class.fromRect(domRect));
-
     } else {
-        syncTypeDetected = false;
+        nativeTypeDetected = false;
     }
 
     return {
         cloned,
         ignoreProps,
         ignoreProto,
-        syncTypeDetected
+        nativeTypeDetected
     };
 };
