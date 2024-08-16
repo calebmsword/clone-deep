@@ -41,9 +41,7 @@ export const handleTag = ({
     ignoreCloningMethods,
     ignoreCloningMethodsThisLoop,
     propsToIgnore,
-    saveClone,
-    pendingResults,
-    async
+    saveClone
 }) => {
 
     let cloned;
