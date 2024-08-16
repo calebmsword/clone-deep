@@ -105,6 +105,47 @@ export const handleError = (error, log, saveClone) => {
 };
 
 /**
+ * Error handler used for customizers or cloning methods.
+ * This method always returns the value `false`, in case you would like to flag
+ * that an error was thrown.
+ * @param {Object} spec
+ * @param {import('../../types').Log} spec.log
+ * @param {unknown} spec.error
+ * @param {boolean} [spec.doThrow]
+ * @param {string} spec.name
+ * @returns {boolean}
+ */
+export const handleCustomError = ({
+    log,
+    error,
+    doThrow,
+    name
+}) => {
+    if (doThrow === true) {
+        throw error;
+    }
+
+    const msg = `${name} encountered error. Its results will be ignored for ` +
+                'the current value and the algorithm will proceed with ' +
+                'default behavior. ';
+
+    if (error instanceof Error) {
+        error.message = `${msg}Error encountered: ${error.message}`;
+
+        const cause = error.cause
+            ? { cause: error.cause }
+            : undefined;
+
+        const stack = error.stack ? error.stack : undefined;
+        log(getWarning(error.message, cause, stack));
+    } else {
+        log(getWarning(msg, { cause: error }));
+    }
+
+    return false;
+};
+
+/**
  * Ensure that the cloned object shares a prototype with the original.
  * @param {any} cloned
  * The cloned object.
@@ -167,8 +208,11 @@ export const addOwnPropertiesToQueue = ({
  * @param {boolean|undefined} spec.ignoreProps
  * @param {boolean} spec.ignoreThisLoop
  * @param {(string|symbol)[]} spec.propsToIgnore
+ * @param {boolean} spec.useCustomizerClone
+ * @param {boolean} spec.useCloningMethod
  * @param {Map<any, any>} spec.cloneStore
  * @param {import('../../types').QueueItem[]} spec.queue
+ * @param {boolean} [spec.asyncResult]
  */
 export const finalizeClone = ({
     value,
@@ -179,9 +223,10 @@ export const finalizeClone = ({
     ignoreThisLoop,
     propsToIgnore,
     cloneStore,
-    queue
+    queue,
+    asyncResult
 }) => {
-    if (isObject(cloned) && !cloneIsCached && !ignoreThisLoop) {
+    if (isObject(cloned) && !cloneIsCached && !ignoreThisLoop && !asyncResult) {
         cloneStore.set(value, cloned);
 
         if (!ignoreProto) {

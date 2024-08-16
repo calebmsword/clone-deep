@@ -151,7 +151,6 @@ export default [{
         curly: 'error',
         'default-case': 'error',
         'default-case-last': 'error',
-        'dot-notation': ['error', { allowKeywords: false }],
         eqeqeq: ['error', 'always'],
         'func-names': ['error', 'as-needed'],
         'func-style': ['error', 'expression', { allowArrowFunctions: true }],

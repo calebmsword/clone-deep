@@ -35,7 +35,7 @@ export const processPendingResults = async ({
                     ? ' for value assigned to property ' +
                       `"${String(result.prop)}". `
                     : '. ') +
-                'This value will be cloned into empty object.',
+                'This value will be cloned into an empty object.',
                 { cause: clone.reason }));
             cloned = {};
         } else {
@@ -58,6 +58,8 @@ export const processPendingResults = async ({
             ignoreProto: result.ignoreProto,
             ignoreProps: result.ignoreProps,
             ignoreThisLoop: false,
+            useCustomizerClone: false,
+            useCloningMethod: false,
             propsToIgnore: result.propsToIgnore,
             cloneStore,
             queue

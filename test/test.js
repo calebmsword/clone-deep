@@ -1982,6 +1982,35 @@ try {
             assert.strictEqual(getProto(cloned).test, 'test');
             assert.strictEqual(getProto(getProto(cloned)).test, 'test');
         });
+
+        test('if in "let customizers throw" mode, errors in cloning methods ' +
+             'will be thrown', () => {
+            // --act/assert
+            assert.throws(() => {
+                cloneDeep({
+                    [CLONE]() {
+                        throw new Error('fail');
+                    }
+                }, { letCustomizerThrow: true });
+            });
+        });
+
+        test('if not in "let customizers throw" mode, errors in cloning ' +
+             'methods will be logged', () => {
+            // -- arrange
+            const log = mock.fn(() => {});
+
+            // --act
+            cloneDeep({
+                [CLONE]() {
+                    throw new Error('fail');
+                }
+            }, { log });
+
+            // -- assert
+            // it complains a second time when it tries to clone cloning method
+            assert.strictEqual(2, log.mock.calls.length);
+        });
     });
 
     describe('async mode', () => {
@@ -2229,6 +2258,44 @@ try {
 
             // -- assert
             assert.strictEqual(1, log.mock.calls.length);
+        });
+
+        test('cloning methods can cause async results', async () => {
+            // -- arrange
+            const obj = {
+                [CLONE]() {
+                    return {
+                        async: true,
+                        clone: 'hijacked'
+                    };
+                }
+            };
+
+            // -- act
+            const { clone } = await cloneDeep(obj, { async: true });
+
+            // -- assert
+            assert.deepEqual(clone, 'hijacked');
+        });
+
+        test('cloning method complains when it returns async data while ' +
+             'cloneDeep is in sync mode', () => {
+            // -- arrange
+            const log = mock.fn(() => {});
+            const obj = {
+                [CLONE]() {
+                    return {
+                        async: true,
+                        clone: 'hijacked'
+                    };
+                }
+            };
+            // -- act
+            cloneDeep(obj, { log });
+
+            // -- assert
+            // it complains a second time when trying to clone cloning method
+            assert.strictEqual(2, log.mock.calls.length);
         });
     });
 

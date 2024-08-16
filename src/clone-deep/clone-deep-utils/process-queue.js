@@ -104,6 +104,12 @@ export const processQueue = ({
         let useCustomizerClone = false;
 
         /**
+         * Is true if the clone will be resolved asynchronously.
+         * @type {boolean|undefined}
+         */
+        let asyncResult;
+
+        /**
          * Any properties in `value` added here will not be cloned.
          * @type {(string|symbol)[]}
          */
@@ -123,7 +129,8 @@ export const processQueue = ({
                 useCustomizerClone,
                 ignoreProto,
                 ignoreProps,
-                ignoreThisLoop
+                ignoreThisLoop,
+                async: asyncResult
             } = handleCustomizer({
                 log,
                 queue,
@@ -153,16 +160,21 @@ export const processQueue = ({
                 cloned,
                 ignoreProps,
                 ignoreProto,
-                useCloningMethod
+                useCloningMethod,
+                async: asyncResult
             } = handleCloningMethods({
                 value,
+                parentOrAssigner,
+                prop,
+                metadata,
                 ignoreCloningMethods,
                 ignoreCloningMethodsThisLoop,
                 propsToIgnore,
                 log,
                 saveClone,
                 pendingResults,
-                async
+                async,
+                doThrow
             }));
         }
 
@@ -199,9 +211,12 @@ export const processQueue = ({
             ignoreProto,
             ignoreProps,
             ignoreThisLoop,
+            useCustomizerClone,
+            useCloningMethod,
             propsToIgnore,
             cloneStore,
-            queue
+            queue,
+            asyncResult
         });
     }
 };

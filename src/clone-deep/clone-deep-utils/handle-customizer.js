@@ -1,7 +1,6 @@
-/* eslint-disable complexity */
-
-import { getWarning, Warning } from '../../utils/clone-deep-warning.js';
+import { Warning } from '../../utils/clone-deep-warning.js';
 import { isObject } from '../../utils/type-checking.js';
+import { handleCustomError } from './misc.js';
 
 /** @typedef {import('../../utils/types').Assigner} Assigner */
 
@@ -27,7 +26,8 @@ import { isObject } from '../../utils/type-checking.js';
  *     useCustomizerClone: boolean,
  *     ignoreProto: boolean|undefined,
  *     ignoreProps: boolean|undefined,
- *     ignoreThisLoop: boolean
+ *     ignoreThisLoop: boolean,
+ *     async?: boolean
  * }}
  */
 export const handleCustomizer = ({
@@ -85,14 +85,14 @@ export const handleCustomizer = ({
                     if (async) {
                         throw Warning.CUSTOMIZER_ASYNC_IN_SYNC_MODE;
                     }
-                    saveClone(customResult.clone);
+                    cloned = saveClone(customResult.clone);
                 } else {
                     pendingResults?.push({
                         value,
                         parentOrAssigner,
                         prop,
                         metadata,
-                        promise: customResult.clone,
+                        promise: Promise.resolve(customResult.clone),
                         ignoreProto,
                         ignoreProps,
                         propsToIgnore: []
@@ -130,28 +130,12 @@ export const handleCustomizer = ({
             }
         }
     } catch (error) {
-        if (doThrow === true) {
-            throw error;
-        }
-
-        useCustomizerClone = false;
-
-        const msg = 'customizer encountered error. Its results will ' +
-                    'be ignored for the current value and the ' +
-                    'algorithm will proceed with default behavior. ';
-
-        if (error instanceof Error) {
-            error.message = `${msg}Error encountered: ${error.message}`;
-
-            const cause = error.cause
-                ? { cause: error.cause }
-                : undefined;
-
-            const stack = error.stack ? error.stack : undefined;
-            log(getWarning(error.message, cause, stack));
-        } else {
-            log(getWarning(msg, { cause: error }));
-        }
+        useCustomizerClone = handleCustomError({
+            log,
+            error,
+            doThrow,
+            name: 'Customizer'
+        });
     }
 
     return {
@@ -159,6 +143,7 @@ export const handleCustomizer = ({
         useCustomizerClone,
         ignoreProto,
         ignoreProps,
-        ignoreThisLoop
+        ignoreThisLoop,
+        async
     };
 };

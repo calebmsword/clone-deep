@@ -112,8 +112,9 @@ export interface ValueTransform {
 }
 
 export interface CloneMethodResult<T> {
-    clone: T
-    propsToIgnore?: (string|symbol)[]
+    clone: T,
+    propsToIgnore?: (string|symbol)[],
     ignoreProps?: boolean,
-    ignoreProto: true
+    ignoreProto: boolean,
+    async?: boolean
 }
