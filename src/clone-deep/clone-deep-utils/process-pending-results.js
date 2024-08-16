@@ -6,15 +6,17 @@ import { getWarning } from '../../utils/clone-deep-warning.js';
  * Processes pending results.
  * @template [U = any]
  * @param {Object} spec
- * @param {{ result: U }} spec.container
+ * @param {{ clone: U }} spec.container
  * @param {import('../../types').Log} spec.log
  * @param {import('../../types').QueueItem[]} spec.queue
+ * @param {Map<any, any>} spec.cloneStore
  * @param {import('../../types').AsyncResultItem[]} spec.pendingResults
  */
 export const processPendingResults = async ({
     container,
     log,
     queue,
+    cloneStore,
     pendingResults
 }) => {
     const clones = await Promise
@@ -29,7 +31,12 @@ export const processPendingResults = async ({
 
         if (clone.status === 'rejected') {
             log(getWarning(
-                'Promise rejected:', { cause: cloned.reason }));
+                'Promise rejected' + (result.prop !== undefined
+                    ? ' for value assigned to property ' +
+                      `"${String(result.prop)}". `
+                    : '. ') +
+                'This value will be cloned into empty object.',
+                { cause: clone.reason }));
             cloned = {};
         } else {
             cloned = clone.value;
@@ -47,12 +54,12 @@ export const processPendingResults = async ({
         finalizeClone({
             value: result.value,
             cloned,
-            cloneIsCached: result.cloneIsCached,
+            cloneIsCached: false,
             ignoreProto: result.ignoreProto,
             ignoreProps: result.ignoreProps,
-            ignoreThisLoop: result.ignoreThisLoop,
+            ignoreThisLoop: false,
             propsToIgnore: result.propsToIgnore,
-            cloneStore: result.cloneStore,
+            cloneStore,
             queue
         });
     });

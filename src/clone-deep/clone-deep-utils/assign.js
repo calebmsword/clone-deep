@@ -61,7 +61,7 @@ const handleMetadata = ({ log, cloned, parent, prop, metadata }) => {
  * Handles the assignment of the cloned value to some persistent place.
  * @template U
  * @param {Object} spec
- * @param {{ result?: U }} spec.container
+ * @param {{ clone: U }} spec.container
  * Object containing the top-level object that will be returned by
  * cloneDeepInternal.
  * @param {import('../../types').Log} spec.log
@@ -84,7 +84,7 @@ const handleMetadata = ({ log, cloned, parent, prop, metadata }) => {
 export const assign = (
     { container, log, cloned, parentOrAssigner, prop, metadata }) => {
     if (parentOrAssigner === TOP_LEVEL) {
-        container.result = cloned;
+        container.clone = cloned;
     } else if (typeof parentOrAssigner === 'function') {
         parentOrAssigner(cloned, prop, metadata);
     } else if (typeof parentOrAssigner === 'object'

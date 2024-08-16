@@ -11,6 +11,8 @@ import { CLONE } from '../../utils/constants.js';
  * @param {(string|symbol)[]} spec.propsToIgnore
  * @param {import('../../types').Log} spec.log
  * @param {(clone: any) => any} spec.saveClone
+ * @param {import('../../types').AsyncResultItem[]} [spec.pendingResults]
+ * @param {boolean} [spec.async]
  * @returns {{
  *     cloned: any,
  *     ignoreProps: boolean,
@@ -24,7 +26,9 @@ export const handleCloningMethods = ({
     ignoreCloningMethodsThisLoop,
     propsToIgnore,
     log,
-    saveClone
+    saveClone,
+    pendingResults,
+    async
 }) => {
 
     /** @type {any} */

@@ -1,4 +1,9 @@
+/* eslint-disable complexity */
+
 import { getWarning, Warning } from '../../utils/clone-deep-warning.js';
+import { isObject } from '../../utils/type-checking.js';
+
+/** @typedef {import('../../utils/types').Assigner} Assigner */
 
 /**
  * Processes the return value from the provided customizer.
@@ -10,8 +15,13 @@ import { getWarning, Warning } from '../../utils/clone-deep-warning.js';
  * @param {import('../../types').QueueItem[]} spec.queue
  * @param {import('../../types').Customizer} spec.customizer
  * @param {any} spec.value
+ * @param {symbol|object|Assigner} [spec.parentOrAssigner]
+ * @param {string|symbol} [spec.prop]
+ * @param {PropertyDescriptor} [spec.metadata]
  * @param {(clone: any) => any} spec.saveClone
  * @param {boolean} spec.doThrow
+ * @param {import('../../types').AsyncResultItem[]} [spec.pendingResults]
+ * @param {boolean} [spec.async]
  * @returns {{
  *     cloned: any,
  *     useCustomizerClone: boolean,
@@ -20,8 +30,19 @@ import { getWarning, Warning } from '../../utils/clone-deep-warning.js';
  *     ignoreThisLoop: boolean
  * }}
  */
-export const handleCustomizer = (
-    { log, queue, customizer, value, saveClone, doThrow }) => {
+export const handleCustomizer = ({
+    log,
+    queue,
+    customizer,
+    value,
+    parentOrAssigner,
+    prop,
+    metadata,
+    saveClone,
+    doThrow,
+    pendingResults,
+    async: asyncMode
+}) => {
 
     /** @type {any} */
     let cloned;
@@ -41,6 +62,9 @@ export const handleCustomizer = (
     /** @type {boolean|undefined} */
     let ignoreThisLoop = false;
 
+    /** @type {boolean|undefined} */
+    let async;
+
     try {
         const customResult = customizer(value);
 
@@ -50,22 +74,52 @@ export const handleCustomizer = (
             ({
                 additionalValues,
                 ignoreProps,
-                ignoreProto
+                ignoreProto,
+                async
             } = customResult);
 
             if (customResult.ignore === true) {
                 ignoreThisLoop = true;
             } else {
-                cloned = saveClone(customResult.clone);
+                if (!asyncMode) {
+                    if (async) {
+                        throw Warning.CUSTOMIZER_ASYNC_IN_SYNC_MODE;
+                    }
+                    saveClone(customResult.clone);
+                } else {
+                    pendingResults?.push({
+                        value,
+                        parentOrAssigner,
+                        prop,
+                        metadata,
+                        promise: customResult.clone,
+                        ignoreProto,
+                        ignoreProps,
+                        propsToIgnore: []
+                    });
+                }
 
                 if (Array.isArray(additionalValues)) {
                     additionalValues.forEach((object) => {
-                        if (typeof object === 'object'
+                        if (object !== undefined && isObject(object)
                             && typeof object.assigner === 'function') {
-                            queue.push({
-                                value: object.value,
-                                parentOrAssigner: object.assigner
-                            });
+                            if (object.async === true) {
+                                if (!asyncMode) {
+                                    throw Warning
+                                        .ADDITIONAL_VALUES_ASYNC_IN_SYNC_MODE;
+                                }
+                                pendingResults?.push({
+                                    value,
+                                    promise: Promise.resolve(object.value),
+                                    parentOrAssigner: object.assigner,
+                                    propsToIgnore: []
+                                });
+                            } else {
+                                queue.push({
+                                    value: object.value,
+                                    parentOrAssigner: object.assigner
+                                });
+                            }
                         } else {
                             throw Warning.IMPROPER_ADDITIONAL_VALUES;
                         }

@@ -16,7 +16,7 @@ import { handleCloningMethods } from './handle-cloning-method.js';
  * @template U
  * @param {Object} spec
  * @param {import('../../types.js').QueueItem[]} spec.queue
- * @param {{ result?: U }} spec.container
+ * @param {{ clone: U }} spec.container
  * @param {import('../../types.js').Log} spec.log
  * @param {import('../../types.js').Customizer|undefined} spec.customizer
  * @param {Map<any, any>} spec.cloneStore
@@ -25,8 +25,9 @@ import { handleCloningMethods } from './handle-cloning-method.js';
  * @param {boolean} spec.ignoreCloningMethods
  * @param {boolean} spec.doThrow
  * @param {Set<any>|undefined} spec.parentObjectRegistry
- * @param {import('../../types').AsyncResultItem[]} spec.pendingResults
  * @param {[any, any][]} spec.isExtensibleSealFrozen
+ * @param {import('../../types').AsyncResultItem[]} [spec.pendingResults]
+ * @param {boolean} [spec.async]
  */
 export const processQueue = ({
     queue,
@@ -40,7 +41,8 @@ export const processQueue = ({
     doThrow,
     parentObjectRegistry,
     isExtensibleSealFrozen,
-    pendingResults
+    pendingResults,
+    async
 }) => {
 
     for (let item = queue.shift(); item !== undefined; item = queue.shift()) {
@@ -127,8 +129,13 @@ export const processQueue = ({
                 queue,
                 customizer,
                 value,
+                parentOrAssigner,
+                prop,
+                metadata,
                 saveClone,
-                doThrow
+                doThrow,
+                pendingResults,
+                async
             }));
         }
 
@@ -153,7 +160,9 @@ export const processQueue = ({
                 ignoreCloningMethodsThisLoop,
                 propsToIgnore,
                 log,
-                saveClone
+                saveClone,
+                pendingResults,
+                async
             }));
         }
 
@@ -175,7 +184,9 @@ export const processQueue = ({
                 ignoreCloningMethods,
                 ignoreCloningMethodsThisLoop,
                 propsToIgnore,
-                saveClone
+                saveClone,
+                pendingResults,
+                async
             }));
         }
 

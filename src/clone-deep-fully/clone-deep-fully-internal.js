@@ -12,7 +12,7 @@ import { isObject } from '../utils/type-checking.js';
  * Handles internal logic for the full deep clone.
  * @template [T=any]
  * The type of the input value.
- * @template [U = T | Promise<{ result: T }>]
+ * @template [U = T | Promise<{ clone: T }>]
  * The return type of the clone.
  *
  * @param {Object} spec
@@ -24,7 +24,7 @@ import { isObject } from '../utils/type-checking.js';
  * @param {boolean} spec.ignoreCloningMethods
  * @param {boolean} spec.letCustomizerThrow
  * @param {boolean} spec.force
- * @returns {U | Promise<{ result: U }>}
+ * @returns {U | Promise<{ clone: U }>}
  */
 export const cloneDeepFullyInternal = ({
     value,
@@ -36,7 +36,7 @@ export const cloneDeepFullyInternal = ({
     letCustomizerThrow,
     force
 }) => {
-    /** @type {U | Promise<{ result: U }>} */
+    /** @type {U | Promise<{ clone: U }>} */
     const clone = cloneDeep(value, {
         customizer,
         log,

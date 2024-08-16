@@ -10,7 +10,7 @@ import {
  * Clones the provided value.
  * @template T
  * See CloneDeep.
- * @template [U = T | Promise<{ result: T }>]
+ * @template [U = T | Promise<{ clone: T }>]
  * See CloneDeep.
  * @param {Object} spec
  * @param {T} spec.value
@@ -30,7 +30,7 @@ import {
  * in the prototype of an object that was cloned earlier in the chain.
  * @param {boolean} [spec.async]
  * Whether or not the algorithm will return the clone asynchronously.
- * @returns {U | Promise<{ result: U }>}
+ * @returns {U | Promise<{ clone: U }>}
  */
 export const cloneDeepInternal = ({
     value,
@@ -40,14 +40,14 @@ export const cloneDeepInternal = ({
     ignoreCloningMethods,
     doThrow,
     parentObjectRegistry,
-    async = false
+    async
 }) => {
 
     /**
      * Contains the cloned value.
-     * @type {{ result: any }}
+     * @type {{ clone: any }}
      */
-    const container = { result: undefined };
+    const container = { clone: undefined };
 
     /**
      * Will be used to store cloned values so that we don't loop infinitely on
@@ -75,7 +75,7 @@ export const cloneDeepInternal = ({
     /** An array of all prototypes of supported types in this runtime. */
     const supportedPrototypes = getSupportedPrototypes();
 
-    const doProcessQueue = () => {
+    if (!async) {
         processQueue({
             queue,
             container,
@@ -87,29 +87,39 @@ export const cloneDeepInternal = ({
             ignoreCloningMethods,
             doThrow,
             parentObjectRegistry,
-            isExtensibleSealFrozen,
-            pendingResults
+            isExtensibleSealFrozen
         });
-    };
-
-    if (!async) {
-        doProcessQueue();
 
         handleMetadata(isExtensibleSealFrozen);
 
-        return container.result;
+        return container.clone;
     }
 
     /** @returns {Promise<void>} */
     const processData = async () => {
         try {
-            doProcessQueue();
+            processQueue({
+                queue,
+                container,
+                log,
+                customizer,
+                cloneStore,
+                prioritizePerformance,
+                supportedPrototypes,
+                ignoreCloningMethods,
+                doThrow,
+                parentObjectRegistry,
+                isExtensibleSealFrozen,
+                pendingResults,
+                async
+            });
 
             if (pendingResults.length > 0) {
                 await processPendingResults({
                     container,
                     log,
                     queue,
+                    cloneStore,
                     pendingResults
                 });
 

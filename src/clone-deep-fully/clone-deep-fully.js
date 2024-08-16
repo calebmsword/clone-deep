@@ -10,7 +10,7 @@ import { cloneDeepFullyInternal } from './clone-deep-fully-internal.js';
  * Deeply clones the provided object and its prototype chain.
  * @template T
  * See the documentation for `cloneDeep`.
- * @template [U = T | Promise<{ result: T }>]
+ * @template [U = T | Promise<{ clone: T }>]
  * See the documentation for `cloneDeep`.
  * @param {T} value
  * The object to clone.
@@ -34,7 +34,7 @@ import { cloneDeepFullyInternal } from './clone-deep-fully-internal.js';
  * See the documentation for `cloneDeep`.
  * @param {boolean} options.letCustomizerThrow
  * See the documentation for `cloneDeep`.
- * @returns {U | Promise<{ result: U }>} The deep copy.
+ * @returns {U | Promise<{ clone: U }>} The deep copy.
  */
 const cloneDeepFully = (value, options) => {
     if (typeof options !== 'object' && typeof options !== 'function') {

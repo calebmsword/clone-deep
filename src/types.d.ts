@@ -11,6 +11,7 @@ export interface CloneDeepOptions {
     ignoreCloningMethods?: boolean
     logMode?: string
     letCustomizerThrow?: boolean
+    async?: boolean
 }
 
 export interface CloneDeepFullyOptions extends CloneDeepOptions {
@@ -30,10 +31,7 @@ export interface AsyncResultItem {
     prop?: string | symbol,
     metadata?: PropertyDescriptor,
     promise: Promise<any>,
-    cloneIsCached: boolean,
-    ignoreProto: boolean,
-    ignoreProps: boolean,
-    ignoreThisLoop: boolean,
-    propsToIgnore: (string|symbol)[],
-    cloneStore: Map<any, any>
+    ignoreProto?: boolean,
+    ignoreProps?: boolean,
+    propsToIgnore: (string|symbol)[]
 }

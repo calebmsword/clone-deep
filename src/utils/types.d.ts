@@ -98,7 +98,8 @@ export interface DOMPointExtended extends DOMPoint {
 
 export interface AdditionalValue {
     value: any,
-    assigner: (clone: any) => void
+    assigner: (clone: any) => void,
+    async?: boolean
 }
 
 export interface ValueTransform {
@@ -107,6 +108,7 @@ export interface ValueTransform {
     ignore?: boolean,
     ignoreProps?: boolean,
     ignoreProto?: boolean,
+    async?: boolean
 }
 
 export interface CloneMethodResult<T> {

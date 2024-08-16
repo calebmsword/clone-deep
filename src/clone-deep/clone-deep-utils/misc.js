@@ -4,6 +4,7 @@ import {
     getPrototype,
     hasAccessor
 } from '../../utils/metadata.js';
+import { isObject } from '../../utils/type-checking.js';
 
 /**
  * Checks the clone store to see if we the given value was already cloned.
@@ -180,10 +181,7 @@ export const finalizeClone = ({
     cloneStore,
     queue
 }) => {
-
-    if (cloned !== null && typeof cloned === 'object'
-        && !cloneIsCached
-        && !ignoreThisLoop) {
+    if (isObject(cloned) && !cloneIsCached && !ignoreThisLoop) {
         cloneStore.set(value, cloned);
 
         if (!ignoreProto) {

@@ -20,6 +20,8 @@ import { getWarning } from '../../utils/clone-deep-warning.js';
  * @param {boolean} spec.ignoreCloningMethodsThisLoop
  * @param {(string|symbol)[]} spec.propsToIgnore
  * @param {(clone: any) => any} spec.saveClone
+ * @param {import('../../types').AsyncResultItem[]} [spec.pendingResults]
+ * @param {boolean} [spec.async]
  * @returns {{
  *     cloned: any,
  *     ignoreProps: boolean|undefined,
@@ -39,7 +41,9 @@ export const handleTag = ({
     ignoreCloningMethods,
     ignoreCloningMethodsThisLoop,
     propsToIgnore,
-    saveClone
+    saveClone,
+    pendingResults,
+    async
 }) => {
 
     let cloned;
