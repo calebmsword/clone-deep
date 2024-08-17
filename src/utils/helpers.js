@@ -1,4 +1,9 @@
-import { supportedPrototypes, Tag, TypeArrays, WebApis } from './constants.js';
+import {
+    supportedPrototypes,
+    Es6NativeTypes,
+    Tag,
+    WebApis
+} from './constants.js';
 import { getWarning } from './clone-deep-warning.js';
 import { isCallable } from './type-checking.js';
 
@@ -148,7 +153,7 @@ export const getSupportedPrototypes = () => {
         }
     });
 
-    Object.keys(TypeArrays).forEach((typeArrayString) => {
+    Object.keys(Es6NativeTypes).forEach((typeArrayString) => {
         const PotentialArray = getConstructorFromString(typeArrayString);
 
         if (PotentialArray !== undefined && isCallable(PotentialArray)) {

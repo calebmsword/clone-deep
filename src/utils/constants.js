@@ -78,8 +78,13 @@ export const WebApis = Object.freeze({
     VideoFrame: 'VideoFrame'
 });
 
-export const TypeArrays = Object.freeze({
+export const Es6NativeTypes = Object.freeze({
     ArrayBuffer: 'ArrayBuffer',
+    BigInt: 'BigInt',
+    Map: 'Map',
+    Promise: 'Promise',
+    Set: 'Set',
+    Symbol: 'Symbol',
     DataView: 'DataView',
     Float32Array: 'Float32Array',
     Float64Array: 'Float64Array',
@@ -96,34 +101,13 @@ export const TypeArrays = Object.freeze({
 
 /** All prototypes of supported types. */
 export const supportedPrototypes = Object.freeze([
-    // "standard" classes
     Array.prototype,
-    BigInt.prototype,
     Boolean.prototype,
     Date.prototype,
     Error.prototype,
     Function.prototype,
-    Map.prototype,
     Number.prototype,
     Object.prototype,
-    Promise.prototype,
     RegExp.prototype,
-    Set.prototype,
-    String.prototype,
-    Symbol.prototype,
-
-    // ArrayBuffer, DataView and TypedArrays
-    ArrayBuffer.prototype,
-    DataView.prototype,
-    Float32Array.prototype,
-    Float64Array.prototype,
-    Int8Array.prototype,
-    Int16Array.prototype,
-    Int32Array.prototype,
-    Uint8Array.prototype,
-    Uint8ClampedArray.prototype,
-    Uint16Array.prototype,
-    Uint32Array.prototype,
-    BigInt64Array.prototype,
-    BigUint64Array.prototype
+    String.prototype
 ]);
