@@ -7,9 +7,10 @@ import {
     finalizeClone
 } from './misc.js';
 import { handleCustomizer } from './handle-customizer.js';
-import { getTag, isObject } from '../../utils/type-checking.js';
 import { handleTag } from './handle-tag.js';
 import { handleCloningMethods } from './handle-cloning-method.js';
+import { isObject } from '../../utils/type-checking.js';
+import { getTag } from '../../utils/get-tag.js';
 
 /**
  * Iterate through all items in the queue.
