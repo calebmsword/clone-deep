@@ -1,5 +1,5 @@
-import { Tag } from './constants.js';
-import { getConstructorFromString } from './helpers.js';
+import { Tag } from '../../utils/constants.js';
+import { getConstructorFromString } from '../../utils/helpers.js';
 import {
     isDOMMatrix,
     isDOMMatrixReadOnly,
@@ -11,7 +11,7 @@ import {
     isImageBitmap,
     isImageData,
     toStringTag
-} from './type-checking.js';
+} from '../../utils/type-checking.js';
 
 /** @typedef {new (...args: any[]) => any} Constructor */
 

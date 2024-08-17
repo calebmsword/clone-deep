@@ -10,7 +10,7 @@ import { handleCustomizer } from './handle-customizer.js';
 import { handleTag } from './handle-tag.js';
 import { handleCloningMethods } from './handle-cloning-method.js';
 import { isObject } from '../../utils/type-checking.js';
-import { getTag } from '../../utils/get-tag.js';
+import { getTag } from './get-tag.js';
 
 /**
  * Iterate through all items in the queue.

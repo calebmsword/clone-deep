@@ -12,7 +12,7 @@ import cloneDeepFully from '../src/clone-deep-fully/clone-deep-fully.js';
 import useCustomizers from '../src/use-customizers.js';
 
 import { CLONE, Tag } from '../src/utils/constants.js';
-import { getTag } from '../src/utils/get-tag.js';
+import { getTag } from '../src/clone-deep/clone-deep-utils/get-tag.js';
 import {
     createFileList,
     getSupportedPrototypes,
