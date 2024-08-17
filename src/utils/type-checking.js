@@ -288,3 +288,23 @@ export const isTypedArray = (value, prioritizePerformance, tag) => {
 export const isObject = (value) => {
     return value !== null && ['object', 'function'].includes(typeof value);
 };
+
+/**
+ * @param {any} value
+ * @returns {boolean}
+ */
+const isStringOrSymbol = (value) => {
+    return ['string', 'symbol'].includes(typeof value);
+};
+
+/**
+ * Returns true if the provided value is an array of strings or symbols.
+ * @param {any} value
+ * @returns {boolean}
+ */
+export const isPropertyKeyArray = (value) => {
+    if (!Array.isArray(value)) {
+        return false;
+    }
+    return value.every(isStringOrSymbol);
+};

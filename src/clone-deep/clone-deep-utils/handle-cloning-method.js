@@ -2,7 +2,7 @@
 
 import { Warning } from '../../utils/clone-deep-warning.js';
 import { CLONE } from '../../utils/constants.js';
-import { isCallable } from '../../utils/type-checking.js';
+import { isCallable, isPropertyKeyArray } from '../../utils/type-checking.js';
 import { handleCustomError } from './misc.js';
 
 /** @typedef {import('../../utils/types').Assigner} Assigner */
@@ -57,56 +57,56 @@ export const handleCloningMethods = ({
     let async;
 
     try {
-        if (isCallable(value[CLONE])
-            && ignoreCloningMethods !== true
-            && ignoreCloningMethodsThisLoop === false) {
+        if (ignoreCloningMethods || ignoreCloningMethodsThisLoop
+            || !isCallable(value[CLONE])) {
+            return {
+                cloned,
+                ignoreProps,
+                ignoreProto,
+                useCloningMethod: false,
+                async
+            };
+        }
 
-            /** @type {import('../../utils/types').CloneMethodResult<any>} */
-            const result = value[CLONE]();
+        /** @type {import('../../utils/types').CloneMethodResult<any>} */
+        const result = value[CLONE]();
 
-            if (result.async === true && !asyncMode) {
-                throw Warning.CLONING_METHOD_ASYNC_IN_SYNC_MODE;
-            }
+        if (result.async === true && !asyncMode) {
+            throw Warning.CLONING_METHOD_ASYNC_IN_SYNC_MODE;
+        }
 
-            if (result.propsToIgnore !== undefined) {
-                if (Array.isArray(result.propsToIgnore)
-                    && result.propsToIgnore.every(
-                        /** @param {any} string */
-                        (string) => {
-                            return ['string', 'symbol']
-                                .includes(typeof string);
-                        })) {
-                    propsToIgnore.push(...result.propsToIgnore);
-                } else {
-                    log(Warning.CLONING_METHOD_IMPROPER_PROPS_TO_IGNORE);
-                }
-            }
-            if (typeof result.ignoreProps === 'boolean') {
-                ({ ignoreProps } = result);
-            }
+        if (result.propsToIgnore !== undefined
+            && !isPropertyKeyArray(result.propsToIgnore)) {
+            throw Warning.CLONING_METHOD_IMPROPER_PROPS_TO_IGNORE;
+        }
 
-            if (typeof result.ignoreProto === 'boolean') {
-                ({ ignoreProto } = result);
-            }
+        if (Array.isArray(result.propsToIgnore)
+            && isPropertyKeyArray(result.propsToIgnore)) {
+            propsToIgnore.push(...result.propsToIgnore);
+        }
 
-            if (!result.async) {
-                cloned = saveClone(result.clone);
-            } else {
-                async = true;
-                pendingResults?.push({
-                    value,
-                    parentOrAssigner,
-                    prop,
-                    metadata,
-                    promise: Promise.resolve(result.clone),
-                    ignoreProto,
-                    ignoreProps,
-                    propsToIgnore
-                });
-            }
+        if (typeof result.ignoreProps === 'boolean') {
+            ({ ignoreProps } = result);
+        }
 
+        if (typeof result.ignoreProto === 'boolean') {
+            ({ ignoreProto } = result);
+        }
+
+        if (!result.async) {
+            cloned = saveClone(result.clone);
         } else {
-            useCloningMethod = false;
+            async = true;
+            pendingResults?.push({
+                value,
+                parentOrAssigner,
+                prop,
+                metadata,
+                promise: Promise.resolve(result.clone),
+                ignoreProto,
+                ignoreProps,
+                propsToIgnore
+            });
         }
 
     } catch (error) {
