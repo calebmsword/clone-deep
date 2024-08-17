@@ -17,10 +17,6 @@ export const handleAdditionalValues = ({
     queue,
     pendingResults
 }) => {
-    if (!Array.isArray(additionalValues) && additionalValues !== undefined) {
-        throw Warning.IMPROPER_ADDITIONAL_VALUES;
-    }
-
     additionalValues?.forEach((additionalValueConfig) => {
         const {
             value: additionalValue,

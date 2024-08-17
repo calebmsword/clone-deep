@@ -98,6 +98,11 @@ export const handleCustomizer = ({
             };
         }
 
+        if (!Array.isArray(additionalValues)
+            && additionalValues !== undefined) {
+            throw Warning.IMPROPER_ADDITIONAL_VALUES;
+        }
+
         if (async && !asyncMode) {
             throw Warning.CUSTOMIZER_ASYNC_IN_SYNC_MODE;
         }
