@@ -18,8 +18,6 @@ export const handleAsyncWebTypes = ({
     tag,
     propsToIgnore,
     pushPendingResult
-    // queue,
-    // pendingResults
 }) => {
 
     let asyncWebTypeDetected = true;
