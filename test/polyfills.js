@@ -1,4 +1,5 @@
 /* node:coverage disable */
+/* eslint-disable complexity */
 
 import { isCallable } from '../src/utils/type-checking.js';
 
@@ -459,17 +460,139 @@ export const polyfill = () => {
         };
     }
 
-    if (!isCallable(global.FileSystemDirectoryHandle)) {
-        global.FileSystemDirectoryHandle = class FileSystemDirectoryHandle {
+    if (!isCallable(global.VideoFrame)) {
+        global.VideoFrame = class VideoFrame {
+            static #registry = new WeakSet();
+
+            constructor() {
+                VideoFrame.#registry.add(this);
+            }
+
+            allocationSize() {
+                if (!VideoFrame.#registry.has(this)) {
+                    throw new TypeError(msg);
+                }
+                return 0;
+            }
+
+            clone() {
+                if (!VideoFrame.#registry.has(this)) {
+                    throw new TypeError(msg);
+                }
+                return new VideoFrame();
+            }
         };
 
-        FileSystemDirectoryHandle.prototype[Symbol.toStringTag] =
-            'FileSystemDirectoryHandle';
-    };
+        VideoFrame.prototype[Symbol.toStringTag] = 'VideoFrame';
+    }
 
-    if (!isCallable(global.showDirectoryPicker)) {
-        global.showDirectoryPicker = () => {
-            new FileSystemDirectoryHandle();
+    if (!isCallable(global.ImageData)) {
+        global.ImageData = class ImageData {
+            static #registry = new WeakSet();
+
+            #data;
+
+            #width;
+
+            #height;
+
+            #colorSpace;
+
+            get data() {
+                if (!ImageData.#registry.has(this)) {
+                    throw new TypeError(msg);
+                }
+                return this.#data;
+            }
+
+            get width() {
+                if (!ImageData.#registry.has(this)) {
+                    throw new TypeError(msg);
+                }
+                return this.#width;
+            }
+
+            get height() {
+                if (!ImageData.#registry.has(this)) {
+                    throw new TypeError(msg);
+                }
+                return this.#height;
+            }
+
+            get colorSpace() {
+                if (!ImageData.#registry.has(this)) {
+                    throw new TypeError(msg);
+                }
+                return this.#colorSpace;
+            }
+
+            constructor(data, width, height, settings) {
+                ImageData.#registry.add(this);
+
+                if (settings === null || typeof settings !== 'object') {
+                    settings = {};
+                }
+
+                this.#data = data;
+                this.#width = width;
+                this.#height = height;
+                this.#colorSpace = settings.colorSpace || 'srgb';
+            }
+        };
+
+        ImageData.prototype[Symbol.toStringTag] = 'ImageData';
+    }
+
+    if (!isCallable(global.AudioData)) {
+        global.AudioData = class AudioData {
+            static #registry = new WeakSet();
+
+            constructor() {
+                AudioData.#registry.add(this);
+            }
+
+            allocationSize() {
+                if (!AudioData.#registry.has(this)) {
+                    throw new TypeError(msg);
+                }
+                return 0;
+            }
+
+            clone() {
+                if (!AudioData.#registry.has(this)) {
+                    throw new TypeError(msg);
+                }
+                return new AudioData();
+            }
+        };
+
+        AudioData.prototype[Symbol.toStringTag] = 'AudioData';
+    }
+
+    if (!isCallable(global.ImageBitmap)) {
+        global.ImageBitmap = class ImageBitmap {
+            static #registry = new WeakSet();
+
+            #height = 0;
+
+            get height() {
+                if (!ImageBitmap.#registry.has(this)) {
+                    throw new TypeError(msg);
+                }
+                return this.#height;
+            }
+
+            constructor() {
+                ImageBitmap.#registry.add(this);
+            }
+        };
+
+        ImageBitmap.prototype[Symbol.toStringTag] = 'ImageBitmap';
+    }
+
+    if (!isCallable(global.createImageBitmap)) {
+        global.createImageBitmap = () => {
+            return Promise.resolve(new ImageBitmap());
         };
     }
 };
@@ -488,6 +611,9 @@ export const clearPolyfills = () => {
     global.DOMQuad = undefined;
     global.FileList = undefined;
     global.DataTransfer = undefined;
-    global.FileSystemDirectoryHandle = undefined;
-    global.showDirectoryPicker = undefined;
+    global.AudioData = undefined;
+    global.VideoFrame = undefined;
+    global.ImageData = undefined;
+    global.ImageBitmap = undefined;
+    global.createImageBitmap = undefined;
 };

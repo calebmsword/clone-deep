@@ -42,11 +42,11 @@ const classesToTypeCheck = [
     ['DataView', 'getInt8', Tag.DATAVIEW],
 
     // Web APIs
-    ['AudioData', 'allocationSize', Tag.AUDIODATA],
+    ['AudioData', 'allocationSize', Tag.AUDIODATA, { planeIndex: 1 }],
     ['Blob', 'clone', Tag.BLOB],
     ['DOMQuad', 'toJSON', Tag.DOMQUAD],
     ['FileList', 'item', Tag.FILELIST, 0],
-    ['VideoData', 'allocationSize', Tag.VIDEODATA, 0]
+    ['VideoFrame', 'allocationSize', Tag.VIDEOFRAME, 0]
 ];
 
 /**

@@ -1,7 +1,7 @@
 import { handleError } from './misc.js';
 import { handleNativeTypes } from './handle-native-types.js';
 import { handleSyncWebTypes } from './handle-sync-web-types.js';
-import { getWarning } from '../../utils/clone-deep-warning.js';
+import { Warning } from '../../utils/clone-deep-warning.js';
 import { handleAsyncWebTypes } from './handle-async-web-types.js';
 
 /** @typedef {import('../../utils/types').Assigner} Assigner */
@@ -45,7 +45,8 @@ export const handleTag = ({
     ignoreCloningMethods,
     ignoreCloningMethodsThisLoop,
     propsToIgnore,
-    saveClone
+    saveClone,
+    async
 }) => {
 
     let cloned;
@@ -100,34 +101,28 @@ export const handleTag = ({
         /**
          * Pushes the given promise into the list of pending results.
          * @param {Promise<any>} promise
-         * @param {Object} [options]
-         * @param {boolean} [options.ignoreProps]
-         * @param {boolean} [options.ignoreProto]
          */
-        const pushPendingResult = (promise, options) => {
+        const pushPendingResult = (promise) => {
             pendingResults?.push({
                 value,
                 parentOrAssigner,
                 prop,
                 metadata,
                 promise,
-                ignoreProps: options?.ignoreProps,
-                ignoreProto: options?.ignoreProto,
                 propsToIgnore
             });
         };
 
-        if (!nativeTypeDetected && !webTypeDetected) {
+        if (async && !nativeTypeDetected && !webTypeDetected) {
             asyncWebTypeDetected = handleAsyncWebTypes({
                 value,
                 tag,
-                propsToIgnore,
                 pushPendingResult
             });
         }
 
-        if (!(nativeTypeDetected || webTypeDetected || asyncWebTypeDetected)) {
-            throw getWarning('Attempted to clone unsupported type.');
+        if (!nativeTypeDetected && !webTypeDetected && !asyncWebTypeDetected) {
+            throw Warning.UNSUPPORTED_TYPE;
         }
     } catch (error) {
         ({ cloned, ignoreProto } = handleError(error, log, saveClone));

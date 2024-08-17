@@ -1,4 +1,4 @@
-import { Tag, WebApi } from './constants.js';
+import { Tag, WebApis } from './constants.js';
 import { getConstructorFromString } from './helpers.js';
 import { getDescriptors, getPrototype } from './metadata.js';
 
@@ -136,22 +136,17 @@ export const getGeometryCheckers = (webApiString, methodOrProp, property) => {
 export const {
     isDOMMatrixReadOnly,
     isDOMMatrix
-} = getGeometryCheckers(WebApi.DOMMatrixReadOnly, 'scale', 'm11');
+} = getGeometryCheckers(WebApis.DOMMatrixReadOnly, 'scale', 'm11');
 
 export const {
     isDOMPointReadOnly,
     isDOMPoint
-} = getGeometryCheckers(WebApi.DOMPointReadOnly, 'toJSON', 'x');
+} = getGeometryCheckers(WebApis.DOMPointReadOnly, 'toJSON', 'x');
 
 export const {
     isDOMRectReadOnly,
     isDOMRect
-} = getGeometryCheckers(WebApi.DOMRectReadOnly, { name: 'x' }, 'x');
-
-const FileConstructor = getConstructorFromString('File');
-const lastModifiedGetter = FileConstructor
-    ? getDescriptors(FileConstructor.prototype).lastModified.get
-    : undefined;
+} = getGeometryCheckers(WebApis.DOMRectReadOnly, { name: 'x' }, 'x');
 
 /**
  * Returns `true` if the given value is a File instance, `false` otherwise.
@@ -159,21 +154,16 @@ const lastModifiedGetter = FileConstructor
  * @returns {boolean}
  */
 export const isFile = (value) => {
-    if (!(value instanceof File)) {
-        return false;
-    }
     try {
-        lastModifiedGetter?.call(value);
+        if (!(value instanceof File)) {
+            return false;
+        }
+        getDescriptors(File.prototype).lastModified.get?.call(value);
         return true;
     } catch {
         return false;
     }
 };
-
-const ImageBitmapConstructor = getConstructorFromString('ImageBitmap');
-const heightGetter = ImageBitmapConstructor
-    ? getDescriptors(ImageBitmapConstructor.prototype).height.get
-    : undefined;
 
 /**
  * Returns `true` if the given value is an ImageBitmap, `false` otherwise.
@@ -181,6 +171,11 @@ const heightGetter = ImageBitmapConstructor
  * @returns {boolean}
  */
 export const isImageBitmap = (value) => {
+    const ImageBitmapConstructor = getConstructorFromString('ImageBitmap');
+    const heightGetter = ImageBitmapConstructor
+        ? getDescriptors(ImageBitmap.prototype).height.get
+        : undefined;
+
     if (heightGetter === undefined) {
         return false;
     }
@@ -196,17 +191,17 @@ export const isImageBitmap = (value) => {
     }
 };
 
-const ImageDataConstructor = getConstructorFromString('ImageData');
-const widthGetter = ImageDataConstructor !== undefined
-    ? getDescriptors(ImageData.prototype).width.get
-    : undefined;
-
 /**
  * Returns `true` if the given value is an ImageBitmap, `false` otherwise.
  * @param {any} value
  * @returns {boolean}
  */
 export const isImageData = (value) => {
+    const ImageDataConstructor = getConstructorFromString('ImageData');
+    const widthGetter = ImageDataConstructor !== undefined
+        ? getDescriptors(ImageData.prototype).width.get
+        : undefined;
+
     if (widthGetter === undefined) {
         return false;
     }
@@ -235,13 +230,6 @@ export const isIterable = (value) => {
     }
     return typeof value[Symbol.iterator] === 'function';
 };
-
-const TypedArrayProto =
-    getConstructorFromString('Float32Array') !== undefined
-    && getConstructorFromString('ArrayBuffer') !== undefined
-        ? getPrototype(getPrototype(
-            new Float32Array(new ArrayBuffer(0))))
-        : undefined;
 
 const typedArrayTags = Object.freeze([
     Tag.FLOAT32,
@@ -273,7 +261,8 @@ export const isTypedArray = (value, prioritizePerformance, tag) => {
     }
 
     try {
-        TypedArrayProto?.lastIndexOf.call(value);
+        getPrototype(getPrototype(
+            new Float32Array(new ArrayBuffer(0))))?.lastIndexOf.call(value);
         return true;
     } catch {
         return false;

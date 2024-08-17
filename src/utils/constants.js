@@ -41,6 +41,7 @@ export const Tag = Object.freeze({
     BIGUINT64: '[object BigUint64Array]',
 
     // Web APIs
+    AUDIODATA: '[object AudioData]',
     BLOB: '[object Blob]',
     DOMEXCEPTION: '[object DOMException]',
     DOMMATRIX: '[object DOMMatrix]',
@@ -52,15 +53,14 @@ export const Tag = Object.freeze({
     DOMQUAD: '[object DOMQuad]',
     FILE: '[object File]',
     FILELIST: '[object FileList]',
+    IMAGEDATA: '[object ImageData]',
+    VIDEOFRAME: '[object VideoFrame]',
 
     // Async Web APIs
-    AUDIODATA: '[object AudioData]',
-    IMAGEBITMAP: '[object ImageBitmap]',
-    IMAGEDATA: '[object ImageData]',
-    VIDEODATA: '[object VideoData]'
+    IMAGEBITMAP: '[object ImageBitmap]'
 });
 
-export const WebApi = Object.freeze({
+export const WebApis = Object.freeze({
     AudioData: 'AudioData',
     Blob: 'Blob',
     DOMException: 'DOMException',
@@ -74,7 +74,24 @@ export const WebApi = Object.freeze({
     File: 'File',
     FileList: 'FileList',
     ImageBitmap: 'ImageBitmap',
-    ImageData: 'ImageData'
+    ImageData: 'ImageData',
+    VideoFrame: 'VideoFrame'
+});
+
+export const TypeArrays = Object.freeze({
+    ArrayBuffer: 'ArrayBuffer',
+    DataView: 'DataView',
+    Float32Array: 'Float32Array',
+    Float64Array: 'Float64Array',
+    Int8Array: 'Int8Array',
+    Int16Array: 'Int16Array',
+    Int32Array: 'Int32Array',
+    Uint8Array: 'Uint8Array',
+    Uint8ClampedArray: 'Uint8ClampedArray',
+    Uint16Array: 'Uint16Array',
+    Uint32Array: 'Uint32Array',
+    BigInt64Array: 'BigInt64Array',
+    BigUint64Array: 'BigUint64Array'
 });
 
 /** All prototypes of supported types. */

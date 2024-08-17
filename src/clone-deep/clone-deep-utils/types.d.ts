@@ -1,5 +1,5 @@
 type TypedArray =
-  | Int8Array
+  Int8Array
   | Uint8Array
   | Uint8ClampedArray
   | Int16Array
@@ -10,6 +10,8 @@ type TypedArray =
   | Float64Array
   | BigInt64Array
   | BigUint64Array;
+
+type Layout = { offset: number, stride: number }[]
 
 export interface AudioData {
     duration: number,
@@ -29,7 +31,7 @@ export interface AudioData {
             frameOffset: number,
             frameCount: number
         }
-    ) => Promise<{ offset: number, stride: number }>
+    ) => Promise<Layout>
 }
 
 export interface VideoData {
@@ -63,5 +65,5 @@ export interface VideoData {
         },
         format: string,
         colorSpace: string
-    ) => Promise<{ offset: number, stride: number }>
+    ) => Promise<Layout>
 }
