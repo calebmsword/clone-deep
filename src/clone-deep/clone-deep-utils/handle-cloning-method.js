@@ -18,7 +18,7 @@ import { handleCustomError } from './misc.js';
  * @param {(string|symbol)[]} spec.propsToIgnore
  * @param {import('../../types').Log} spec.log
  * @param {(clone: any) => any} spec.saveClone
- * @param {import('../../types').AsyncResultItem[]} [spec.pendingResults]
+ * @param {import('../../types').PendingResultItem[]} [spec.pendingResults]
  * @param {boolean} [spec.async]
  * @param {boolean} [spec.doThrow]
  * @returns {{

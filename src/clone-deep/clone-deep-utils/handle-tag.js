@@ -2,14 +2,16 @@ import { handleError } from './misc.js';
 import { handleNativeTypes } from './handle-native-types.js';
 import { handleSyncWebTypes } from './handle-sync-web-types.js';
 import { getWarning } from '../../utils/clone-deep-warning.js';
+import { handleAsyncWebTypes } from './handle-async-web-types.js';
 
 /** @typedef {import('../../utils/types').Assigner} Assigner */
 
 /**
  * @param {Object} spec
  * @param {any} spec.value
- * @param {symbol|object|Assigner|undefined} spec.parentOrAssigner
- * @param {string|symbol|undefined} spec.prop
+ * @param {symbol|object|Assigner} [spec.parentOrAssigner]
+ * @param {string|symbol} [spec.prop]
+ * @param {PropertyDescriptor} [spec.metadata]
  * @param {string} spec.tag
  * @param {boolean} spec.prioritizePerformance
  * @param {import('../../types').Log} spec.log
@@ -20,7 +22,7 @@ import { getWarning } from '../../utils/clone-deep-warning.js';
  * @param {boolean} spec.ignoreCloningMethodsThisLoop
  * @param {(string|symbol)[]} spec.propsToIgnore
  * @param {(clone: any) => any} spec.saveClone
- * @param {import('../../types').AsyncResultItem[]} [spec.pendingResults]
+ * @param {import('../../types').PendingResultItem[]} [spec.pendingResults]
  * @param {boolean} [spec.async]
  * @returns {{
  *     cloned: any,
@@ -32,10 +34,12 @@ export const handleTag = ({
     value,
     parentOrAssigner,
     prop,
+    metadata,
     tag,
     prioritizePerformance,
     log,
     queue,
+    pendingResults,
     isExtensibleSealFrozen,
     supportedPrototypes,
     ignoreCloningMethods,
@@ -54,6 +58,9 @@ export const handleTag = ({
 
         /** @type {boolean|undefined} */
         let webTypeDetected;
+
+        /** @type {boolean|undefined} */
+        let asyncWebTypeDetected;
 
         ({
             cloned,
@@ -90,7 +97,36 @@ export const handleTag = ({
             }));
         }
 
-        if (!(nativeTypeDetected || webTypeDetected)) {
+        /**
+         * Pushes the given promise into the list of pending results.
+         * @param {Promise<any>} promise
+         * @param {Object} [options]
+         * @param {boolean} [options.ignoreProps]
+         * @param {boolean} [options.ignoreProto]
+         */
+        const pushPendingResult = (promise, options) => {
+            pendingResults?.push({
+                value,
+                parentOrAssigner,
+                prop,
+                metadata,
+                promise,
+                ignoreProps: options?.ignoreProps,
+                ignoreProto: options?.ignoreProto,
+                propsToIgnore
+            });
+        };
+
+        if (!nativeTypeDetected && !webTypeDetected) {
+            asyncWebTypeDetected = handleAsyncWebTypes({
+                value,
+                tag,
+                propsToIgnore,
+                pushPendingResult
+            });
+        }
+
+        if (!(nativeTypeDetected || webTypeDetected || asyncWebTypeDetected)) {
             throw getWarning('Attempted to clone unsupported type.');
         }
     } catch (error) {

@@ -26,7 +26,7 @@ import { handleCloningMethods } from './handle-cloning-method.js';
  * @param {boolean} spec.doThrow
  * @param {Set<any>|undefined} spec.parentObjectRegistry
  * @param {[any, any][]} spec.isExtensibleSealFrozen
- * @param {import('../../types').AsyncResultItem[]} [spec.pendingResults]
+ * @param {import('../../types').PendingResultItem[]} [spec.pendingResults]
  * @param {boolean} [spec.async]
  */
 export const processQueue = ({
@@ -187,6 +187,7 @@ export const processQueue = ({
                 value,
                 parentOrAssigner,
                 prop,
+                metadata,
                 tag,
                 prioritizePerformance,
                 log,

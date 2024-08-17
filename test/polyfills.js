@@ -458,6 +458,20 @@ export const polyfill = () => {
             }
         };
     }
+
+    if (!isCallable(global.FileSystemDirectoryHandle)) {
+        global.FileSystemDirectoryHandle = class FileSystemDirectoryHandle {
+        };
+
+        FileSystemDirectoryHandle.prototype[Symbol.toStringTag] =
+            'FileSystemDirectoryHandle';
+    };
+
+    if (!isCallable(global.showDirectoryPicker)) {
+        global.showDirectoryPicker = () => {
+            new FileSystemDirectoryHandle();
+        };
+    }
 };
 
 // Causes this module to have side effect of populating polyfills.
@@ -474,4 +488,6 @@ export const clearPolyfills = () => {
     global.DOMQuad = undefined;
     global.FileList = undefined;
     global.DataTransfer = undefined;
+    global.FileSystemDirectoryHandle = undefined;
+    global.showDirectoryPicker = undefined;
 };

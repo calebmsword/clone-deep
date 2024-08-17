@@ -10,7 +10,7 @@ import { getWarning } from '../../utils/clone-deep-warning.js';
  * @param {import('../../types').Log} spec.log
  * @param {import('../../types').QueueItem[]} spec.queue
  * @param {Map<any, any>} spec.cloneStore
- * @param {import('../../types').AsyncResultItem[]} spec.pendingResults
+ * @param {import('../../types').PendingResultItem[]} spec.pendingResults
  */
 export const processPendingResults = async ({
     container,

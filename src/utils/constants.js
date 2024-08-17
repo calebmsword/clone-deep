@@ -51,10 +51,17 @@ export const Tag = Object.freeze({
     DOMRECTREADONLY: '[object DOMRectReadOnly]',
     DOMQUAD: '[object DOMQuad]',
     FILE: '[object File]',
-    FILELIST: '[object FileList]'
+    FILELIST: '[object FileList]',
+
+    // Async Web APIs
+    AUDIODATA: '[object AudioData]',
+    IMAGEBITMAP: '[object ImageBitmap]',
+    IMAGEDATA: '[object ImageData]',
+    VIDEODATA: '[object VideoData]'
 });
 
 export const WebApi = Object.freeze({
+    AudioData: 'AudioData',
     Blob: 'Blob',
     DOMException: 'DOMException',
     DOMMatrix: 'DOMMatrix',
@@ -65,7 +72,9 @@ export const WebApi = Object.freeze({
     DOMRect: 'DOMRect',
     DOMRectReadOnly: 'DOMRectReadOnly',
     File: 'File',
-    FileList: 'FileList'
+    FileList: 'FileList',
+    ImageBitmap: 'ImageBitmap',
+    ImageData: 'ImageData'
 });
 
 /** All prototypes of supported types. */

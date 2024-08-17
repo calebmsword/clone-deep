@@ -46,7 +46,13 @@ export type Tag = Readonly<{
     DOMRECTREADONLY: string,
     DOMQUAD: string,
     FILE: string,
-    FILELIST: string
+    FILELIST: string,
+
+    // Async Web APIs
+    AUDIODATA: string,
+    IMAGEBITMAP: string,
+    IMAGEDATA: string,
+    VIDEODATA: string
 }>
 
 export type Assigner = (

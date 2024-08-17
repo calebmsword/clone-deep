@@ -25,7 +25,7 @@ export interface QueueItem {
     metadata?: PropertyDescriptor
 }
 
-export interface AsyncResultItem {
+export interface PendingResultItem {
     value: any,
     parentOrAssigner?: symbol|Object|Assigner,
     prop?: string | symbol,

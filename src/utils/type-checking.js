@@ -148,7 +148,10 @@ export const {
     isDOMRect
 } = getGeometryCheckers(WebApi.DOMRectReadOnly, { name: 'x' }, 'x');
 
-const lastModifiedGetter = getDescriptors(File.prototype).lastModified.get;
+const FileConstructor = getConstructorFromString('File');
+const lastModifiedGetter = FileConstructor
+    ? getDescriptors(FileConstructor.prototype).lastModified.get
+    : undefined;
 
 /**
  * Returns `true` if the given value is a File instance, `false` otherwise.
@@ -161,6 +164,58 @@ export const isFile = (value) => {
     }
     try {
         lastModifiedGetter?.call(value);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+const ImageBitmapConstructor = getConstructorFromString('ImageBitmap');
+const heightGetter = ImageBitmapConstructor
+    ? getDescriptors(ImageBitmapConstructor.prototype).height.get
+    : undefined;
+
+/**
+ * Returns `true` if the given value is an ImageBitmap, `false` otherwise.
+ * @param {any} value
+ * @returns {boolean}
+ */
+export const isImageBitmap = (value) => {
+    if (heightGetter === undefined) {
+        return false;
+    }
+
+    if (!(value instanceof ImageBitmap)) {
+        return false;
+    }
+    try {
+        heightGetter.call(value);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+const ImageDataConstructor = getConstructorFromString('ImageData');
+const widthGetter = ImageDataConstructor !== undefined
+    ? getDescriptors(ImageData.prototype).width.get
+    : undefined;
+
+/**
+ * Returns `true` if the given value is an ImageBitmap, `false` otherwise.
+ * @param {any} value
+ * @returns {boolean}
+ */
+export const isImageData = (value) => {
+    if (widthGetter === undefined) {
+        return false;
+    }
+
+    if (!(value instanceof ImageData)) {
+        return false;
+    }
+    try {
+        widthGetter.call(value);
         return true;
     } catch {
         return false;
@@ -196,9 +251,11 @@ const classesToTypeCheck = [
     ['DataView', 'getInt8', Tag.DATAVIEW],
 
     // Web APIs
+    ['AudioData', 'allocationSize', Tag.AUDIODATA],
     ['Blob', 'clone', Tag.BLOB],
     ['DOMQuad', 'toJSON', Tag.DOMQUAD],
-    ['FileList', 'item', Tag.FILELIST, 0]
+    ['FileList', 'item', Tag.FILELIST, 0],
+    ['VideoData', 'allocationSize', Tag.VIDEODATA, 0]
 ];
 
 /**
@@ -213,7 +270,9 @@ const typeCheckers = [
     [isDOMPointReadOnly, Tag.DOMPOINTREADONLY],
     [isDOMRect, Tag.DOMRECT],
     [isDOMRectReadOnly, Tag.DOMRECTREADONLY],
-    [isFile, Tag.FILE]
+    [isFile, Tag.FILE],
+    [isImageBitmap, Tag.IMAGEBITMAP],
+    [isImageData, Tag.IMAGEDATA]
 ];
 
 /**
@@ -359,8 +418,12 @@ export const isIterable = (value) => {
     return typeof value[Symbol.iterator] === 'function';
 };
 
-const TypedArrayProto = getPrototype(getPrototype(
-    new Float32Array(new ArrayBuffer(0))));
+const TypedArrayProto =
+    getConstructorFromString('Float32Array') !== undefined
+    && getConstructorFromString('ArrayBuffer') !== undefined
+        ? getPrototype(getPrototype(
+            new Float32Array(new ArrayBuffer(0))))
+        : undefined;
 
 const typedArrayTags = Object.freeze([
     Tag.FLOAT32,
@@ -392,7 +455,7 @@ export const isTypedArray = (value, prioritizePerformance, tag) => {
     }
 
     try {
-        TypedArrayProto.lastIndexOf.call(value);
+        TypedArrayProto?.lastIndexOf.call(value);
         return true;
     } catch {
         return false;

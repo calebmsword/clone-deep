@@ -19,7 +19,7 @@ import { handleCustomError } from './misc.js';
  * @param {PropertyDescriptor} [spec.metadata]
  * @param {(clone: any) => any} spec.saveClone
  * @param {boolean} spec.doThrow
- * @param {import('../../types').AsyncResultItem[]} [spec.pendingResults]
+ * @param {import('../../types').PendingResultItem[]} [spec.pendingResults]
  * @param {boolean} [spec.async]
  * @returns {{
  *     cloned: any,
