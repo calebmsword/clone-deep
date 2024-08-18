@@ -41,6 +41,7 @@ export const Tag = Object.freeze({
     BIGUINT64: '[object BigUint64Array]',
 
     // Web APIs
+    AUDIODATA: '[object AudioData]',
     BLOB: '[object Blob]',
     DOMEXCEPTION: '[object DOMException]',
     DOMMATRIX: '[object DOMMatrix]',
@@ -51,10 +52,16 @@ export const Tag = Object.freeze({
     DOMRECTREADONLY: '[object DOMRectReadOnly]',
     DOMQUAD: '[object DOMQuad]',
     FILE: '[object File]',
-    FILELIST: '[object FileList]'
+    FILELIST: '[object FileList]',
+    IMAGEDATA: '[object ImageData]',
+    VIDEOFRAME: '[object VideoFrame]',
+
+    // Async Web APIs
+    IMAGEBITMAP: '[object ImageBitmap]'
 });
 
-export const WebApi = Object.freeze({
+export const WebApis = Object.freeze({
+    AudioData: 'AudioData',
     Blob: 'Blob',
     DOMException: 'DOMException',
     DOMMatrix: 'DOMMatrix',
@@ -65,39 +72,42 @@ export const WebApi = Object.freeze({
     DOMRect: 'DOMRect',
     DOMRectReadOnly: 'DOMRectReadOnly',
     File: 'File',
-    FileList: 'FileList'
+    FileList: 'FileList',
+    ImageBitmap: 'ImageBitmap',
+    ImageData: 'ImageData',
+    VideoFrame: 'VideoFrame'
+});
+
+export const Es6NativeTypes = Object.freeze({
+    ArrayBuffer: 'ArrayBuffer',
+    BigInt: 'BigInt',
+    Map: 'Map',
+    Promise: 'Promise',
+    Set: 'Set',
+    Symbol: 'Symbol',
+    DataView: 'DataView',
+    Float32Array: 'Float32Array',
+    Float64Array: 'Float64Array',
+    Int8Array: 'Int8Array',
+    Int16Array: 'Int16Array',
+    Int32Array: 'Int32Array',
+    Uint8Array: 'Uint8Array',
+    Uint8ClampedArray: 'Uint8ClampedArray',
+    Uint16Array: 'Uint16Array',
+    Uint32Array: 'Uint32Array',
+    BigInt64Array: 'BigInt64Array',
+    BigUint64Array: 'BigUint64Array'
 });
 
 /** All prototypes of supported types. */
 export const supportedPrototypes = Object.freeze([
-    // "standard" classes
     Array.prototype,
-    BigInt.prototype,
     Boolean.prototype,
     Date.prototype,
     Error.prototype,
     Function.prototype,
-    Map.prototype,
     Number.prototype,
     Object.prototype,
-    Promise.prototype,
     RegExp.prototype,
-    Set.prototype,
-    String.prototype,
-    Symbol.prototype,
-
-    // ArrayBuffer, DataView and TypedArrays
-    ArrayBuffer.prototype,
-    DataView.prototype,
-    Float32Array.prototype,
-    Float64Array.prototype,
-    Int8Array.prototype,
-    Int16Array.prototype,
-    Int32Array.prototype,
-    Uint8Array.prototype,
-    Uint8ClampedArray.prototype,
-    Uint16Array.prototype,
-    Uint32Array.prototype,
-    BigInt64Array.prototype,
-    BigUint64Array.prototype
+    String.prototype
 ]);

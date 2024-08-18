@@ -1,4 +1,4 @@
-import { Tag, WebApi } from './constants.js';
+import { Tag, WebApis } from './constants.js';
 import { getConstructorFromString } from './helpers.js';
 import { getDescriptors, getPrototype } from './metadata.js';
 
@@ -136,19 +136,17 @@ export const getGeometryCheckers = (webApiString, methodOrProp, property) => {
 export const {
     isDOMMatrixReadOnly,
     isDOMMatrix
-} = getGeometryCheckers(WebApi.DOMMatrixReadOnly, 'scale', 'm11');
+} = getGeometryCheckers(WebApis.DOMMatrixReadOnly, 'scale', 'm11');
 
 export const {
     isDOMPointReadOnly,
     isDOMPoint
-} = getGeometryCheckers(WebApi.DOMPointReadOnly, 'toJSON', 'x');
+} = getGeometryCheckers(WebApis.DOMPointReadOnly, 'toJSON', 'x');
 
 export const {
     isDOMRectReadOnly,
     isDOMRect
-} = getGeometryCheckers(WebApi.DOMRectReadOnly, { name: 'x' }, 'x');
-
-const lastModifiedGetter = getDescriptors(File.prototype).lastModified.get;
+} = getGeometryCheckers(WebApis.DOMRectReadOnly, { name: 'x' }, 'x');
 
 /**
  * Returns `true` if the given value is a File instance, `false` otherwise.
@@ -156,193 +154,67 @@ const lastModifiedGetter = getDescriptors(File.prototype).lastModified.get;
  * @returns {boolean}
  */
 export const isFile = (value) => {
-    if (!(value instanceof File)) {
-        return false;
-    }
     try {
-        lastModifiedGetter?.call(value);
+        if (!(value instanceof File)) {
+            return false;
+        }
+        getDescriptors(File.prototype).lastModified.get?.call(value);
         return true;
     } catch {
         return false;
     }
 };
 
-/** @typedef {new (...args: any[]) => any} Constructor */
-
-/** @typedef {BigIntConstructor|SymbolConstructor|Constructor} ClassesToTypeCheckConstructor */
-
 /**
- * Convenience array used for `getTag`.
- * @type {Array<[ClassesToTypeCheckConstructor|string, string, string, ...any]>}
- */
-const classesToTypeCheck = [
-    // "standard" classes
-    ['ArrayBuffer', 'slice', Tag.ARRAYBUFFER],
-    ['BigInt', 'valueOf', Tag.BIGINT],
-    [Boolean, 'valueOf', Tag.BOOLEAN],
-    [Date, 'getUTCMilliseconds', Tag.DATE],
-    [Function, 'bind', Tag.FUNCTION],
-    [Map, 'has', Tag.MAP],
-    [Number, 'valueOf', Tag.NUMBER],
-    ['Promise', 'then', Tag.PROMISE],
-    [RegExp, 'exec', Tag.REGEXP],
-    ['Set', 'has', Tag.SET],
-    [String, 'valueOf', Tag.STRING],
-    ['Symbol', 'valueOf', Tag.SYMBOL],
-    ['WeakMap', 'has', Tag.WEAKMAP],
-    ['WeakSet', 'has', Tag.WEAKSET],
-
-    // ArrayBuffer, DataView and TypedArrays
-    ['DataView', 'getInt8', Tag.DATAVIEW],
-
-    // Web APIs
-    ['Blob', 'clone', Tag.BLOB],
-    ['DOMQuad', 'toJSON', Tag.DOMQUAD],
-    ['FileList', 'item', Tag.FILELIST, 0]
-];
-
-/**
- * Convenience array used for `getTag`.
- * Certain classes that require special handling to type check are handled here.
- * @type {Array<[(value: any) => boolean, string]>}
- */
-const typeCheckers = [
-    [isDOMMatrix, Tag.DOMMATRIX],
-    [isDOMMatrixReadOnly, Tag.DOMMATRIXREADONLY],
-    [isDOMPoint, Tag.DOMPOINT],
-    [isDOMPointReadOnly, Tag.DOMPOINTREADONLY],
-    [isDOMRect, Tag.DOMRECT],
-    [isDOMRectReadOnly, Tag.DOMRECTREADONLY],
-    [isFile, Tag.FILE]
-];
-
-/**
- * Gets a "tag", which is an string which identifies the type of a value.
- *
- * `Object.prototype.toString` returns a string like `"[object <Type>]"`,  where
- * `"<Type>"` is the type of the object. We refer this return value as the
- * **tag**. Normally, the tag is determined by what `this[Symbol.toStringTag]`
- * is, but the JavaScript specification for `Object.prototype.toString` requires
- * that many native JavaScript objects return a specific tag if the object does
- * not have the `Symbol.toStringTag` property. Also, classes introduced after
- * ES6 typically have their own non-writable `Symbol.toStringTag` property. This
- * makes `Object.prototype.toString.call` a stronger type-check that
- * `instanceof`.
- *
- * @example
- * ```
- * const array = new Array();
- *
- * console.log(array instanceof Array);
- * // true
- *
- * console.log(Object.prototype.toString.call(array));
- * // "[object Array]"
- *
- *
- * const arraySubclass = Object.create(Array.prototype);
- *
- * console.log(arraySubclass instance Array);
- * // true;
- *
- * console.log(Object.prototype.toString.call(arraySubclass));
- * // "[object Object]"
- *
- *
- * // Note this is not a perfect type check because we can do:
- * arraySubclass[Symbol.toStringTag] = "Array"
- * console.log(Object.prototype.toString.call(arraySubclass));
- * // "[object Array]"
- * ```
- *
- * However, most native classes will throw if their prototype methods are called
- * on an object that wasn't called with the appropriate constructor function.
- * This can be used as a stronger type check than
- * `Object.prototype.toString.call` on classes where this is applicable.
- *
- * @example
- * ```
- * const isMap = value => {
- *     try {
- *         Map.prototype.has.call(value);
- *         return true;
- *     }
- *     catch {
- *         return false;
- *     }
- * }
- *
- * console.log(isMap(new Map()));
- * // true
- *
- * console.log(isMap(Object.create(Map.prototype)));
- * // false
- *
- * console.log(isMap({ [Symbol.toStringTag]: "Map" }));
- * // false
- * ```
- *
- * Some classes don't have any native instances, but instead have properties
- * with get/set accessors. These accessors typically throw if bound to incorrect
- * instances so we can use a nearly equivalent technique for them.
- *
- * Currently, only Array, CryptoKey, Error subclasses, DOMException, and
- * TypedArray subclasses are having their tag retrieved from
- * `Object.prototype.toString.call`. (This is not an issue for Arrays since
- * Array.isArray is the best check for arrays anyway.) All other classes are
- * checked by binding the given value to the appropriate prototype method or
- * accessor function. No matter which method is used, we return the tag
- * associated with the detected class.
- *
- * Since calling prototype methods can be expensive, it is possible to call this
- * function is such a way that `Object.prototype.toString.call` is solely used
- * to determine tags using the `prioritizePerformance` parameter.
- *
+ * Returns `true` if the given value is an ImageBitmap, `false` otherwise.
  * @param {any} value
- * The value to get the tag of.
- * @param {boolean} prioritizePerformance
- * Whether type-checking should be done performantly.
- * @returns {string} tag
- * A string indicating the value's type.
+ * @returns {boolean}
  */
-export const getTag = (value, prioritizePerformance) => {
+export const isImageBitmap = (value) => {
+    const ImageBitmapConstructor = getConstructorFromString('ImageBitmap');
+    const heightGetter = ImageBitmapConstructor
+        ? getDescriptors(ImageBitmap.prototype).height.get
+        : undefined;
 
-    if (prioritizePerformance) {
-        return toStringTag(value);
+    if (heightGetter === undefined) {
+        return false;
     }
 
-    /** @type {undefined|string} */
-    let result;
+    if (!(value instanceof ImageBitmap)) {
+        return false;
+    }
+    try {
+        heightGetter.call(value);
+        return true;
+    } catch {
+        return false;
+    }
+};
 
-    classesToTypeCheck.some(([constructor, method, tag, ...args]) => {
-        if (typeof constructor === 'string') {
-            constructor = getConstructorFromString(constructor);
-        }
+/**
+ * Returns `true` if the given value is an ImageBitmap, `false` otherwise.
+ * @param {any} value
+ * @returns {boolean}
+ */
+export const isImageData = (value) => {
+    const ImageDataConstructor = getConstructorFromString('ImageData');
+    const widthGetter = ImageDataConstructor !== undefined
+        ? getDescriptors(ImageData.prototype).width.get
+        : undefined;
 
-        if (constructor === undefined || !(value instanceof constructor)) {
-            return false; // continue iterating
-        }
-
-        try {
-            constructor.prototype[method].call(value, ...args);
-            result = tag;
-            return true; // stop iterating
-        } catch {
-            return false; // continue iterating
-        }
-    });
-
-    if (result === undefined) {
-        typeCheckers.some(([typeChecker, tag]) => {
-            if (typeChecker(value)) {
-                result = tag;
-                return true; // stop iterating
-            }
-            return false; // continue iterating
-        });
+    if (widthGetter === undefined) {
+        return false;
     }
 
-    return result || toStringTag(value);
+    if (!(value instanceof ImageData)) {
+        return false;
+    }
+    try {
+        widthGetter.call(value);
+        return true;
+    } catch {
+        return false;
+    }
 };
 
 /**
@@ -358,9 +230,6 @@ export const isIterable = (value) => {
     }
     return typeof value[Symbol.iterator] === 'function';
 };
-
-const TypedArrayProto = getPrototype(getPrototype(
-    new Float32Array(new ArrayBuffer(0))));
 
 const typedArrayTags = Object.freeze([
     Tag.FLOAT32,
@@ -392,7 +261,8 @@ export const isTypedArray = (value, prioritizePerformance, tag) => {
     }
 
     try {
-        TypedArrayProto.lastIndexOf.call(value);
+        getPrototype(getPrototype(
+            new Float32Array(new ArrayBuffer(0))))?.lastIndexOf.call(value);
         return true;
     } catch {
         return false;
@@ -406,4 +276,24 @@ export const isTypedArray = (value, prioritizePerformance, tag) => {
  */
 export const isObject = (value) => {
     return value !== null && ['object', 'function'].includes(typeof value);
+};
+
+/**
+ * @param {any} value
+ * @returns {boolean}
+ */
+const isStringOrSymbol = (value) => {
+    return ['string', 'symbol'].includes(typeof value);
+};
+
+/**
+ * Returns true if the provided value is an array of strings or symbols.
+ * @param {any} value
+ * @returns {boolean}
+ */
+export const isPropertyKeyArray = (value) => {
+    if (!Array.isArray(value)) {
+        return false;
+    }
+    return value.every(isStringOrSymbol);
 };

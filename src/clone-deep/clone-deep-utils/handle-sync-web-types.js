@@ -157,6 +157,25 @@ export const handleSyncWebTypes = ({
 
         cloned = saveClone(Class.fromRect(domRect));
 
+    } else if (Tag.IMAGEDATA === tag) {
+        /** @type {ImageData} */
+        const imageData = value;
+
+        // ImageData::data is read-only so clone it now instead of later
+        propsToIgnore.push('data');
+        const dataArray = Uint8ClampedArray.from(imageData.data);
+
+        cloned = saveClone(new ImageData(
+            dataArray, imageData.width, imageData.height, {
+                colorSpace: imageData.colorSpace
+            }));
+
+    } else if ([Tag.AUDIODATA, Tag.VIDEOFRAME].includes(tag)) {
+        /** @type {import('./types').AudioData | import('./types').VideoData} */
+        const data = value;
+
+        cloned = saveClone(data.clone());
+
     } else {
         webTypeDetected = false;
     }

@@ -7,18 +7,19 @@ import {
     finalizeClone
 } from './misc.js';
 import { handleCustomizer } from './handle-customizer.js';
-import { getTag, isObject } from '../../utils/type-checking.js';
 import { handleTag } from './handle-tag.js';
 import { handleCloningMethods } from './handle-cloning-method.js';
+import { isObject } from '../../utils/type-checking.js';
+import { getTag } from './get-tag.js';
 
 /**
  * Iterate through all items in the queue.
  * @template U
  * @param {Object} spec
- * @param {import('../../types.js').QueueItem[]} spec.queue
+ * @param {import('../../types').QueueItem[]} spec.queue
  * @param {{ clone: U }} spec.container
- * @param {import('../../types.js').Log} spec.log
- * @param {import('../../types.js').Customizer|undefined} spec.customizer
+ * @param {import('../../types').Log} spec.log
+ * @param {import('../../types').Customizer|undefined} spec.customizer
  * @param {Map<any, any>} spec.cloneStore
  * @param {boolean} spec.prioritizePerformance
  * @param {any[]} spec.supportedPrototypes
@@ -26,7 +27,7 @@ import { handleCloningMethods } from './handle-cloning-method.js';
  * @param {boolean} spec.doThrow
  * @param {Set<any>|undefined} spec.parentObjectRegistry
  * @param {[any, any][]} spec.isExtensibleSealFrozen
- * @param {import('../../types').AsyncResultItem[]} [spec.pendingResults]
+ * @param {import('../../types').PendingResultItem[]} [spec.pendingResults]
  * @param {boolean} [spec.async]
  */
 export const processQueue = ({
@@ -187,6 +188,7 @@ export const processQueue = ({
                 value,
                 parentOrAssigner,
                 prop,
+                metadata,
                 tag,
                 prioritizePerformance,
                 log,

@@ -12,13 +12,13 @@ import cloneDeepFully from '../src/clone-deep-fully/clone-deep-fully.js';
 import useCustomizers from '../src/use-customizers.js';
 
 import { CLONE, Tag } from '../src/utils/constants.js';
+import { getTag } from '../src/clone-deep/clone-deep-utils/get-tag.js';
 import {
     createFileList,
     getSupportedPrototypes,
     getTypedArrayConstructor
 } from '../src/utils/helpers.js';
 import {
-    getTag,
     isDOMMatrix,
     isDOMMatrixReadOnly,
     isDOMPoint,
@@ -27,6 +27,7 @@ import {
     isDOMRectReadOnly,
     isIterable
 } from '../src/utils/type-checking.js';
+import { getDescriptors } from '../src/utils/metadata.js';
 
 // we will monkeypatch console.warn in a second, so hold onto the original
 // implementation for safekeeping
@@ -173,6 +174,15 @@ try {
                 return new TypedArray(new ArrayBuffer());
             };
 
+            const getVideoFrame = () => {
+                return new VideoFrame(Uint8Array.from([0x7f, 0xff, 0xd4]), {
+                    timestamp: 0,
+                    codedWidth: 1,
+                    codedHeight: 1,
+                    format: 'I420'
+                });
+            };
+
             const type = {
                 // "standard" classes
                 args: [
@@ -241,8 +251,18 @@ try {
                 domquad: [new DOMQuad(), Tag.DOMQUAD],
                 domrect: [new DOMRect(), Tag.DOMRECT],
                 domrectreadonly: [new DOMRectReadOnly(), Tag.DOMRECTREADONLY],
+                audiodata: [new AudioData({
+                    data: new ArrayBuffer(1),
+                    format: 'u8',
+                    numberOfChannels: 1,
+                    numberOfFrames: 1,
+                    timestamp: 0,
+                    sampleRate: 44100
+                }), Tag.AUDIODATA],
                 file: [new File([], ''), Tag.FILE],
-                filelist: [createFileList([]), Tag.FILELIST]
+                filelist: [createFileList([]), Tag.FILELIST],
+                imagedata: [new ImageData(10, 10), Tag.IMAGEDATA],
+                videoframe: [getVideoFrame(), Tag.VIDEOFRAME]
             };
 
             for (const key of Object.keys(type)) {
@@ -1253,6 +1273,26 @@ try {
                  assert.strictEqual('test1', cloned.p1.test1);
                  assert.strictEqual('test2', cloned.p1.test2);
              });
+
+        test('ImageData and ImageBitmap instances are only recognized if ' +
+             'they were created by the constructor function', () => {
+            // -- arrange
+            const fakeImageData = Object.create(ImageData.prototype);
+            const fakeImageBitmap = Object.create(ImageBitmap.prototype);
+
+            // -- act
+            const cloneData = cloneDeep(fakeImageData);
+            const cloneBitmap = cloneDeep(fakeImageBitmap);
+
+            // -- assert
+            assert.throws(() => {
+                getDescriptors(getProto(ImageData)).width.get?.call(cloneData);
+            });
+            assert.throws(() => {
+                getDescriptors(getProto(ImageBitmap))
+                    .height.get?.call(cloneBitmap);
+            });
+        });
     });
 
     describe('cloneDeep customizer', () => {
@@ -2088,7 +2128,12 @@ try {
                 domrect: [new DOMRect(), Tag.DOMRECT],
                 domrectreadonly: [new DOMRectReadOnly(), Tag.DOMRECTREADONLY],
                 file: [new File([], ''), Tag.FILE],
-                filelist: [createFileList([]), Tag.FILELIST]
+                filelist: [createFileList([]), Tag.FILELIST],
+                imagebitmap: [
+                    await createImageBitmap(new ImageData(1, 1)),
+                    Tag.IMAGEBITMAP
+                ],
+                imagedata: [new ImageData(10, 10), Tag.IMAGEDATA]
             };
 
             const promises = [];
@@ -2296,6 +2341,20 @@ try {
             // -- assert
             // it complains a second time when trying to clone cloning method
             assert.strictEqual(2, log.mock.calls.length);
+        });
+
+        test('async mode logs warning when unsupported type', async () => {
+            // -- arrange
+            const log = mock.fn(() => {});
+            const unsupported = {
+                [Symbol.toStringTag]: 'Unsupported'
+            };
+
+            // -- act
+            await cloneDeep(unsupported, { async: true, log });
+
+            // -- assert
+            assert.strictEqual(1, log.mock.calls.length);
         });
     });
 

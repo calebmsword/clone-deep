@@ -146,56 +146,6 @@ export const handleCustomError = ({
 };
 
 /**
- * Ensure that the cloned object shares a prototype with the original.
- * @param {any} cloned
- * The cloned object.
- * @param {any} value
- * The original object.
- */
-export const ensurePrototypesMatch = (cloned, value) => {
-    if (getPrototype(cloned) !== getPrototype(value)) {
-        Object.setPrototypeOf(cloned, getPrototype(value));
-    }
-};
-
-/**
- * Updates the synchronous queue with the properties of the given value.
- * This will use all "owned" properties of value. This includes non-enumerable
- * and symbol properties, and excludes properties from value's prototype chain.
- * @param {Object} spec
- * @param {any} spec.value
- * The value whose properties will be iterated over.
- * @param {any} spec.clone
- * The clone that will inherit clones of `value`'s properties.
- * @param {(string|symbol)[]} spec.propsToIgnore
- * A list of properties of `value` to skip.
- * @param {import('../../types').QueueItem[]} spec.queue
- * The queue representing future values to clone synchronously.
- */
-export const addOwnPropertiesToQueue = ({
-    value,
-    clone,
-    propsToIgnore,
-    queue
-}) => {
-
-    forAllOwnProperties(value, (key) => {
-        if (propsToIgnore.includes(key)) {
-            return;
-        }
-
-        const meta = Object.getOwnPropertyDescriptor(value, key);
-
-        queue.push({
-            value: !hasAccessor(meta) ? value[key] : undefined,
-            parentOrAssigner: clone,
-            prop: key,
-            metadata: meta
-        });
-    });
-};
-
-/**
  * Performs last-minute pruning of the cloned value.
  * This function stores the cloned value in the clone store, check that
  * prototype is the same as the original value, and adds properties of the
@@ -226,21 +176,30 @@ export const finalizeClone = ({
     queue,
     asyncResult
 }) => {
-    if (isObject(cloned) && !cloneIsCached && !ignoreThisLoop && !asyncResult) {
-        cloneStore.set(value, cloned);
+    if (!isObject(cloned) || cloneIsCached || ignoreThisLoop || asyncResult) {
+        return;
+    }
 
-        if (!ignoreProto) {
-            ensurePrototypesMatch(cloned, value);
-        }
+    cloneStore.set(value, cloned);
 
-        if (!ignoreProps) {
-            addOwnPropertiesToQueue({
-                value,
-                clone: cloned,
-                propsToIgnore,
-                queue
+    if (!ignoreProto && getPrototype(cloned) !== getPrototype(value)) {
+        Object.setPrototypeOf(cloned, getPrototype(value));
+    }
+
+    if (!ignoreProps) {
+        forAllOwnProperties(value, (key) => {
+            if (propsToIgnore.includes(key)) {
+                return;
+            }
+
+            const meta = Object.getOwnPropertyDescriptor(value, key);
+            queue.push({
+                value: !hasAccessor(meta) ? value[key] : undefined,
+                parentOrAssigner: cloned,
+                prop: key,
+                metadata: meta
             });
-        }
+        });
     }
 };
 

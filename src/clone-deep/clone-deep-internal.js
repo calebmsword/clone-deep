@@ -61,7 +61,7 @@ export const cloneDeepInternal = ({
      */
     const queue = [{ value, parentOrAssigner: TOP_LEVEL }];
 
-    /** @type import('../types').AsyncResultItem[]} */
+    /** @type import('../types').PendingResultItem[]} */
     const pendingResults = [];
 
     /**

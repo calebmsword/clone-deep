@@ -1,4 +1,9 @@
-import { supportedPrototypes, Tag, WebApi } from './constants.js';
+import {
+    supportedPrototypes,
+    Es6NativeTypes,
+    Tag,
+    WebApis
+} from './constants.js';
 import { getWarning } from './clone-deep-warning.js';
 import { isCallable } from './type-checking.js';
 
@@ -140,11 +145,19 @@ export const getSupportedPrototypes = () => {
     /** @type {object[]} */
     const webApiPrototypes = [];
 
-    Object.keys(WebApi).forEach((webApiString) => {
+    Object.keys(WebApis).forEach((webApiString) => {
         const PotentialWebApi = getConstructorFromString(webApiString);
 
         if (PotentialWebApi !== undefined && isCallable(PotentialWebApi)) {
             webApiPrototypes.push(PotentialWebApi.prototype);
+        }
+    });
+
+    Object.keys(Es6NativeTypes).forEach((typeArrayString) => {
+        const PotentialArray = getConstructorFromString(typeArrayString);
+
+        if (PotentialArray !== undefined && isCallable(PotentialArray)) {
+            webApiPrototypes.push(PotentialArray.prototype);
         }
     });
 

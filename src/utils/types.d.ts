@@ -36,6 +36,7 @@ export type Tag = Readonly<{
     BIGUINT64: string,
 
     // Web APIs
+    AUDIODATA: string,
     BLOB: string,
     DOMEXCEPTION: string,
     DOMMATRIX: string,
@@ -46,7 +47,12 @@ export type Tag = Readonly<{
     DOMRECTREADONLY: string,
     DOMQUAD: string,
     FILE: string,
-    FILELIST: string
+    FILELIST: string,
+    IMAGEDATA: string,
+    VIDEOFRAME: string
+
+    // Async Web APIs
+    IMAGEBITMAP: string,
 }>
 
 export type Assigner = (

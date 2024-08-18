@@ -58,5 +58,6 @@ export const Warning = {
         'return value of CLONE method is an object whose propsToIgnore ' +
         'property, if not undefined, is expected to be an array of strings ' +
         'or symbols. The given result is not this type of array so it will ' +
-        'have no effect.')
+        'have no effect.'),
+    UNSUPPORTED_TYPE: getWarning('Attempted to clone unsupported type.')
 };
