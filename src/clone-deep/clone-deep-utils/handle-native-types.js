@@ -12,7 +12,7 @@ import {
 import { getPrototype } from '../../utils/metadata.js';
 import { isIterable, isTypedArray } from '../../utils/type-checking.js';
 
-/** @typedef {import('../../utils/types.js').Assigner} Assigner */
+/** @typedef {import('../../utils/types').Assigner} Assigner */
 
 /**
  * @param {Object} spec
@@ -21,13 +21,13 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
  * @param {string|symbol|undefined} spec.prop
  * @param {string} spec.tag
  * @param {boolean} spec.prioritizePerformance
- * @param {import('../../types.js').QueueItem[]} spec.queue
+ * @param {import('../../types').QueueItem[]} spec.queue
  * @param {[any, any][]} spec.isExtensibleSealFrozen
  * @param {any[]} spec.supportedPrototypes
  * @param {boolean} spec.ignoreCloningMethods
  * @param {boolean} spec.ignoreCloningMethodsThisLoop
  * @param {(string|symbol)[]} spec.propsToIgnore
- * @param {import('../../types.js').Log} spec.log
+ * @param {import('../../types').Log} spec.log
  * @param {(clone: any) => any} spec.saveClone
  * @returns {{
  *     cloned: any,
@@ -156,7 +156,7 @@ export const handleNativeTypes = ({
                 : new AggregateError(errors, message, { cause });
 
         } else {
-            /** @type {import('../../utils/types.js').AtomicErrorConstructor} */
+            /** @type {import('../../utils/types').AtomicErrorConstructor} */
             const ErrorConstructor = getAtomicErrorConstructor(error, log);
 
             const { cause } = error;
@@ -200,7 +200,7 @@ export const handleNativeTypes = ({
     } else if (isTypedArray(value, prioritizePerformance, tag)
             || Tag.DATAVIEW === tag) {
 
-        /** @type {import('../../utils/types.js').TypedArrayConstructor} */
+        /** @type {import('../../utils/types').TypedArrayConstructor} */
         const TypedArray = getTypedArrayConstructor(tag, log);
 
         // copy data over to clone

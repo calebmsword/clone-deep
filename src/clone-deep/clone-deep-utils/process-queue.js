@@ -16,10 +16,10 @@ import { getTag } from './get-tag.js';
  * Iterate through all items in the queue.
  * @template U
  * @param {Object} spec
- * @param {import('../../types.js').QueueItem[]} spec.queue
+ * @param {import('../../types').QueueItem[]} spec.queue
  * @param {{ clone: U }} spec.container
- * @param {import('../../types.js').Log} spec.log
- * @param {import('../../types.js').Customizer|undefined} spec.customizer
+ * @param {import('../../types').Log} spec.log
+ * @param {import('../../types').Customizer|undefined} spec.customizer
  * @param {Map<any, any>} spec.cloneStore
  * @param {boolean} spec.prioritizePerformance
  * @param {any[]} spec.supportedPrototypes
