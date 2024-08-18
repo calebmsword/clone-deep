@@ -17,10 +17,18 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
 /**
  * @param {Object} spec
  * @param {any} spec.value
- * @param {symbol|object|Assigner|undefined} spec.parentOrAssigner
- * @param {string|symbol|undefined} spec.prop
+ * The value to clone.
+ * @param {symbol|object|Assigner} [spec.parentOrAssigner]
+ * Either the parent object that the cloned value will be assigned to, or a
+ * function which assigns the value itself. If equal to `TOP_LEVEL`, then it
+ * is the value that will be returned by the algorithm.
+ * @param {string|symbol} [spec.prop]
+ * If this value is a nested value being cloned, this is the property on the
+ * parent object which contains the value being cloned.
  * @param {string} spec.tag
+ * The tag of the provided value.
  * @param {boolean} spec.prioritizePerformance
+ * Whether type-checking should sacrifice robustnesss for performance.
  * @param {import('../../types').QueueItem[]} spec.queue
  * @param {[any, any][]} spec.isExtensibleSealFrozen
  * @param {any[]} spec.supportedPrototypes
