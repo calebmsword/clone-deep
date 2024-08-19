@@ -16,35 +16,12 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
 
 /**
  * @param {Object} spec
- * @param {any} spec.value
- * The value to clone.
- * @param {symbol|object|Assigner} [spec.parentOrAssigner]
- * Either the parent object that the cloned value will be assigned to, or a
- * function which assigns the value itself. If equal to `TOP_LEVEL`, then it
- * is the value that will be returned by the algorithm.
- * @param {string|symbol} [spec.prop]
- * If this value is a nested value being cloned, this is the property on the
- * parent object which contains the value being cloned.
+ * @param {import('./global-state.js').GlobalState} spec.globalState
+ * @param {import('../../types').QueueItem} spec.queueItem
  * @param {string} spec.tag
  * The tag of the provided value.
- * @param {boolean} spec.prioritizePerformance
- * Whether type-checking should sacrifice robustnesss for performance.
- * @param {import('../../types').QueueItem[]} spec.queue
- * The queue of values to clone.
- * @param {[any, any][]} spec.isExtensibleSealFrozen
- * Tuples of values and their clones are added to this list. This is to ensure
- * that each clone value will have the correct
- * extensibility/sealedness/frozenness.
- * @param {any[]} spec.supportedPrototypes
- * A list of prototypes of the supported types available in this runtime.
- * @param {boolean} spec.ignoreCloningMethods
- * Whether cloning methods should even be considered.
- * @param {boolean} spec.ignoreCloningMethodsThisLoop
- * Whether cloning methods should be considered for this particular value.
  * @param {(string|symbol)[]} spec.propsToIgnore
  * A list of properties under this value that should not be cloned.
- * @param {import('../../types').Log} spec.log
- * The logger.
  * @param {(clone: any) => any} spec.saveClone
  * A function which stores the clone of `value` into the cloned object.
  * @returns {{
@@ -55,18 +32,22 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
  * }}
  */
 export const handleNativeTypes = ({
-    value,
-    parentOrAssigner,
-    prop,
+    globalState,
+    queueItem,
     tag,
-    prioritizePerformance,
-    queue,
-    isExtensibleSealFrozen,
-    supportedPrototypes,
     propsToIgnore,
-    log,
     saveClone
 }) => {
+
+    const {
+        prioritizePerformance,
+        log,
+        queue,
+        isExtensibleSealFrozen,
+        supportedPrototypes
+    } = globalState;
+
+    const { value, parentOrAssigner, prop } = queueItem;
 
     /** @type {any} */
     let cloned;

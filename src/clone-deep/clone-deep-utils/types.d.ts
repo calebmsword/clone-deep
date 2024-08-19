@@ -1,3 +1,5 @@
+import { PendingResultItem, QueueItem } from "../../types";
+
 type TypedArray =
   Int8Array
   | Uint8Array
@@ -70,4 +72,14 @@ export interface VideoData {
         format: string,
         colorSpace: string
     ) => Promise<Layout>
+}
+
+export interface GlobalState<U> {
+    container: {
+        clone: U
+    },
+    cloneStore: Map<any, any>,
+    queue: QueueItem[],
+    pendingResults: PendingResultItem[],
+    isExtensibleSealFrozen: [any, any][]
 }

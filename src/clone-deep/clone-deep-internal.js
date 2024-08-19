@@ -1,10 +1,9 @@
-import { TOP_LEVEL } from './clone-deep-utils/assign.js';
 import { handleMetadata } from './clone-deep-utils/misc.js';
 import { processQueue } from './clone-deep-utils/process-queue.js';
-import { getSupportedPrototypes } from '../utils/helpers.js';
 import {
     processPendingResults
 } from './clone-deep-utils/process-pending-results.js';
+import { GlobalState } from './clone-deep-utils/global-state.js';
 
 /**
  * Clones the provided value.
@@ -43,96 +42,43 @@ export const cloneDeepInternal = ({
     async
 }) => {
 
-    /**
-     * Contains the cloned value.
-     * @type {{ clone: any }}
-     */
-    const container = { clone: undefined };
-
-    /**
-     * Will be used to store cloned values so that we don't loop infinitely on
-     * circular references.
-     */
-    const cloneStore = new Map();
-
-    /**
-     * A queue so we can avoid recursion.
-     * @type {import('../types').QueueItem[]}
-     */
-    const queue = [{ value, parentOrAssigner: TOP_LEVEL }];
-
-    /** @type import('../types').PendingResultItem[]} */
-    const pendingResults = [];
-
-    /**
-     * We will do a second pass through everything to check Object.isExtensible,
-     * Object.isSealed and Object.isFrozen. We do it last so we don't run into
-     * issues where we append properties on a frozen object, etc.
-     * @type {Array<[any, any]>}
-     */
-    const isExtensibleSealFrozen = [];
-
-    /** An array of all prototypes of supported types in this runtime. */
-    const supportedPrototypes = getSupportedPrototypes();
+    const globalState = new GlobalState({
+        value,
+        log,
+        customizer,
+        parentObjectRegistry,
+        prioritizePerformance,
+        ignoreCloningMethods,
+        doThrow,
+        async
+    });
 
     if (!async) {
-        processQueue({
-            queue,
-            container,
-            log,
-            customizer,
-            cloneStore,
-            prioritizePerformance,
-            supportedPrototypes,
-            ignoreCloningMethods,
-            doThrow,
-            parentObjectRegistry,
-            isExtensibleSealFrozen
-        });
+        processQueue(globalState);
 
-        handleMetadata(isExtensibleSealFrozen);
+        handleMetadata(globalState.isExtensibleSealFrozen);
 
-        return container.clone;
+        return globalState.container.clone;
     }
 
     /** @returns {Promise<void>} */
     const processData = async () => {
         try {
-            processQueue({
-                queue,
-                container,
-                log,
-                customizer,
-                cloneStore,
-                prioritizePerformance,
-                supportedPrototypes,
-                ignoreCloningMethods,
-                doThrow,
-                parentObjectRegistry,
-                isExtensibleSealFrozen,
-                pendingResults,
-                async
-            });
+            processQueue(globalState);
 
-            if (pendingResults.length > 0) {
-                await processPendingResults({
-                    container,
-                    log,
-                    queue,
-                    cloneStore,
-                    pendingResults
-                });
+            if (globalState.pendingResults.length > 0) {
+                await processPendingResults(globalState);
 
                 return processData();
             }
 
-            handleMetadata(isExtensibleSealFrozen);
+            handleMetadata(globalState.isExtensibleSealFrozen);
         } catch (reason) {
             return Promise.reject(reason);
         }
     };
 
     return processData().then(() => {
-        return container;
+        return globalState.container;
     });
 };

@@ -10,16 +10,10 @@ import { forAllOwnProperties, hasAccessor } from '../../utils/metadata.js';
 
 /**
  * @param {Object} spec
- * @param {any} spec.value
- * The value being cloned.
+ * @param {import('./global-state.js').GlobalState} spec.globalState
+ * @param {import('../../types').QueueItem} spec.queueItem
  * @param {string} spec.tag
  * The tag of the provided value.
- * @param {import('../../types').QueueItem[]} spec.queue
- * The queue of values to clone.
- * @param {[any, any][]} spec.isExtensibleSealFrozen
- * Tuples of values and their clones are added to this list. This is to ensure
- * that each clone value will have the correct
- * extensibility/sealedness/frozenness.
  * @param {(string|symbol)[]} spec.propsToIgnore
  * A list of properties under this value that should not be cloned.
  * @param {(clone: any) => any} spec.saveClone
@@ -30,13 +24,15 @@ import { forAllOwnProperties, hasAccessor } from '../../utils/metadata.js';
  * }}
  */
 export const handleSyncWebTypes = ({
-    value,
+    globalState,
+    queueItem,
     tag,
-    queue,
-    isExtensibleSealFrozen,
     propsToIgnore,
     saveClone
 }) => {
+
+    const { queue, isExtensibleSealFrozen } = globalState;
+    const { value } = queueItem;
 
     /** @type {any} */
     let cloned;

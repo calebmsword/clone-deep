@@ -119,6 +119,13 @@ export const cloneFile = (file) => {
     });
 };
 
+
+/** @type {any} */
+const __global = globalThis;
+
+/** @type {{ [key: string]: new (...args: any[]) => any | undefined }} */
+const global = __global;
+
 /**
  * Attempts to retreive a web API from the global object.
  * Doing this in a way that utilizes TypeScript effectively is obtuse, hence
@@ -128,12 +135,6 @@ export const cloneFile = (file) => {
  * @returns {new (...args: any[]) => any | undefined}
  */
 export const getConstructorFromString = (string) => {
-    /** @type {any} */
-    const __global = globalThis;
-
-    /** @type {{ [key: string]: new (...args: any[]) => any | undefined }} */
-    const global = __global;
-
     return global[string];
 };
 

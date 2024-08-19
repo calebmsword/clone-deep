@@ -14,62 +14,24 @@ import { getTag } from './get-tag.js';
 
 /**
  * Iterate through all items in the queue.
- * @template U
- * @param {Object} spec
- * @param {import('../../types').QueueItem[]} spec.queue
- * The queue of values to clone.
- * @param {{ clone: U }} spec.container
- * Object containing the top-level object that will be returned by
- * cloneDeepInternal.
- * @param {import('../../types').Log} spec.log
- * The logger.
- * @param {import('../../types').Customizer} [spec.customizer]
- * The customizer used to qualify the default behavior of cloneDeepInternal.
- * @param {Map<any, any>} spec.cloneStore
- * A store of previously cloned values, used to resolve circular references.
- * @param {boolean} spec.prioritizePerformance
- * Whether or not type-checking will be more performant.
- * @param {any[]} spec.supportedPrototypes
- * A list of prototypes of the supported types available in this runtime.
- * @param {boolean} spec.ignoreCloningMethods
- * Whether cloning methods should even be considered.
- * @param {boolean} spec.doThrow
- * Whether errors in the customizer should cause the function to throw.
- * @param {Set<any>} [spec.parentObjectRegistry]
- * This is used to check if an object with a cloning method is in the prototype
- * of an object that was cloned earlier in the chain.
- * @param {[any, any][]} spec.isExtensibleSealFrozen
- * Tuples of values and their clones are added to this list. This is to ensure
- * that each clone value will have the correct
- * extensibility/sealedness/frozenness.
- * @param {import('../../types').PendingResultItem[]} [spec.pendingResults]
- * The list of all clones that can only be acquired asynchronously.
- * @param {boolean} [spec.async]
+ * @param {import('./global-state.js').GlobalState} globalState
+ * The global application state.
  */
-export const processQueue = ({
-    queue,
-    container,
-    log,
-    customizer,
-    cloneStore,
-    prioritizePerformance,
-    supportedPrototypes,
-    ignoreCloningMethods,
-    doThrow,
-    parentObjectRegistry,
-    isExtensibleSealFrozen,
-    pendingResults,
-    async
-}) => {
+export const processQueue = (globalState) => {
 
-    for (let item = queue.shift(); item !== undefined; item = queue.shift()) {
+    const {
+        queue,
+        customizer,
+        cloneStore,
+        isExtensibleSealFrozen,
+        parentObjectRegistry,
+        prioritizePerformance,
+        ignoreCloningMethods
+    } = globalState;
 
-        const {
-            value,
-            parentOrAssigner,
-            prop,
-            metadata
-        } = item;
+    for (let queueItem = queue.shift(); queueItem; queueItem = queue.shift()) {
+
+        const { value } = queueItem;
 
         /**
          * A shortcut for conveniently using {@link assign}.
@@ -78,12 +40,14 @@ export const processQueue = ({
          */
         const saveClone = (clonedValue) => {
             return assign({
-                container,
-                log,
-                cloned: clonedValue,
-                parentOrAssigner,
-                prop,
-                metadata
+                globalState,
+                queueItem: {
+                    value: queueItem?.value,
+                    parentOrAssigner: queueItem?.parentOrAssigner,
+                    prop: queueItem?.prop,
+                    metadata: queueItem?.metadata
+                },
+                cloned: clonedValue
             });
         };
 
@@ -149,17 +113,10 @@ export const processQueue = ({
                 ignoreThisLoop,
                 async: asyncResult
             } = handleCustomizer({
-                log,
-                queue,
                 customizer,
-                value,
-                parentOrAssigner,
-                prop,
-                metadata,
-                saveClone,
-                doThrow,
-                pendingResults,
-                async
+                globalState,
+                queueItem,
+                saveClone
             }));
         }
 
@@ -172,6 +129,7 @@ export const processQueue = ({
 
         ignoreCloningMethodsThisLoop = checkParentObjectRegistry(
             value, parentObjectRegistry);
+
         if (!ignore && !ignoreCloningMethods && !ignoreCloningMethodsThisLoop) {
             ({
                 cloned,
@@ -180,18 +138,10 @@ export const processQueue = ({
                 useCloningMethod,
                 async: asyncResult
             } = handleCloningMethods({
-                value,
-                parentOrAssigner,
-                prop,
-                metadata,
-                ignoreCloningMethods,
-                ignoreCloningMethodsThisLoop,
+                globalState,
+                queueItem,
                 propsToIgnore,
-                log,
-                saveClone,
-                pendingResults,
-                async,
-                doThrow
+                saveClone
             }));
         }
 
@@ -201,22 +151,11 @@ export const processQueue = ({
                 ignoreProps,
                 ignoreProto
             } = handleTag({
-                value,
-                parentOrAssigner,
-                prop,
-                metadata,
+                globalState,
+                queueItem,
                 tag,
-                prioritizePerformance,
-                log,
-                queue,
-                isExtensibleSealFrozen,
-                supportedPrototypes,
-                ignoreCloningMethods,
-                ignoreCloningMethodsThisLoop,
                 propsToIgnore,
-                saveClone,
-                pendingResults,
-                async
+                saveClone
             }));
         }
 
@@ -224,6 +163,8 @@ export const processQueue = ({
 
         finalizeClone({
             value,
+            cloneStore,
+            queue,
             cloned,
             cloneIsCached,
             ignoreProto,
@@ -231,8 +172,6 @@ export const processQueue = ({
             ignoreThisLoop,
             useCloningMethod,
             propsToIgnore,
-            cloneStore,
-            queue,
             asyncResult
         });
     }

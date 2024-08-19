@@ -4,26 +4,16 @@ import { getWarning } from '../../utils/clone-deep-warning.js';
 
 /**
  * Processes pending results.
- * @template [U = any]
- * @param {Object} spec
- * @param {{ clone: U }} spec.container
- * Contains the cloned top-level object returned by the algorithm.
- * @param {import('../../types').Log} spec.log
- * The logger.
- * @param {import('../../types').QueueItem[]} spec.queue
- * The queue storing all values to clone.
- * @param {Map<any, any>} spec.cloneStore
- * A store of previously cloned values, used to resolve circular references.
- * @param {import('../../types').PendingResultItem[]} spec.pendingResults
- * The list of all clones that can only be acquired asynchronously.
+ * @param {import('./global-state.js').GlobalState} globalState
  */
-export const processPendingResults = async ({
-    container,
-    log,
-    queue,
-    cloneStore,
-    pendingResults
-}) => {
+export const processPendingResults = async (globalState) => {
+    const {
+        log,
+        queue,
+        cloneStore,
+        pendingResults
+    } = globalState;
+
     const clones = await Promise
         .allSettled(pendingResults.map((result) => {
             return result.promise;
@@ -36,9 +26,9 @@ export const processPendingResults = async ({
 
         if (clone.status === 'rejected') {
             log(getWarning(
-                'Promise rejected' + (result.prop !== undefined
+                'Promise rejected' + (result.queueItem.prop !== undefined
                     ? ' for value assigned to property ' +
-                      `"${String(result.prop)}". `
+                      `"${String(result.queueItem.prop)}". `
                     : '. ') +
                 'This value will be cloned into an empty object.',
                 { cause: clone.reason }));
@@ -48,16 +38,13 @@ export const processPendingResults = async ({
         }
 
         assign({
-            container,
-            log,
-            cloned,
-            parentOrAssigner: result.parentOrAssigner,
-            prop: result.prop,
-            metadata: result.metadata
+            globalState,
+            queueItem: result.queueItem,
+            cloned
         });
 
         finalizeClone({
-            value: result.value,
+            value: result.queueItem.value,
             cloned,
             cloneIsCached: false,
             ignoreProto: result.ignoreProto,

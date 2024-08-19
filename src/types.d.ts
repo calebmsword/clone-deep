@@ -30,7 +30,7 @@ export interface CloneDeepFullyOptions extends CloneDeepOptions {
  * The type of elements in the queue.
  */
 export interface QueueItem {
-    value: any,
+    value?: any,
     parentOrAssigner?: symbol|Object|Assigner,
     prop?: string | symbol,
     metadata?: PropertyDescriptor
@@ -40,10 +40,7 @@ export interface QueueItem {
  * The type of elements in the PendingResults array.
  */
 export interface PendingResultItem {
-    value: any,
-    parentOrAssigner?: symbol|Object|Assigner,
-    prop?: string | symbol,
-    metadata?: PropertyDescriptor,
+    queueItem: QueueItem,
     promise: Promise<any>,
     ignoreProto?: boolean,
     ignoreProps?: boolean,

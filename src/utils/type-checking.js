@@ -171,20 +171,11 @@ export const isFile = (value) => {
  * @returns {boolean}
  */
 export const isImageBitmap = (value) => {
-    const ImageBitmapConstructor = getConstructorFromString('ImageBitmap');
-    const heightGetter = ImageBitmapConstructor
-        ? getDescriptors(ImageBitmap.prototype).height.get
-        : undefined;
-
-    if (heightGetter === undefined) {
-        return false;
-    }
-
-    if (!(value instanceof ImageBitmap)) {
-        return false;
-    }
     try {
-        heightGetter.call(value);
+        if (!(value instanceof ImageBitmap)) {
+            return false;
+        }
+        getDescriptors(ImageBitmap.prototype).height.get?.call(value);
         return true;
     } catch {
         return false;
@@ -197,20 +188,11 @@ export const isImageBitmap = (value) => {
  * @returns {boolean}
  */
 export const isImageData = (value) => {
-    const ImageDataConstructor = getConstructorFromString('ImageData');
-    const widthGetter = ImageDataConstructor !== undefined
-        ? getDescriptors(ImageData.prototype).width.get
-        : undefined;
-
-    if (widthGetter === undefined) {
-        return false;
-    }
-
-    if (!(value instanceof ImageData)) {
-        return false;
-    }
     try {
-        widthGetter.call(value);
+        if (!(value instanceof ImageData)) {
+            return false;
+        }
+        getDescriptors(ImageData.prototype).width.get?.call(value);
         return true;
     } catch {
         return false;
