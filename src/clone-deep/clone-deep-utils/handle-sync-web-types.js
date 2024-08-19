@@ -11,11 +11,19 @@ import { forAllOwnProperties, hasAccessor } from '../../utils/metadata.js';
 /**
  * @param {Object} spec
  * @param {any} spec.value
+ * The value being cloned.
  * @param {string} spec.tag
+ * The tag of the provided value.
  * @param {import('../../types').QueueItem[]} spec.queue
+ * The queue of values to clone.
  * @param {[any, any][]} spec.isExtensibleSealFrozen
+ * Tuples of values and their clones are added to this list. This is to ensure
+ * that each clone value will have the correct
+ * extensibility/sealedness/frozenness.
  * @param {(string|symbol)[]} spec.propsToIgnore
+ * A list of properties under this value that should not be cloned.
  * @param {(clone: any) => any} spec.saveClone
+ * A function which stores the clone of `value` into the cloned object.
  * @returns {{
  *     cloned: any,
  *     webTypeDetected: boolean

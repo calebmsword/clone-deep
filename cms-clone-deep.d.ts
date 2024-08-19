@@ -12,7 +12,7 @@ export {
 
 export { 
     AdditionalValue, 
-    ValueTransform 
+    CloningMethodResult 
 } from "./src/utils/types";
 
 declare module "cms-clone-deep" {

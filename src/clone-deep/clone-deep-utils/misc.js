@@ -110,9 +110,14 @@ export const handleError = (error, log, saveClone) => {
  * that an error was thrown.
  * @param {Object} spec
  * @param {import('../../types').Log} spec.log
+ * The logger.
  * @param {unknown} spec.error
+ * The error thrown by the customizer/cloning method.
  * @param {boolean} [spec.doThrow]
+ * Whether errors thrown by customizers/cloning methods should be thrown by
+ * the algorithm.
  * @param {string} spec.name
+ * Either 'Customizer' or 'Cloning method'.
  * @returns {boolean}
  */
 export const handleCustomError = ({
@@ -152,17 +157,29 @@ export const handleCustomError = ({
  * original value to the queue.
  * @param {Object} spec
  * @param {any} spec.value
+ * The value that was cloned.
  * @param {any} spec.cloned
+ * The clone of `value`.
  * @param {boolean} spec.cloneIsCached
+ * Whether the clone was acquired from the clone store.
  * @param {boolean|undefined} spec.ignoreProto
+ * If tre, the algorithm will not ensure that `value` and `clone` share
+ * prototypes.
  * @param {boolean|undefined} spec.ignoreProps
+ * If true, the algorithm will not add additional values from the properties of
+ * `value` to the queue.
  * @param {boolean} spec.ignoreThisLoop
+ * If true, this value won't be cloned at all.
  * @param {(string|symbol)[]} spec.propsToIgnore
- * @param {boolean} spec.useCustomizerClone
+ * A list of properties under this value that should not be cloned.
  * @param {boolean} spec.useCloningMethod
+ * Whether cloning methods will be observed.
  * @param {Map<any, any>} spec.cloneStore
+ * A store of previously cloned values, used to resolve circular references.
  * @param {import('../../types').QueueItem[]} spec.queue
+ * The queue storing all values to clone.
  * @param {boolean} [spec.asyncResult]
+ * Whether the clone of this value was acquired asynchronously.
  */
 export const finalizeClone = ({
     value,

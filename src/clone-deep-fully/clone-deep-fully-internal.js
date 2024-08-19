@@ -17,13 +17,22 @@ import { isObject } from '../utils/type-checking.js';
  *
  * @param {Object} spec
  * @param {T} spec.value
+ * The value to clone.
  * @param {Customizer|undefined} spec.customizer
+ * A customizer that would qualify the default behavior of `cloneDeep`.
  * @param {Log} spec.log
+ * A logger.
  * @param {string|undefined} spec.logMode
+ * Either "silent" or "quiet". This will configure the behavior of the default
+ * logger.
  * @param {boolean} spec.prioritizePerformance
+ * Whether type-checking will be performed performantly.
  * @param {boolean} spec.ignoreCloningMethods
+ * Whether cloning methods will be observed.
  * @param {boolean} spec.letCustomizerThrow
+ * Whether errors from the customizer will be thrown by the algorithm.
  * @param {boolean} spec.force
+ * If true, then prototypes with methods will be cloned.
  * @returns {U | Promise<{ clone: U }>}
  */
 export const cloneDeepFullyInternal = ({

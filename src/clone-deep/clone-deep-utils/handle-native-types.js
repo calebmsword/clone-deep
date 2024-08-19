@@ -30,13 +30,23 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
  * @param {boolean} spec.prioritizePerformance
  * Whether type-checking should sacrifice robustnesss for performance.
  * @param {import('../../types').QueueItem[]} spec.queue
+ * The queue of values to clone.
  * @param {[any, any][]} spec.isExtensibleSealFrozen
+ * Tuples of values and their clones are added to this list. This is to ensure
+ * that each clone value will have the correct
+ * extensibility/sealedness/frozenness.
  * @param {any[]} spec.supportedPrototypes
+ * A list of prototypes of the supported types available in this runtime.
  * @param {boolean} spec.ignoreCloningMethods
+ * Whether cloning methods should even be considered.
  * @param {boolean} spec.ignoreCloningMethodsThisLoop
+ * Whether cloning methods should be considered for this particular value.
  * @param {(string|symbol)[]} spec.propsToIgnore
+ * A list of properties under this value that should not be cloned.
  * @param {import('../../types').Log} spec.log
+ * The logger.
  * @param {(clone: any) => any} spec.saveClone
+ * A function which stores the clone of `value` into the cloned object.
  * @returns {{
  *     cloned: any,
  *     ignoreProps: boolean,
@@ -150,11 +160,7 @@ export const handleNativeTypes = ({
                 : [];
 
             if (!isIterable(aggregateError.errors)) {
-                log(getWarning('Cloning AggregateError with ' +
-                            'non-iterable errors property. It ' +
-                            'will be cloned into an ' +
-                            'AggregateError instance with an ' +
-                            'empty aggregation.'));
+                log(Warning.IMPROPER_AGGREGATE_ERRORS);
             }
 
             const { cause } = aggregateError;

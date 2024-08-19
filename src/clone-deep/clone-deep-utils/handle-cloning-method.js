@@ -85,7 +85,7 @@ export const handleCloningMethods = ({
             };
         }
 
-        /** @type {import('../../utils/types').CloneMethodResult<any>} */
+        /** @type {import('../../utils/types').CloningMethodResult<any>} */
         const result = value[CLONE]();
 
         if (result.async === true && !asyncMode) {

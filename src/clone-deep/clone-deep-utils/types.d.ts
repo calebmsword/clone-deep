@@ -13,6 +13,8 @@ type TypedArray =
 
 type Layout = { offset: number, stride: number }[]
 
+/** A "polyfill" for the AudioData type not provided in the version of 
+ * TypeScript I am using. */
 export interface AudioData {
     duration: number,
     format: string,
@@ -34,6 +36,8 @@ export interface AudioData {
     ) => Promise<Layout>
 }
 
+/** A "polyfill" for the VideoData type not provided in the version of 
+ * TypeScript I am using. */
 export interface VideoData {
     codedHeight: number,
     codedRect: DOMRectReadOnly,

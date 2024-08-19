@@ -17,17 +17,33 @@ import { getTag } from './get-tag.js';
  * @template U
  * @param {Object} spec
  * @param {import('../../types').QueueItem[]} spec.queue
+ * The queue of values to clone.
  * @param {{ clone: U }} spec.container
+ * Object containing the top-level object that will be returned by
+ * cloneDeepInternal.
  * @param {import('../../types').Log} spec.log
- * @param {import('../../types').Customizer|undefined} spec.customizer
+ * The logger.
+ * @param {import('../../types').Customizer} [spec.customizer]
+ * The customizer used to qualify the default behavior of cloneDeepInternal.
  * @param {Map<any, any>} spec.cloneStore
+ * A store of previously cloned values, used to resolve circular references.
  * @param {boolean} spec.prioritizePerformance
+ * Whether or not type-checking will be more performant.
  * @param {any[]} spec.supportedPrototypes
+ * A list of prototypes of the supported types available in this runtime.
  * @param {boolean} spec.ignoreCloningMethods
+ * Whether cloning methods should even be considered.
  * @param {boolean} spec.doThrow
- * @param {Set<any>|undefined} spec.parentObjectRegistry
+ * Whether errors in the customizer should cause the function to throw.
+ * @param {Set<any>} [spec.parentObjectRegistry]
+ * This is used to check if an object with a cloning method is in the prototype
+ * of an object that was cloned earlier in the chain.
  * @param {[any, any][]} spec.isExtensibleSealFrozen
+ * Tuples of values and their clones are added to this list. This is to ensure
+ * that each clone value will have the correct
+ * extensibility/sealedness/frozenness.
  * @param {import('../../types').PendingResultItem[]} [spec.pendingResults]
+ * The list of all clones that can only be acquired asynchronously.
  * @param {boolean} [spec.async]
  */
 export const processQueue = ({
@@ -213,7 +229,6 @@ export const processQueue = ({
             ignoreProto,
             ignoreProps,
             ignoreThisLoop,
-            useCustomizerClone,
             useCloningMethod,
             propsToIgnore,
             cloneStore,

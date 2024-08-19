@@ -59,5 +59,8 @@ export const Warning = {
         'property, if not undefined, is expected to be an array of strings ' +
         'or symbols. The given result is not this type of array so it will ' +
         'have no effect.'),
-    UNSUPPORTED_TYPE: getWarning('Attempted to clone unsupported type.')
+    UNSUPPORTED_TYPE: getWarning('Attempted to clone unsupported type.'),
+    IMPROPER_AGGREGATE_ERRORS: getWarning(
+        'Cloning AggregateError with non-iterable errors property. It will ' +
+        'be cloned into an AggregateError instance with an empty aggregation.')
 };

@@ -55,6 +55,11 @@ export type Tag = Readonly<{
     IMAGEBITMAP: string,
 }>
 
+/** 
+ * A function which has the responsibility of assigning the clone of value.
+ * These should be provided only for data that cannot be assigned to a property
+ * on an object. 
+ */
 export type Assigner = (
     value: any,
     prop: PropertyKey | undefined,
@@ -94,21 +99,38 @@ export type GeometryConstructor =
     ConstructorFor<DOMRect> |
     ConstructorFor<DOMRectReadOnly>;
 
+/**
+ * TypeScript erroneously complains when you arbitrarily access properties of 
+ * DOMQuad instances, even though they are objects just like any other object.
+ * This extends DOMQuad so that you can access arbitrary properties.
+ */
 export interface DOMQuadExtended extends DOMQuad {
     [key: string]: any
 }
 
+/**
+ * TypeScript erroneously complains when you arbitrarily access properties of 
+ * DOMQuad instances, even though they are objects just like any other object.
+ * This extends DOMPoint so that you can access arbitrary properties.
+ */
 export interface DOMPointExtended extends DOMPoint {
     [key: string|symbol]: any
 }
 
+/**
+ * The type of elements of the `additionalValues` array property that can be
+ * in a customizer result.
+ */
 export interface AdditionalValue {
     value: any,
     assigner: (clone: any) => void,
     async?: boolean
 }
 
-export interface ValueTransform {
+/**
+ * The return value of a customizer.
+ */
+export interface CustomizerResult {
     clone?: any,
     additionalValues?: AdditionalValue[],
     ignore?: boolean,
@@ -117,7 +139,10 @@ export interface ValueTransform {
     async?: boolean
 }
 
-export interface CloneMethodResult<T> {
+/**
+ * The return value of a cloning method.
+ */
+export interface CloningMethodResult<T> {
     clone: T,
     propsToIgnore?: (string|symbol)[],
     ignoreProps?: boolean,
