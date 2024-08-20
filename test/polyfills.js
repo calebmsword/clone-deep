@@ -458,6 +458,10 @@ export const polyfill = () => {
                 return new FileList(this.items.getAll());
             }
         };
+
+        globalThis.ClipBoardData = class ClipBoardData {
+            clipboardData = new DataTransfer();
+        };
     }
 
     if (!isCallable(global.VideoFrame)) {

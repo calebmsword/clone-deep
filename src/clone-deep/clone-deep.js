@@ -11,7 +11,7 @@ import { cloneDeepInternal } from './clone-deep-internal.js';
 /**
  * @template T
  * The type of the input value.
- * @template [U = T | Promise<{ clone: T }>]
+ * @template [U = T]
  * The type of the return value. By default, it is the same as the input value.
  * Nefarious customizer usage could require them be distinct, however. Please do
  * not do this.

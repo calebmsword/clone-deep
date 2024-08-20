@@ -62,5 +62,9 @@ export const Warning = {
     UNSUPPORTED_TYPE: getWarning('Attempted to clone unsupported type.'),
     IMPROPER_AGGREGATE_ERRORS: getWarning(
         'Cloning AggregateError with non-iterable errors property. It will ' +
-        'be cloned into an AggregateError instance with an empty aggregation.')
+        'be cloned into an AggregateError instance with an empty aggregation.'),
+    FILELIST_DISALLOWED: getWarning('Cannot create FileList in this runtime.'),
+    UNRECOGNIZED_TYPEARRAY_SUBCLASS: getWarning(
+        'Unrecognized TypedArray subclass. This object will be cloned into a ' +
+        'DataView instance.')
 };

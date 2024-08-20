@@ -9,7 +9,7 @@ import { GlobalState } from './clone-deep-utils/global-state.js';
  * Clones the provided value.
  * @template T
  * See CloneDeep.
- * @template [U = T | Promise<{ clone: T }>]
+ * @template [U = T]
  * See CloneDeep.
  * @param {Object} spec
  * @param {T} spec.value

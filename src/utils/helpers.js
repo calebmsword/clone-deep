@@ -4,7 +4,7 @@ import {
     Tag,
     WebApis
 } from './constants.js';
-import { getWarning } from './clone-deep-warning.js';
+import { getWarning, Warning } from './clone-deep-warning.js';
 import { isCallable } from './type-checking.js';
 import { getPrototype } from './metadata.js';
 
@@ -45,8 +45,7 @@ export const getTypedArrayConstructor = (tag, log) => {
     case Tag.BIGUINT64:
         return BigUint64Array;
     default:
-        log(getWarning('Unrecognized TypedArray subclass. This object ' +
-                           'will be cloned into a DataView instance.'));
+        log(Warning.UNRECOGNIZED_TYPEARRAY_SUBCLASS);
         return DataView;
     }
 };
@@ -92,20 +91,30 @@ export const getAtomicErrorConstructor = (value, log) => {
  * Creates a FileList.
  * See https://github.com/fisker/create-file-list.
  * @param  {...File} files
- * @returns {FileList}
+ * @returns {FileList|undefined}
  */
 export const createFileList = (...files) => {
-    if (!isCallable(globalThis.DataTransfer)) {
-        throw getWarning('Cannot create FileList in this runtime.');
-    }
+    const getDataTransfer = () => {
+        try {
+            return new DataTransfer();
+        } catch {
+            return new ClipboardEvent('').clipboardData;
+        }
+    };
 
-    const dataTransfer = new DataTransfer();
+    let dataTransfer;
+
+    try {
+        dataTransfer = getDataTransfer();
+    } catch {
+        throw Warning.FILELIST_DISALLOWED;
+    }
 
     for (const file of files) {
-        dataTransfer.items.add(file);
+        dataTransfer?.items.add(file);
     }
 
-    return dataTransfer.files;
+    return dataTransfer?.files;
 };
 
 /**
