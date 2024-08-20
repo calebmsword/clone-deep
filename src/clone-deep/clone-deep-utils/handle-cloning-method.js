@@ -11,8 +11,9 @@ import { handleCustomError } from './misc.js';
  * Handles the return value from a cloning method.
  * @param {Object} spec
  * @param {import('./global-state.js').GlobalState} spec.globalState
+ * The fundamental data structures used for cloneDeep.
  * @param {import('../../types').QueueItem} spec.queueItem
- * The optional property descriptor for this value, if it has one.
+ * Describes the value and metadata of the data being cloned.
  * @param {(string|symbol)[]} spec.propsToIgnore
  * A list of properties under this value that should not be cloned.
  * @param {(clone: any) => any} spec.saveClone

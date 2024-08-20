@@ -1,5 +1,4 @@
-import { PendingResultItem, QueueItem } from "../../types";
-
+/** Any TypedArray subclass. */
 type TypedArray =
   Int8Array
   | Uint8Array
@@ -12,8 +11,6 @@ type TypedArray =
   | Float64Array
   | BigInt64Array
   | BigUint64Array;
-
-type Layout = { offset: number, stride: number }[]
 
 /** A "polyfill" for the AudioData type not provided in the version of 
  * TypeScript I am using. */
@@ -35,7 +32,7 @@ export interface AudioData {
             frameOffset: number,
             frameCount: number
         }
-    ) => Promise<Layout>
+    ) => void
 }
 
 /** A "polyfill" for the VideoData type not provided in the version of 
@@ -71,5 +68,5 @@ export interface VideoData {
         },
         format: string,
         colorSpace: string
-    ) => Promise<Layout>
+    ) => Promise<{ offset: number, stride: number }[]>
 }

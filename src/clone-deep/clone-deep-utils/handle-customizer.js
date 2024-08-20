@@ -11,8 +11,9 @@ import { handleCustomError } from './misc.js';
  * necessary. Errors from the customizers are also handled here.
  * @param {Object} spec
  * @param {import('./global-state.js').GlobalState} spec.globalState
- * The queue of values to clone.
+ * The fundamental data structures used for cloneDeep.
  * @param {import('../../types').QueueItem} spec.queueItem
+ * Describes the value and metadata of the data being cloned.
  * @param {import('../../types').Customizer} spec.customizer
  * The customizer used to qualify the default behavior of cloneDeepInternal.
  * The optional property descriptor for this value, if it has one.

@@ -6,7 +6,7 @@ import { Tag } from '../../utils/constants.js';
  * Handles Web API types that can only be cloned asynchronously.
  * @param {Object} spec
  * @param {import('../../types').QueueItem} spec.queueItem
- * The value to clone.
+ * Describes the value and metadata of the data being cloned.
  * @param {string} spec.tag
  * The tag for the value.
  * @param {(promise: Promise<any>, options?: {

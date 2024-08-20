@@ -11,7 +11,9 @@ import { forAllOwnProperties, hasAccessor } from '../../utils/metadata.js';
 /**
  * @param {Object} spec
  * @param {import('./global-state.js').GlobalState} spec.globalState
+ * The fundamental data structures used for cloneDeep.
  * @param {import('../../types').QueueItem} spec.queueItem
+ * Describes the value and metadata of the data being cloned.
  * @param {string} spec.tag
  * The tag of the provided value.
  * @param {(string|symbol)[]} spec.propsToIgnore

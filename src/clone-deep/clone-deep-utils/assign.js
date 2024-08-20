@@ -62,20 +62,12 @@ const handleMetadata = ({ log, cloned, parent, prop, metadata }) => {
  * @template U
  * @param {Object} spec
  * @param {import('./global-state.js').GlobalState} spec.globalState
+ * The fundamental data structures used for cloneDeep.
  * A logger.
  * @param {import('../../types').QueueItem} spec.queueItem
+ * Describes the value and metadata of the data being cloned.
  * @param {any} spec.cloned
  * The cloned value.
- * @param {Assigner|symbol|object} [spec.parentOrAssigner]
- * Either the parent object that the cloned value will be assigned to, or a
- * function which assigns the value itself. If equal to `TOP_LEVEL`, then it
- * is the value that will be returned by the algorithm.
- * @param {PropertyKey} [spec.prop]
- * If `parentOrAssigner` is a parent object, then `parentOrAssigner[prop]`
- * will be assigned `cloned`.
- * @param {PropertyDescriptor} [spec.metadata]
- * The property descriptor for the object. If not an object, then this is
- * ignored.
  * @returns {any}
  * The cloned value.
  */

@@ -5,6 +5,7 @@ import { isCallable, isObject } from '../../utils/type-checking.js';
  * Validates and processes any `additionalValues` from a customizer.
  * @param {Object} spec
  * @param {import('../../types').QueueItem} spec.queueItem
+ * Describes the value and metadata of the data being cloned.
  * @param {import('../../utils/types').AdditionalValue[]} [spec.additionalValues]
  * Data associated with value that also will be cloned. This should only
  * represent data that is inaccessible via property access (like, for example,

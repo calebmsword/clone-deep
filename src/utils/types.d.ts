@@ -1,3 +1,6 @@
+/** 
+ * The type of the Tag enum-like object used to hold tags of supported types. 
+ */
 export type Tag = Readonly<{
     [key: string]: string,
 
@@ -66,6 +69,7 @@ export type Assigner = (
     metadata: PropertyDescriptor | undefined
 ) => void;
 
+/** Constructors of TypedArray subclasses/ */
 export type TypedArrayConstructor =
     DataViewConstructor |
     Float32ArrayConstructor |
@@ -80,6 +84,7 @@ export type TypedArrayConstructor =
     BigInt64ArrayConstructor |
     BigUint64ArrayConstructor;
 
+/** Any error constructor that is not `AggregateErrorConstructor`. */
 export type AtomicErrorConstructor = 
     ErrorConstructor | 
     EvalErrorConstructor | 
@@ -89,15 +94,16 @@ export type AtomicErrorConstructor =
     TypeErrorConstructor | 
     URIErrorConstructor;
 
-type ConstructorFor<T> = new (...args: any[]) => T;
+/** The type of a constructor function. */
+type Constructor<T> = new (...args: any[]) => T;
 
 export type GeometryConstructor = 
-    ConstructorFor<DOMMatrix> |
-    ConstructorFor<DOMMatrixReadOnly> |
-    ConstructorFor<DOMPoint> |
-    ConstructorFor<DOMMatrixReadOnly> |
-    ConstructorFor<DOMRect> |
-    ConstructorFor<DOMRectReadOnly>;
+    Constructor<DOMMatrix> |
+    Constructor<DOMMatrixReadOnly> |
+    Constructor<DOMPoint> |
+    Constructor<DOMMatrixReadOnly> |
+    Constructor<DOMRect> |
+    Constructor<DOMRectReadOnly>;
 
 /**
  * TypeScript erroneously complains when you arbitrarily access properties of 
