@@ -14,6 +14,7 @@ import useCustomizers from '../src/use-customizers.js';
 import { CLONE, Tag } from '../src/utils/constants.js';
 import { getTag } from '../src/clone-deep/clone-deep-utils/get-tag.js';
 import {
+    castAsInstanceOf,
     createFileList,
     getSupportedPrototypes,
     getTypedArrayConstructor
@@ -39,6 +40,22 @@ const getProto = (object) => {
 };
 const tagOf = (value) => {
     return getTag(value);
+};
+
+assert.true = (condition) => {
+    assert.strictEqual(true, condition);
+};
+
+assert.truthy = (condition) => {
+    assert.strictEqual(true, Boolean(condition));
+};
+
+assert.false = (condition) => {
+    assert.strictEqual(false, condition);
+};
+
+assert.undefined = (condition) => {
+    assert.strictEqual(undefined, condition);
 };
 
 try {
@@ -2437,6 +2454,16 @@ try {
             } finally {
                 polyfill();
             }
+        });
+
+        test('castAsInstanceOf behaves as expected', () => {
+            // -- act/assert
+            assert.truthy(castAsInstanceOf(new Error(''), Error));
+            assert.undefined(castAsInstanceOf(new Date(), Map));
+            assert.undefined(castAsInstanceOf(new Date(), null));
+            assert.undefined(castAsInstanceOf(new Date(), () => {
+                return new Date();
+            }));
         });
     });
 } catch (error) {

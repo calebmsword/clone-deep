@@ -4,6 +4,7 @@ import {
     getPrototype,
     hasAccessor
 } from '../../utils/metadata.js';
+import { castAsInstanceOf } from '../../utils/helpers.js';
 import { isObject } from '../../utils/type-checking.js';
 
 /**
@@ -73,7 +74,7 @@ export const checkParentObjectRegistry = (value, registry) => {
  * If an error occurs when handling supported types, it will be handled here.
  * This will have a side effect of storing an empty object in the place where
  * a successful clone should have gone.
- * @param {unknown} error
+ * @param {unknown} thrown
  * The error thrown.
  * @param {import('../../types').Log} log
  * A logger.
@@ -84,18 +85,20 @@ export const checkParentObjectRegistry = (value, registry) => {
  * property indicating that the prototype for the dummy clone value should not
  * be checked.
  */
-export const handleError = (error, log, saveClone) => {
+export const handleError = (thrown, log, saveClone) => {
     const msg = 'Encountered error while attempting to clone specific value. ' +
                 'The value will be "cloned" into an empty object. Error ' +
                 'encountered:';
 
-    if (error instanceof Error) {
+    const error = castAsInstanceOf(thrown, Error);
+
+    if (error) {
         error.message = `${msg} ${error.message}`;
         const cause = error.cause ? { cause: error.cause } : undefined;
         const stack = error.stack ? error.stack : undefined;
         log(getWarning(error.message, cause, stack));
     } else {
-        log(getWarning(msg, { cause: error }));
+        log(getWarning(msg, { cause: thrown }));
     }
 
     return {
@@ -122,19 +125,21 @@ export const handleError = (error, log, saveClone) => {
  */
 export const handleCustomError = ({
     log,
-    error,
+    error: thrown,
     doThrow,
     name
 }) => {
     if (doThrow === true) {
-        throw error;
+        throw thrown;
     }
 
     const msg = `${name} encountered error. Its results will be ignored for ` +
                 'the current value and the algorithm will proceed with ' +
                 'default behavior. ';
 
-    if (error instanceof Error) {
+    const error = castAsInstanceOf(thrown, Error);
+
+    if (error) {
         error.message = `${msg}Error encountered: ${error.message}`;
 
         const cause = error.cause

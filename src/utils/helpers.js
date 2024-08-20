@@ -6,6 +6,7 @@ import {
 } from './constants.js';
 import { getWarning } from './clone-deep-warning.js';
 import { isCallable } from './type-checking.js';
+import { getPrototype } from './metadata.js';
 
 /* eslint-disable complexity -- obviously this function will have a complexity
 greater than 10. There is no point in chunking this function up further. */
@@ -163,4 +164,29 @@ export const getSupportedPrototypes = () => {
     });
 
     return supportedPrototypes.concat(webApiPrototypes);
+};
+
+/**
+ * @template T
+ * Returns the provided value as an "instance" of the given "class".
+ * Where a "class" is a constructor function, and being an instance means having
+ * the prototype of the constructor function in the prototype chain.
+ * If the provided value is not a suitable instance of the class, then the
+ * function returns `undefined`.
+ * @param {any} value
+ * @param {T extends new (...args: any[]) => any ? T : never} constructor
+ * @returns {undefined | ReturnType<T>}
+ */
+export const castAsInstanceOf = (value, constructor) => {
+    if (!isCallable(constructor)) {
+        return;
+    }
+    let tempPrototype = getPrototype(value);
+    while (tempPrototype !== null) {
+        if (tempPrototype === constructor.prototype) {
+            return value;
+        }
+        tempPrototype = getPrototype(tempPrototype);
+    }
+    return;
 };

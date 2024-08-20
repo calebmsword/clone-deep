@@ -73,13 +73,3 @@ export interface VideoData {
         colorSpace: string
     ) => Promise<Layout>
 }
-
-export interface GlobalState<U> {
-    container: {
-        clone: U
-    },
-    cloneStore: Map<any, any>,
-    queue: QueueItem[],
-    pendingResults: PendingResultItem[],
-    isExtensibleSealFrozen: [any, any][]
-}

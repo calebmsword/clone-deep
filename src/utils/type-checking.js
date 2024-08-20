@@ -1,5 +1,5 @@
 import { Tag, WebApis } from './constants.js';
-import { getConstructorFromString } from './helpers.js';
+import { castAsInstanceOf, getConstructorFromString } from './helpers.js';
 import { getDescriptors, getPrototype } from './metadata.js';
 
 const { toString } = Object.prototype;
@@ -155,10 +155,11 @@ export const {
  */
 export const isFile = (value) => {
     try {
-        if (!(value instanceof File)) {
+        const file = castAsInstanceOf(value, File);
+        if (!file) {
             return false;
         }
-        getDescriptors(File.prototype).lastModified.get?.call(value);
+        getDescriptors(File.prototype).lastModified.get?.call(file);
         return true;
     } catch {
         return false;
@@ -172,10 +173,11 @@ export const isFile = (value) => {
  */
 export const isImageBitmap = (value) => {
     try {
-        if (!(value instanceof ImageBitmap)) {
+        const imageBitmap = castAsInstanceOf(value, ImageBitmap);
+        if (!imageBitmap) {
             return false;
         }
-        getDescriptors(ImageBitmap.prototype).height.get?.call(value);
+        getDescriptors(ImageBitmap.prototype).height.get?.call(imageBitmap);
         return true;
     } catch {
         return false;
@@ -189,10 +191,11 @@ export const isImageBitmap = (value) => {
  */
 export const isImageData = (value) => {
     try {
-        if (!(value instanceof ImageData)) {
+        const imageData = castAsInstanceOf(value, ImageData);
+        if (!imageData) {
             return false;
         }
-        getDescriptors(ImageData.prototype).width.get?.call(value);
+        getDescriptors(ImageData.prototype).width.get?.call(imageData);
         return true;
     } catch {
         return false;
