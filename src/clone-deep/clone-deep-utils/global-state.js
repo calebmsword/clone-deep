@@ -106,9 +106,9 @@ export class GlobalState {
         this.queue = [{ value, parentOrAssigner: TOP_LEVEL }];
         this.supportedPrototypes = getSupportedPrototypes();
         this.parentObjectRegistry = parentObjectRegistry;
-        this.prioritizePerformance = prioritizePerformance;
-        this.ignoreCloningMethods = ignoreCloningMethods;
-        this.doThrow = doThrow;
-        this.async = async;
+        this.prioritizePerformance = Boolean(prioritizePerformance);
+        this.ignoreCloningMethods = Boolean(ignoreCloningMethods);
+        this.doThrow = Boolean(doThrow);
+        this.async = Boolean(async);
     }
 }

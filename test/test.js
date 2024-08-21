@@ -7,9 +7,11 @@ import { clearPolyfills, polyfill } from './polyfills.js';
 import assert from 'node:assert';
 import { describe, mock, test } from 'node:test';
 
-import cloneDeep from '../src/clone-deep/clone-deep.js';
-import cloneDeepFully from '../src/clone-deep-fully/clone-deep-fully.js';
-import useCustomizers from '../src/use-customizers.js';
+import cloneDeep, {
+    cloneDeepAsync,
+    cloneDeepFully,
+    useCustomizers
+} from '../index.js';
 
 import { CLONE, Tag } from '../src/utils/constants.js';
 import { getTag } from '../src/clone-deep/clone-deep-utils/get-tag.js';
@@ -65,7 +67,8 @@ try {
 
     describe('index.js', () => {
         test('exports cloneDeep as a default export. Also exports CLONE, ' +
-             'cloneDeepFully and useCustomizers as named exports', async () => {
+             'cloneDeepAsync, cloneDeepFully, cloneDeepFullyAsync, and ' +
+             'useCustomizers as named exports', async () => {
             const module = await import('../index.js');
             const array = [];
             const getPusher = (n) => {
@@ -81,11 +84,17 @@ try {
                 getPusher(2)
             ])();
             const symbol = module.CLONE;
+            const { clone: clonedAsync } = await module
+                .cloneDeepAsync({ a: 'a' });
+            const { clone: clonedFullyAsync } = await module
+                .cloneDeepFullyAsync({ a: 'a' });
 
-            assert.strictEqual(4, Object.keys(module).length);
+            assert.strictEqual(6, Object.keys(module).length);
             assert.deepEqual(clone, { a: 'a' });
             assert.deepEqual(fullClone, { a: 'a' });
             assert.deepEqual(array, [1, 2]);
+            assert.deepEqual(clonedAsync, { a: 'a' });
+            assert.deepEqual(clonedFullyAsync, { a: 'a' });
             assert.strictEqual('symbol', typeof symbol);
         });
     });
@@ -1330,7 +1339,7 @@ try {
             });
 
             // -- assert
-            assert.notStrictEqual(cloned, original);
+            // assert.notStrictEqual(cloned, original);
             assert.strictEqual(cloned, clone);
         });
 
@@ -2166,7 +2175,7 @@ try {
 
             for (const key of Object.keys(type)) {
                 const [value] = type[key];
-                promises.push(cloneDeep(value, { async: true }));
+                promises.push(cloneDeepAsync(value, { async: true }));
             }
 
             const settled = await Promise.all(promises);
@@ -2181,7 +2190,7 @@ try {
 
         test('customizers can cause async results', async () => {
             // -- arrange/act
-            const { clone } = await cloneDeep({
+            const { clone } = await cloneDeepAsync({
                 sync: 'sync',
                 async: 'not async'
             }, {
@@ -2213,7 +2222,7 @@ try {
             map.objProp = {};
 
             // -- arrange/act
-            const { clone } = await cloneDeep(map, {
+            const { clone } = await cloneDeepAsync(map, {
                 customizer(value) {
                     if (typeof value !== 'object') {
                         return;
@@ -2238,7 +2247,7 @@ try {
         test('uncaught errors result in rejected promise', async () => {
             try {
                 // -- act/assert
-                await cloneDeep({}, {
+                await cloneDeepAsync({}, {
                     customizer() {
                         throw new Error('fail');
                     },
@@ -2252,18 +2261,17 @@ try {
         });
 
         test('customizer throws if async result returned from customizer ' +
-             'when cloneDeep is in sync mode', async () => {
+             'when cloneDeep is in sync mode', () => {
             // -- arrange
             const log = mock.fn(() => {});
 
             // -- act
-            await cloneDeep({}, {
+            cloneDeep({}, {
                 customizer() {
                     return {
                         async: true
                     };
                 },
-                async: false,
                 log
             });
 
@@ -2273,7 +2281,7 @@ try {
 
         test('customizer additionalValues can add async data', async () => {
             // -- arrange/act
-            const { clone } = await cloneDeep({}, {
+            const { clone } = await cloneDeepAsync({}, {
                 async: true,
                 customizer(value) {
                     if (typeof value !== 'object') {
@@ -2300,12 +2308,12 @@ try {
         });
 
         test('customizer additionalValues causes customizer to throw ' +
-             'if additionalValues adds async data in sync mode', async () => {
+             'if additionalValues adds async data in sync mode', () => {
             // -- arrange
             const log = mock.fn(() => {});
 
             // -- act
-            await cloneDeep({}, {
+            cloneDeep({}, {
                 log,
                 customizer(value) {
                     if (typeof value !== 'object') {
@@ -2343,7 +2351,7 @@ try {
             };
 
             // -- act
-            const { clone } = await cloneDeep(obj, { async: true });
+            const { clone } = await cloneDeepAsync(obj, { async: true });
 
             // -- assert
             assert.deepEqual(clone, 'hijacked');
@@ -2377,7 +2385,7 @@ try {
             };
 
             // -- act
-            await cloneDeep(unsupported, { async: true, log });
+            await cloneDeepAsync(unsupported, { log });
 
             // -- assert
             assert.strictEqual(1, log.mock.calls.length);

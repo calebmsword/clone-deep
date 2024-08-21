@@ -208,7 +208,7 @@ export const finalizeClone = ({
         Object.setPrototypeOf(cloned, getPrototype(value));
     }
 
-    if (!ignoreProps) {
+    if (!ignoreProps && isObject(value)) {
         forAllOwnProperties(value, (key) => {
             if (propsToIgnore.includes(key)) {
                 return;
