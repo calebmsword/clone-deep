@@ -104,7 +104,7 @@ export const processQueue = (globalState) => {
 
         cloneIsCached = checkCloneStore(value, cloneStore, saveClone);
 
-        if (typeof customizer === 'function') {
+        if (!cloneIsCached && typeof customizer === 'function') {
             ({
                 cloned,
                 useCustomizerClone,

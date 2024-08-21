@@ -26,7 +26,8 @@ import {
     isDOMPointReadOnly,
     isDOMRect,
     isDOMRectReadOnly,
-    isIterable
+    isIterable,
+    isObject
 } from '../src/utils/type-checking.js';
 import { getDescriptors } from '../src/utils/metadata.js';
 
@@ -1320,8 +1321,12 @@ try {
             const clone = {};
 
             // -- act
-            const cloned = cloneDeep(original, () => {
-                return { clone };
+            const cloned = cloneDeep(original, (value) => {
+                const result = { clone };
+                if (!isObject(value)) {
+                    result.ignoreProps = true;
+                }
+                return result;
             });
 
             // -- assert
@@ -1692,8 +1697,12 @@ try {
             const clone = {};
 
             // -- act
-            const cloned = cloneDeepFully(original, () => {
-                return { clone };
+            const cloned = cloneDeepFully(original, (value) => {
+                const result = { clone };
+                if (!isObject(value)) {
+                    result.ignoreProps = true;
+                }
+                return result;
             });
 
             // -- assert
