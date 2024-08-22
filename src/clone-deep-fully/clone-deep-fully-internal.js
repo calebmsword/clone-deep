@@ -12,9 +12,8 @@ import { isObject } from '../utils/type-checking.js';
  * Handles internal logic for the full deep clone.
  * @template [T=any]
  * The type of the input value.
- * @template [U = T | Promise<{ clone: T }>]
+ * @template [U = T]
  * The return type of the clone.
- *
  * @param {Object} spec
  * @param {T} spec.value
  * The value to clone.
@@ -55,7 +54,7 @@ export const cloneDeepFullyInternal = ({
         letCustomizerThrow
     });
 
-    /** @type {any} */
+    /** @type {U} */
     let tempClone = clone;
 
     /** @type {any} */
@@ -99,7 +98,6 @@ export const cloneDeepFullyInternal = ({
  * The type of the input value.
  * @template [U = T]
  * The return type of the clone.
- *
  * @param {Object} spec
  * @param {T} spec.value
  * The value to clone.
@@ -130,18 +128,20 @@ export const cloneDeepFullyInternalAsync = async ({
     letCustomizerThrow,
     force
 }) => {
-    const { clone: _clone } = await cloneDeepAsync(value, {
-        customizer,
-        log,
-        logMode,
-        prioritizePerformance,
-        ignoreCloningMethods,
-        letCustomizerThrow,
-        async: true
-    });
+    // eslint-disable-next-line @s/no-extra-parens
+    const { clone } = await /** @type {Promise<{ clone: U }>} */ (
+        cloneDeepAsync(value, {
+            customizer,
+            log,
+            logMode,
+            prioritizePerformance,
+            ignoreCloningMethods,
+            letCustomizerThrow,
+            async: true
+        }));
 
     /** @type {any} */
-    let tempClone = _clone;
+    let tempClone = clone;
 
     /** @type {any} */
     let tempOrig = value;
@@ -178,7 +178,7 @@ export const cloneDeepFullyInternalAsync = async ({
 
     const containers = await Promise.all(pendingCloneContainers);
 
-    let _tempClone = _clone;
+    let _tempClone = clone;
     let _tempOrig = value;
     containers.forEach(({ clone: newProto }) => {
         Object.setPrototypeOf(_tempClone, newProto);
@@ -186,12 +186,6 @@ export const cloneDeepFullyInternalAsync = async ({
         _tempClone = Object.getPrototypeOf(_tempClone);
         _tempOrig = Object.getPrototypeOf(_tempOrig);
     });
-
-    /** @type {any} */
-    const __clone = _clone;
-
-    /** @type {U} */
-    const clone = __clone;
 
     return { clone };
 };
