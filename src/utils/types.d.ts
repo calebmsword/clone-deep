@@ -137,23 +137,25 @@ export interface AdditionalValue {
  * The return value of a customizer.
  */
 export interface CustomizerResult {
+    useCustomizerClone?: boolean,
     clone?: any,
-    additionalValues?: AdditionalValue[],
-    ignore?: boolean,
+    propsToIgnore?: (string|symbol)[],
     ignoreProps?: boolean,
     ignoreProto?: boolean,
     async?: boolean,
-    useCustomizerClone?: boolean
+    additionalValues?: AdditionalValue[],
+    throwWith?: Error
 }
 
 /**
  * The return value of a cloning method.
  */
-export interface CloningMethodResult<T> {
-    clone: T,
+export interface CloningMethodResult {
+    useCloningMethod?: boolean,
+    clone: any,
     propsToIgnore?: (string|symbol)[],
     ignoreProps?: boolean,
     ignoreProto: boolean,
     async?: boolean,
-    useCloningMethod?: boolean
+    throwWith?: Error
 }

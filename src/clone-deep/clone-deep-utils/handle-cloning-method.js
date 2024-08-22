@@ -53,6 +53,11 @@ export const handleCloningMethods = ({
     /** @type {boolean|undefined} */
     let async;
 
+    /** @type {Error|undefined} */
+    let throwWith;
+
+    let forceThrow = false;
+
     try {
         if (!isCallable(value[CLONE])) {
             return {
@@ -64,7 +69,7 @@ export const handleCloningMethods = ({
             };
         }
 
-        /** @type {import('../../utils/types').CloningMethodResult<any>} */
+        /** @type {import('../../utils/types').CloningMethodResult} */
         const result = value[CLONE](value, log);
 
         if (!isObject(result)) {
@@ -76,6 +81,12 @@ export const handleCloningMethods = ({
                 async
             };
         }
+
+        if (result.throwWith !== undefined) {
+            forceThrow = true;
+            throw throwWith;
+        }
+
 
         if (result.async && !asyncMode) {
             throw Warning.CLONING_METHOD_ASYNC_IN_SYNC_MODE;
@@ -120,7 +131,7 @@ export const handleCloningMethods = ({
         useCloningMethod = handleCustomError({
             log,
             error,
-            doThrow,
+            doThrow: doThrow || forceThrow,
             name: 'Cloning method'
         });
     }

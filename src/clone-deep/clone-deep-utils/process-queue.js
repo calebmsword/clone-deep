@@ -112,6 +112,7 @@ export const processQueue = (globalState) => {
                 customizer,
                 globalState,
                 queueItem,
+                propsToIgnore,
                 saveClone
             }));
         }

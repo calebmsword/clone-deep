@@ -1338,7 +1338,7 @@ try {
         });
     });
 
-    describe('cloneDeep customizer', () => {
+    describe('customizer', () => {
 
         test('Customizer can determine cloned value', () => {
             // -- arrange
@@ -1670,6 +1670,76 @@ try {
             // -- assert
             assert.strictEqual(1, log.mock.calls.length);
             assert.strictEqual('test', log.mock.calls[0].arguments[0]);
+        });
+
+        test('propsToIgnore property can cause props not to be cloned', () => {
+            // -- arrange/act
+            const clone = cloneDeep({ a: 'a', b: 'b' }, {
+                customizer() {
+                    return {
+                        useCustomizerClone: false,
+                        propsToIgnore: ['a']
+                    };
+                }
+            });
+
+            // -- assert
+            assert.deepEqual(clone, { b: 'b' });
+        });
+
+        test('an improper propsToIgnore causes a warning to be logged', () => {
+            // -- arrange
+            const customizer1 = () => {
+                return {
+                    clone: {},
+                    propsToIgnore: false
+                };
+            };
+            const log1 = mock.fn(() => {});
+
+            const customizer2 = () => {
+                return {
+                    clone: {},
+                    propsToIgnore: [{}]
+                };
+            };
+            const log2 = mock.fn(() => {});
+
+
+            // -- act
+            cloneDeep({}, { customizer: customizer1, log: log1 });
+            cloneDeep({}, { customizer: customizer2, log: log2 });
+
+            // -- assert
+            assert.strictEqual(true,
+                               log1
+                                   .mock
+                                   .calls[0]
+                                   .arguments[0]
+                                   .message
+                                   .includes('is expected to be an array of ' +
+                                             'strings or symbols'));
+            assert.strictEqual(true,
+                               log2
+                                   .mock
+                                   .calls[0]
+                                   .arguments[0]
+                                   .message
+                                   .includes('is expected to be an array of ' +
+                                             'strings or symbols'));
+        });
+
+        test('customizer can force algorithm to throw', () => {
+            // -- act/assert
+            assert.throws(() => {
+                cloneDeep({}, {
+                    customizer() {
+                        return {
+                            throwWith: new Error('fail')
+                        };
+                    }
+                });
+            });
         });
     });
 
@@ -2266,6 +2336,19 @@ try {
             // -- assert
             assert.strictEqual(1, log.mock.calls.length);
             assert.strictEqual('test', log.mock.calls[0].arguments[0]);
+        });
+
+        test('cloning method can force algorithm to throw', () => {
+            // -- act/assert
+            assert.throws(() => {
+                cloneDeep({
+                    [CLONE]() {
+                        return {
+                            throwWith: new Error('fail')
+                        };
+                    }
+                });
+            });
         });
     });
 

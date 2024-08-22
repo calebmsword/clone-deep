@@ -1,4 +1,7 @@
+/* eslint-disable complexity */
+
 import { Warning } from '../../utils/clone-deep-warning.js';
+import { isPropertyKeyArray } from '../../utils/type-checking.js';
 import { handleAdditionalValues } from './handle-additional-values.js';
 import { handleCustomError } from './misc.js';
 
@@ -10,13 +13,14 @@ import { handleCustomError } from './misc.js';
  * place, as well as pushing more elements in the appropriate queue if
  * necessary. Errors from the customizers are also handled here.
  * @param {Object} spec
+ * @param {import('../../types').Customizer} spec.customizer
+ * The customizer used to qualify the default behavior of cloneDeepInternal.
  * @param {import('./global-state.js').GlobalState} spec.globalState
  * The fundamental data structures used for cloneDeep.
  * @param {import('../../types').QueueItem} spec.queueItem
  * Describes the value and metadata of the data being cloned.
- * @param {import('../../types').Customizer} spec.customizer
- * The customizer used to qualify the default behavior of cloneDeepInternal.
- * The optional property descriptor for this value, if it has one.
+ * @param {(string|symbol)[]} spec.propsToIgnore
+ * An array of properties of the given value that will not be cloned.
  * @param {(clone: any) => any} spec.saveClone
  * A function which stores the clone of `value` into the cloned object.
  * @returns {{
@@ -31,6 +35,7 @@ export const handleCustomizer = ({
     customizer,
     globalState,
     queueItem,
+    propsToIgnore,
     saveClone
 }) => {
 
@@ -62,6 +67,11 @@ export const handleCustomizer = ({
     /** @type {boolean|undefined} */
     let async;
 
+    /** @type {Error|undefined} */
+    let throwWith;
+
+    let forceThrow = false;
+
     try {
         const customResult = customizer(value, log);
 
@@ -79,8 +89,14 @@ export const handleCustomizer = ({
             additionalValues,
             ignoreProps,
             ignoreProto,
-            async
+            async,
+            throwWith
         } = customResult);
+
+        if (throwWith !== undefined) {
+            forceThrow = true;
+            throw throwWith;
+        }
 
         useCustomizerClone =
             typeof customResult.useCustomizerClone === 'boolean'
@@ -94,6 +110,16 @@ export const handleCustomizer = ({
 
         if (async && !asyncMode) {
             throw Warning.CUSTOMIZER_ASYNC_IN_SYNC_MODE;
+        }
+
+        if (customResult.propsToIgnore !== undefined
+            && !isPropertyKeyArray(customResult.propsToIgnore)) {
+            throw Warning.CUSTOMIZER_IMPROPER_PROPS_TO_IGNORE;
+        }
+
+        if (Array.isArray(customResult.propsToIgnore)
+            && isPropertyKeyArray(customResult.propsToIgnore)) {
+            propsToIgnore.push(...customResult.propsToIgnore);
         }
 
         if (!asyncMode) {
@@ -119,7 +145,7 @@ export const handleCustomizer = ({
         useCustomizerClone = handleCustomError({
             log,
             error,
-            doThrow,
+            doThrow: doThrow || forceThrow,
             name: 'Customizer'
         });
     }

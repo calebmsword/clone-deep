@@ -51,6 +51,11 @@ export const Warning = {
     ADDITIONAL_VALUES_ASYNC_IN_SYNC_MODE: getWarning(
         'Customizer attempted to add additional values asynchronously, but ' +
         'cloneDeep was not run in async mode.'),
+    CUSTOMIZER_IMPROPER_PROPS_TO_IGNORE: getWarning(
+        'return value of customizer is an object whose propsToIgnore ' +
+        'property, if not undefined, is expected to be an array of strings ' +
+        'or symbols. The given result is not this type of array so it will ' +
+        'have no effect.'),
     CLONING_METHOD_ASYNC_IN_SYNC_MODE: getWarning(
         'Cloning method attempted to asynchronously get the clone for an ' +
         'object, but cloneDeep was not run in async mode.'),
