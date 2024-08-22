@@ -60,9 +60,6 @@ export const processQueue = (globalState) => {
         /** Whether the clone for this value has been cached in the store. */
         let cloneIsCached = false;
 
-        /** Whether the current value should be ignored entirely. */
-        let ignoreThisLoop = false;
-
         /**
          * If true, do not not clone the properties of value.
          * @type {boolean|undefined}
@@ -110,7 +107,6 @@ export const processQueue = (globalState) => {
                 useCustomizerClone,
                 ignoreProto,
                 ignoreProps,
-                ignoreThisLoop,
                 async: asyncResult
             } = handleCustomizer({
                 customizer,
@@ -124,39 +120,42 @@ export const processQueue = (globalState) => {
             saveClone(value);
         }
 
-        const ignore = cloneIsCached || ignoreThisLoop || useCustomizerClone
-            || isPrimitive;
+        const ignore = cloneIsCached || useCustomizerClone || isPrimitive;
 
         ignoreCloningMethodsThisLoop = checkParentObjectRegistry(
             value, parentObjectRegistry);
 
         if (!ignore && !ignoreCloningMethods && !ignoreCloningMethodsThisLoop) {
-            ({
-                cloned,
-                ignoreProps,
-                ignoreProto,
-                useCloningMethod,
-                async: asyncResult
-            } = handleCloningMethods({
+            const cloningMethodResult = handleCloningMethods({
                 globalState,
                 queueItem,
                 propsToIgnore,
                 saveClone
-            }));
+            });
+
+            ({
+                cloned,
+                useCloningMethod,
+                async: asyncResult
+            } = cloningMethodResult);
+
+            ignoreProps ||= cloningMethodResult.ignoreProps;
+            ignoreProto ||= cloningMethodResult.ignoreProto;
         }
 
         if (!ignore && !useCloningMethod) {
-            ({
-                cloned,
-                ignoreProps,
-                ignoreProto
-            } = handleTag({
+            const handleTagResult = handleTag({
                 globalState,
                 queueItem,
                 tag,
                 propsToIgnore,
                 saveClone
-            }));
+            });
+
+            ({ cloned } = handleTagResult);
+
+            ignoreProps ||= handleTagResult.ignoreProps;
+            ignoreProto ||= handleTagResult.ignoreProto;
         }
 
         isExtensibleSealFrozen.push([value, cloned]);
@@ -169,7 +168,6 @@ export const processQueue = (globalState) => {
             cloneIsCached,
             ignoreProto,
             ignoreProps,
-            ignoreThisLoop,
             useCloningMethod,
             propsToIgnore,
             asyncResult

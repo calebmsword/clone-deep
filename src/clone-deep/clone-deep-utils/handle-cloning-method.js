@@ -2,7 +2,11 @@
 
 import { Warning } from '../../utils/clone-deep-warning.js';
 import { CLONE } from '../../utils/constants.js';
-import { isCallable, isPropertyKeyArray } from '../../utils/type-checking.js';
+import {
+    isCallable,
+    isObject,
+    isPropertyKeyArray
+} from '../../utils/type-checking.js';
 import { handleCustomError } from './misc.js';
 
 /** @typedef {import('../../utils/types').Assigner} Assigner */
@@ -61,9 +65,19 @@ export const handleCloningMethods = ({
         }
 
         /** @type {import('../../utils/types').CloningMethodResult<any>} */
-        const result = value[CLONE]();
+        const result = value[CLONE](value, log);
 
-        if (result.async === true && !asyncMode) {
+        if (!isObject(result)) {
+            return {
+                cloned,
+                ignoreProps,
+                ignoreProto,
+                useCloningMethod: false,
+                async
+            };
+        }
+
+        if (result.async && !asyncMode) {
             throw Warning.CLONING_METHOD_ASYNC_IN_SYNC_MODE;
         }
 
@@ -72,9 +86,8 @@ export const handleCloningMethods = ({
             throw Warning.CLONING_METHOD_IMPROPER_PROPS_TO_IGNORE;
         }
 
-        if (Array.isArray(result.propsToIgnore)
-            && isPropertyKeyArray(result.propsToIgnore)) {
-            propsToIgnore.push(...result.propsToIgnore);
+        if (typeof result.useCloningMethod === 'boolean') {
+            ({ useCloningMethod } = result);
         }
 
         if (typeof result.ignoreProps === 'boolean') {
@@ -83,6 +96,11 @@ export const handleCloningMethods = ({
 
         if (typeof result.ignoreProto === 'boolean') {
             ({ ignoreProto } = result);
+        }
+
+        if (Array.isArray(result.propsToIgnore)
+            && isPropertyKeyArray(result.propsToIgnore)) {
+            propsToIgnore.push(...result.propsToIgnore);
         }
 
         if (!result.async) {

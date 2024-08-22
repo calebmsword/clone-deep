@@ -142,7 +142,8 @@ export interface CustomizerResult {
     ignore?: boolean,
     ignoreProps?: boolean,
     ignoreProto?: boolean,
-    async?: boolean
+    async?: boolean,
+    useCustomizerClone?: boolean
 }
 
 /**
@@ -153,5 +154,6 @@ export interface CloningMethodResult<T> {
     propsToIgnore?: (string|symbol)[],
     ignoreProps?: boolean,
     ignoreProto: boolean,
-    async?: boolean
+    async?: boolean,
+    useCloningMethod?: boolean
 }

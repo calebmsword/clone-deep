@@ -49,7 +49,6 @@ export const processPendingResults = async (globalState) => {
             cloneIsCached: false,
             ignoreProto: result.ignoreProto,
             ignoreProps: result.ignoreProps,
-            ignoreThisLoop: false,
             useCloningMethod: false,
             propsToIgnore: result.propsToIgnore,
             cloneStore,

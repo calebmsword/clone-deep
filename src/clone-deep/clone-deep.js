@@ -2,6 +2,8 @@
 
 import { cloneDeepInternal } from './clone-deep-internal.js';
 
+/** @typedef {import('../types').CloneDeepProxyOptions} CloneDeepProxyOptions */
+
 /** @typedef {import('../types').CloneDeepOptions} CloneDeepOptions */
 
 /** @typedef {import('../types').Customizer} Customizer */
@@ -17,37 +19,35 @@ import { cloneDeepInternal } from './clone-deep-internal.js';
  * not do this.
  * @param {T} value
  * The value to deeply copy.
- * @param {CloneDeepOptions|Customizer} [optionsOrCustomizer]
- * If a function, this argument is used as the customizer.
- * @param {object} [optionsOrCustomizer]
- * If an object, this argument is used as a configuration object.
- * @param {Customizer} optionsOrCustomizer.customizer
+ * @param {CloneDeepProxyOptions} [options]
+ * @param {object} [options]
+ * @param {Customizer} options.customizer
  * Allows the user to inject custom logic. The function is given the value to
  * copy. If the function returns an object, the value of the `clone` property on
  * that object will be used as the clone.
- * @param {Log} optionsOrCustomizer.log
+ * @param {Log} options.log
  * Any errors which occur during the algorithm can optionally be passed to a log
  * function. `log` should take one argument which will be the error encountered.
  * Use this to log the error to a custom logger.
- * @param {boolean} optionsOrCustomizer.prioritizePerformance
+ * @param {boolean} options.prioritizePerformance
  * Whether type-checking will be done performantly or robustly.
- * @param {boolean} optionsOrCustomizer.ignoreCloningMethods
+ * @param {boolean} options.ignoreCloningMethods
  * Whether cloning methods will be observed.
- * @param {string} optionsOrCustomizer.logMode
+ * @param {string} options.logMode
  * Case-insensitive. If "silent", no warnings will be logged. Use with caution,
  * as failures to perform true clones are logged as warnings. If "quiet", the
  * stack trace of the warning is ignored.
- * @param {boolean} optionsOrCustomizer.letCustomizerThrow
+ * @param {boolean} options.letCustomizerThrow
  * If `true`, errors thrown by the customizer will be thrown by `cloneDeep`. By
  * default, the error is logged and the algorithm proceeds with default
  * behavior.
- * @param {boolean} optionsOrCustomizer.async
+ * @param {boolean} options.async
  * If `true`, the function will return a promise that resolves with the cloned
  * object.
  * @returns {U | Promise<{ clone: U }>}
  * The deep copy.
  */
-const cloneDeepOptionsProxy = (value, optionsOrCustomizer) => {
+const cloneDeepProxy = (value, options) => {
     /** @type {Customizer|undefined} */
     let customizer;
 
@@ -69,9 +69,7 @@ const cloneDeepOptionsProxy = (value, optionsOrCustomizer) => {
     /** @type {boolean|undefined} */
     let async = false;
 
-    if (typeof optionsOrCustomizer === 'function') {
-        customizer = optionsOrCustomizer;
-    } else if (typeof optionsOrCustomizer === 'object') {
+    if (options !== null && typeof options === 'object') {
         ({
             customizer,
             log,
@@ -80,19 +78,18 @@ const cloneDeepOptionsProxy = (value, optionsOrCustomizer) => {
             ignoreCloningMethods,
             letCustomizerThrow,
             async
-        } = optionsOrCustomizer);
+        } = options);
     }
 
     if (typeof log !== 'function') {
         log = console.warn;
     }
 
-    if (typeof logMode === 'string') {
-        if (logMode.toLowerCase() === 'silent') {
-            log = () => {};
-        } else if (logMode.toLowerCase() === 'quiet') {
-            log = console.warn;
-        }
+    if (typeof logMode === 'string' && logMode.toLowerCase() === 'silent') {
+        log = () => {};
+    }
+    if (typeof logMode === 'string' && logMode.toLowerCase() === 'quiet') {
+        log = console.warn;
     }
 
     /** @type {U | Promise<{ clone: U }>} */
@@ -119,33 +116,32 @@ const cloneDeepOptionsProxy = (value, optionsOrCustomizer) => {
  * See documentation for_cloneDeep.
  * @param {T} value
  * The value to deeply copy.
- * @param {CloneDeepOptions|Customizer} [optionsOrCustomizer]
+ * @param {CloneDeepOptions} [options]
+ * @param {object} options
+ * @param {Customizer} options.customizer
  * See documentation for_cloneDeep.
- * @param {object} [optionsOrCustomizer]
+ * @param {Log} options.log
  * See documentation for_cloneDeep.
- * @param {Customizer} optionsOrCustomizer.customizer
+ * @param {boolean} options.prioritizePerformance
  * See documentation for_cloneDeep.
- * @param {Log} optionsOrCustomizer.log
+ * @param {boolean} options.ignoreCloningMethods
  * See documentation for_cloneDeep.
- * @param {boolean} optionsOrCustomizer.prioritizePerformance
+ * @param {string} options.logMode
  * See documentation for_cloneDeep.
- * @param {boolean} optionsOrCustomizer.ignoreCloningMethods
- * See documentation for_cloneDeep.
- * @param {string} optionsOrCustomizer.logMode
- * See documentation for_cloneDeep.
- * @param {boolean} optionsOrCustomizer.letCustomizerThrow
+ * @param {boolean} options.letCustomizerThrow
  * See documentation for_cloneDeep.
  * @returns {U}
  * See documentation for_cloneDeep..
  */
-const cloneDeep = (value, optionsOrCustomizer) => {
-    if (optionsOrCustomizer !== null
-        && typeof optionsOrCustomizer === 'object') {
-        optionsOrCustomizer.async = false;
+const cloneDeep = (value, options) => {
+    if (options === null || typeof options !== 'object') {
+        options = {};
     }
 
+    options.async = false;
+
     /** @type {any} */
-    const __result = cloneDeepOptionsProxy(value, optionsOrCustomizer);
+    const __result = cloneDeepProxy(value, options);
 
     /** @type {U} */
     const result = __result;
@@ -162,45 +158,35 @@ const cloneDeep = (value, optionsOrCustomizer) => {
  * @template T
  * The type of the input value.
  * @template [U = T]
- * See documentation for_cloneDeep.
+ * See documentation for cloneDeepOptionProxy.
  * @param {T} value
  * The value to deeply copy.
- * @param {CloneDeepOptions|Customizer} [optionsOrCustomizer]
+ * @param {CloneDeepOptions} [options]
+ * @param {object} [options]
+ * @param {Customizer} options.customizer
  * See documentation for_cloneDeep.
- * @param {object} [optionsOrCustomizer]
+ * @param {Log} options.log
  * See documentation for_cloneDeep.
- * @param {Customizer} optionsOrCustomizer.customizer
+ * @param {boolean} options.prioritizePerformance
  * See documentation for_cloneDeep.
- * @param {Log} optionsOrCustomizer.log
+ * @param {boolean} options.ignoreCloningMethods
  * See documentation for_cloneDeep.
- * @param {boolean} optionsOrCustomizer.prioritizePerformance
+ * @param {string} options.logMode
  * See documentation for_cloneDeep.
- * @param {boolean} optionsOrCustomizer.ignoreCloningMethods
- * See documentation for_cloneDeep.
- * @param {string} optionsOrCustomizer.logMode
- * See documentation for_cloneDeep.
- * @param {boolean} optionsOrCustomizer.letCustomizerThrow
+ * @param {boolean} options.letCustomizerThrow
  * See documentation for_cloneDeep.
  * @returns {Promise<{ clone: U }> }
  * See documentation for_cloneDeep..
  */
-export const cloneDeepAsync = (value, optionsOrCustomizer) => {
-    if (typeof optionsOrCustomizer === 'function') {
-        optionsOrCustomizer = {
-            customizer: optionsOrCustomizer,
-            async: true
-        };
-    }
-    if (optionsOrCustomizer === undefined) {
-        optionsOrCustomizer = {};
-    }
-    if (optionsOrCustomizer !== null
-        && typeof optionsOrCustomizer === 'object') {
-        optionsOrCustomizer.async = true;
+export const cloneDeepAsync = (value, options) => {
+    if (options === null || typeof options !== 'object') {
+        options = {};
     }
 
+    options.async = true;
+
     /** @type {any} */
-    const __result = cloneDeepOptionsProxy(value, optionsOrCustomizer);
+    const __result = cloneDeepProxy(value, options);
 
     /** @type {Promise<{ clone: U }>} */
     const result = __result;

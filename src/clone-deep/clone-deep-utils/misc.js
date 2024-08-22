@@ -173,8 +173,6 @@ export const handleCustomError = ({
  * @param {boolean|undefined} spec.ignoreProps
  * If true, the algorithm will not add additional values from the properties of
  * `value` to the queue.
- * @param {boolean} spec.ignoreThisLoop
- * If true, this value won't be cloned at all.
  * @param {(string|symbol)[]} spec.propsToIgnore
  * A list of properties under this value that should not be cloned.
  * @param {boolean} spec.useCloningMethod
@@ -192,13 +190,12 @@ export const finalizeClone = ({
     cloneIsCached,
     ignoreProto,
     ignoreProps,
-    ignoreThisLoop,
     propsToIgnore,
     cloneStore,
     queue,
     asyncResult
 }) => {
-    if (!isObject(cloned) || cloneIsCached || ignoreThisLoop || asyncResult) {
+    if (!isObject(cloned) || cloneIsCached || asyncResult) {
         return;
     }
 

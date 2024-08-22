@@ -24,7 +24,6 @@ import { handleCustomError } from './misc.js';
  *     useCustomizerClone: boolean,
  *     ignoreProto: boolean|undefined,
  *     ignoreProps: boolean|undefined,
- *     ignoreThisLoop: boolean,
  *     async?: boolean
  * }}
  */
@@ -60,14 +59,11 @@ export const handleCustomizer = ({
     /** @type {boolean|undefined} */
     let ignoreProto;
 
-    /** @type {boolean} */
-    const ignoreThisLoop = false;
-
     /** @type {boolean|undefined} */
     let async;
 
     try {
-        const customResult = customizer(value);
+        const customResult = customizer(value, log);
 
         if (typeof customResult !== 'object') {
             return {
@@ -75,7 +71,6 @@ export const handleCustomizer = ({
                 useCustomizerClone: false,
                 ignoreProto,
                 ignoreProps,
-                ignoreThisLoop,
                 async
             };
         }
@@ -86,18 +81,11 @@ export const handleCustomizer = ({
             ignoreProto,
             async
         } = customResult);
-        useCustomizerClone = true;
 
-        if (customResult.ignore === true) {
-            return {
-                cloned,
-                useCustomizerClone,
-                ignoreProto,
-                ignoreProps,
-                ignoreThisLoop: true,
-                async
-            };
-        }
+        useCustomizerClone =
+            typeof customResult.useCustomizerClone === 'boolean'
+                ? customResult.useCustomizerClone
+                : true;
 
         if (!Array.isArray(additionalValues)
             && additionalValues !== undefined) {
@@ -141,7 +129,6 @@ export const handleCustomizer = ({
         useCustomizerClone,
         ignoreProto,
         ignoreProps,
-        ignoreThisLoop,
         async
     };
 };

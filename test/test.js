@@ -10,6 +10,7 @@ import { describe, mock, test } from 'node:test';
 import cloneDeep, {
     cloneDeepAsync,
     cloneDeepFully,
+    cloneDeepFullyAsync,
     useCustomizers
 } from '../index.js';
 
@@ -22,6 +23,7 @@ import {
     getTypedArrayConstructor
 } from '../src/utils/helpers.js';
 import {
+    isCallable,
     isDOMMatrix,
     isDOMMatrixReadOnly,
     isDOMPoint,
@@ -59,6 +61,11 @@ assert.false = (condition) => {
 
 assert.undefined = (condition) => {
     assert.strictEqual(undefined, condition);
+};
+
+assert.deepClone = (object1, object2) => {
+    assert.notStrictEqual(object1, object2);
+    assert.deepEqual(object1, object2);
 };
 
 try {
@@ -1320,6 +1327,15 @@ try {
                     .height.get?.call(cloneBitmap);
             });
         });
+
+        test('cloneDeep is not asynchronous even if async property is ' +
+             'provided in options', () => {
+            // -- arrange/act
+            const clone = cloneDeep({}, { async: true });
+
+            // -- assert
+            assert.true(!isCallable(clone.then));
+        });
     });
 
     describe('cloneDeep customizer', () => {
@@ -1330,12 +1346,13 @@ try {
             const clone = {};
 
             // -- act
-            const cloned = cloneDeep(original, (value) => {
-                const result = { clone };
-                if (!isObject(value)) {
-                    result.ignoreProps = true;
+            const cloned = cloneDeep(original, {
+                customizer(value) {
+                    return {
+                        clone,
+                        ignoreProps: !isObject(value)
+                    };
                 }
-                return result;
             });
 
             // -- assert
@@ -1365,25 +1382,27 @@ try {
             const newValue2 = 'newValue2';
 
             // -- act
-            const cloned = cloneDeep(original, (value) => {
-                if (value !== prop) {
-                    return;
+            const cloned = cloneDeep(original, {
+                customizer(value) {
+                    if (value !== prop) {
+                        return;
+                    }
+                    const clone = {};
+                    return {
+                        clone,
+                        additionalValues: [{
+                            value: newValue1,
+                            assigner: (_cloned) => {
+                                clone[0] = _cloned;
+                            }
+                        }, {
+                            value: newValue2,
+                            assigner: (_cloned) => {
+                                clone[1] = _cloned;
+                            }
+                        }]
+                    };
                 }
-                const clone = {};
-                return {
-                    clone,
-                    additionalValues: [{
-                        value: newValue1,
-                        assigner: (_cloned) => {
-                            clone[0] = _cloned;
-                        }
-                    }, {
-                        value: newValue2,
-                        assigner: (_cloned) => {
-                            clone[1] = _cloned;
-                        }
-                    }]
-                };
             });
 
             // -- assert
@@ -1466,9 +1485,11 @@ try {
             const b = 'b';
 
             // -- act
-            const cloned = cloneDeep({ a, b }, (value) => {
-                if (value === b) {
-                    return { ignore: true };
+            const cloned = cloneDeep({ a, b }, {
+                customizer(value) {
+                    if (value === b) {
+                        return { ignore: true };
+                    }
                 }
             });
 
@@ -1484,12 +1505,14 @@ try {
             const original = { nested };
 
             // -- act
-            const cloned = cloneDeep(original, (value) => {
-                if (value === nested) {
-                    return {
-                        clone: {},
-                        ignoreProps: true
-                    };
+            const cloned = cloneDeep(original, {
+                customizer(value) {
+                    if (value === nested) {
+                        return {
+                            clone: {},
+                            ignoreProps: true
+                        };
+                    }
                 }
             });
 
@@ -1592,15 +1615,61 @@ try {
             const original = Object.create(proto);
 
             // -- act
-            const cloned = cloneDeep(original, () => {
-                return {
-                    clone: {},
-                    ignoreProto: true
-                };
+            const cloned = cloneDeep(original, {
+                customizer() {
+                    return {
+                        clone: {},
+                        ignoreProto: true
+                    };
+                }
             });
 
             // -- assert
             assert.notStrictEqual(getProto(cloned), getProto(original));
+        });
+
+        test('customizer can cause props and proto to be ignored without ' +
+             'assigning a clone', () => {
+            // -- arrange
+            const original = Object.assign(Object.create({
+                a: 'a',
+                [Symbol.toStringTag]: 'Unsupported'
+            }), {
+                b: 'b',
+                c: 'c'
+            });
+
+            // -- act
+            const clone = cloneDeep(original, {
+                customizer() {
+                    return {
+                        useCustomizerClone: false,
+                        ignoreProps: true,
+                        ignoreProto: true
+                    };
+                }
+            });
+
+            // -- assert
+            assert.deepEqual(clone, {});
+            assert.deepEqual(getProto(clone), Object.prototype);
+        });
+
+        test('customizer receives logger', () => {
+            // -- arrange
+            const log = mock.fn(() => {});
+
+            // -- act
+            cloneDeep({}, {
+                customizer(_value, logger) {
+                    logger('test');
+                },
+                log
+            });
+
+            // -- assert
+            assert.strictEqual(1, log.mock.calls.length);
+            assert.strictEqual('test', log.mock.calls[0].arguments[0]);
         });
     });
 
@@ -1706,12 +1775,14 @@ try {
             const clone = {};
 
             // -- act
-            const cloned = cloneDeepFully(original, (value) => {
-                const result = { clone };
-                if (!isObject(value)) {
-                    result.ignoreProps = true;
+            const cloned = cloneDeepFully(original, {
+                customizer(value) {
+                    const result = { clone };
+                    if (!isObject(value)) {
+                        result.ignoreProps = true;
+                    }
+                    return result;
                 }
-                return result;
             });
 
             // -- assert
@@ -1761,6 +1832,70 @@ try {
                 });
             });
         });
+
+        test('cloneDeepFullyAsync works as expected', async () => {
+            // -- arrange
+            const proto = {
+                test: 'test'
+            };
+            const topLevel = Object.assign(Object.create(proto), {
+                top: 'top'
+            });
+
+            // -- act
+            const { clone } = await cloneDeepFullyAsync(topLevel);
+
+            // -- assert
+            assert.deepClone(clone, topLevel);
+            assert.deepClone(getProto(clone), getProto(topLevel));
+            assert.strictEqual('test', getProto(clone).test);
+        });
+
+        test('cloneDeepFullyAsync prioritizePerformance, force, and ' +
+             'ignoreCloningMethodsbehave as expected', async () => {
+            // -- arrange
+            const original = {
+                [CLONE]() {
+                    return 'primitive';
+                }
+            };
+
+            // -- act
+            const { clone } = await cloneDeepFullyAsync(original, {
+                prioritizePerformance: true,
+                force: true,
+                ignoreCloningMethods: true
+            });
+
+            // -- assert
+            assert.deepClone(clone, original);
+            assert.deepClone(getProto(clone), Object.prototype);
+        });
+
+        test('cloneDeepFullyAsync letCustomizerThrow works', () => {
+            // -- arrange
+            const original = {};
+
+            // -- act
+            const clonePromise = cloneDeepFullyAsync(original, {
+                letCustomizerThrow: true,
+                customizer() {
+                    throw new Error('guaranteed to fail');
+                }
+            });
+
+            // -- assert
+            assert.rejects(clonePromise);
+        });
+
+        test('cloneDeepFully is not asynchronous even if async property is ' +
+             'provided in options', () => {
+            // -- arrange/act
+            const clone = cloneDeepFully({}, { async: true });
+
+            // -- assert
+            assert.true(!isCallable(clone.then));
+        });
     });
 
     describe('useCustomizers', () => {
@@ -1807,10 +1942,12 @@ try {
             };
 
             // -- act
-            const cloned = cloneDeep({ a, b }, useCustomizers([
-                getPropertyMapCustomizer(a),
-                getPropertyMapCustomizer(b)
-            ]));
+            const cloned = cloneDeep({ a, b }, {
+                customizer: useCustomizers([
+                    getPropertyMapCustomizer(a),
+                    getPropertyMapCustomizer(b)
+                ])
+            });
 
             // -- assert
             assert.deepEqual(cloned, { a: 'z', b: 'y' });
@@ -1829,7 +1966,9 @@ try {
             const customizer02 = mock.fn(getValuePusher(2));
 
             // -- act
-            cloneDeep({}, useCustomizers([customizer01, customizer02]));
+            cloneDeep({}, {
+                customizer: useCustomizers([customizer01, customizer02])
+            });
 
             // -- assert
             assert.strictEqual(customizer01.mock.calls.length, 1);
@@ -2085,6 +2224,48 @@ try {
             // -- assert
             // it complains a second time when it tries to clone cloning method
             assert.strictEqual(2, log.mock.calls.length);
+        });
+
+        test('cloning method can cause props and proto to be ignored without ' +
+             'assigning a clone', () => {
+            // -- arrange
+            const original = Object.assign(Object.create({
+                a: 'a',
+                [Symbol.toStringTag]: 'Unsupported',
+                [CLONE]() {
+                    return {
+                        useCloningMethod: false,
+                        ignoreProps: true,
+                        ignoreProto: true
+                    };
+                }
+            }), {
+                b: 'b',
+                c: 'c'
+            });
+
+            // -- act
+            const clone = cloneDeep(original);
+
+            // -- assert
+            assert.deepEqual(clone, {});
+            assert.deepEqual(getProto(clone), Object.prototype);
+        });
+
+        test('cloning method receives logger', () => {
+            // -- arrange
+            const log = mock.fn(() => {});
+
+            // -- act
+            cloneDeep(Object.create({
+                [CLONE](_value, logger) {
+                    logger('test');
+                }
+            }), { log });
+
+            // -- assert
+            assert.strictEqual(1, log.mock.calls.length);
+            assert.strictEqual('test', log.mock.calls[0].arguments[0]);
         });
     });
 
