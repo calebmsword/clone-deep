@@ -114,13 +114,8 @@ const cloneDeepFully = (value, options) => {
 
     options.async = false;
 
-    /** @type {any} */
-    const __result = cloneDeepFullyProxy(value, options);
-
-    /** @type {U} */
-    const result = __result;
-
-    return result;
+    /* eslint-disable-next-line @s/no-extra-parens */
+    return /** @type {U} */ (cloneDeepFullyProxy(value, options));
 };
 
 /**
@@ -159,13 +154,8 @@ export const cloneDeepFullyAsync = (value, options) => {
 
     options.async = true;
 
-    /** @type {any} */
-    const __result = cloneDeepFullyProxy(value, options);
-
-    /** @type {Promise<{ clone: U }>}*/
-    const result = __result;
-
-    return result;
+    return /** @type {Promise<{ clone: U }>}*/ (
+        cloneDeepFullyProxy(value, options));
 };
 
 export default cloneDeepFully;

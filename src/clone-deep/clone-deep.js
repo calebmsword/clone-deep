@@ -14,9 +14,11 @@ import { cloneDeepInternal } from './clone-deep-internal.js';
  * @template T
  * The type of the input value.
  * @template [U = T]
- * The type of the return value. By default, it is the same as the input value.
- * Nefarious customizer usage could require them be distinct, however. Please do
- * not do this.
+ * The type of the return value, which by default is the same as `T`. Strictly
+ * speaking it is possible for the types to differ because we don't support
+ * all types, and customizers and cloning methods can arbitrarily manipulate
+ * the resultant type of the clone. Provide this parameter if you know what you
+ * are doing.
  * @param {T} value
  * The value to deeply copy.
  * @param {CloneDeepProxyOptions} [options]
@@ -108,30 +110,17 @@ const cloneDeepProxy = (value, options) => {
  * I should be able to use conditional types to correctly have
  * cloneDeepOptionsProxy return a promise or a non-promise without problems. But
  * it does not work. See https://github.com/microsoft/TypeScript/issues/33912.
- * As a workaround, I perform some evil "casting" to force the return to have
- * the correct type.
+ * As a workaround, I perform some evil casting to force the return to have the
+ * correct type.
  * @template T
  * The type of the input value.
  * @template [U = T]
- * See documentation for_cloneDeep.
+ * See documentation for cloneDeepProxy.
  * @param {T} value
  * The value to deeply copy.
  * @param {CloneDeepOptions} [options]
- * @param {object} options
- * @param {Customizer} options.customizer
- * See documentation for_cloneDeep.
- * @param {Log} options.log
- * See documentation for_cloneDeep.
- * @param {boolean} options.prioritizePerformance
- * See documentation for_cloneDeep.
- * @param {boolean} options.ignoreCloningMethods
- * See documentation for_cloneDeep.
- * @param {string} options.logMode
- * See documentation for_cloneDeep.
- * @param {boolean} options.letCustomizerThrow
- * See documentation for_cloneDeep.
  * @returns {U}
- * See documentation for_cloneDeep..
+ * See documentation for_cloneDeep.
  */
 const cloneDeep = (value, options) => {
     if (options === null || typeof options !== 'object') {
@@ -140,13 +129,8 @@ const cloneDeep = (value, options) => {
 
     options.async = false;
 
-    /** @type {any} */
-    const __result = cloneDeepProxy(value, options);
-
-    /** @type {U} */
-    const result = __result;
-
-    return result;
+    /* eslint-disable-next-line @s/no-extra-parens */
+    return /** @type {U} */ (cloneDeepProxy(value, options));
 };
 
 /**
@@ -158,23 +142,10 @@ const cloneDeep = (value, options) => {
  * @template T
  * The type of the input value.
  * @template [U = T]
- * See documentation for cloneDeepOptionProxy.
+ * See documentation for cloneDeepProxy.
  * @param {T} value
  * The value to deeply copy.
  * @param {CloneDeepOptions} [options]
- * @param {object} [options]
- * @param {Customizer} options.customizer
- * See documentation for_cloneDeep.
- * @param {Log} options.log
- * See documentation for_cloneDeep.
- * @param {boolean} options.prioritizePerformance
- * See documentation for_cloneDeep.
- * @param {boolean} options.ignoreCloningMethods
- * See documentation for_cloneDeep.
- * @param {string} options.logMode
- * See documentation for_cloneDeep.
- * @param {boolean} options.letCustomizerThrow
- * See documentation for_cloneDeep.
  * @returns {Promise<{ clone: U }> }
  * See documentation for_cloneDeep..
  */
@@ -185,13 +156,8 @@ export const cloneDeepAsync = (value, options) => {
 
     options.async = true;
 
-    /** @type {any} */
-    const __result = cloneDeepProxy(value, options);
-
-    /** @type {Promise<{ clone: U }>} */
-    const result = __result;
-
-    return result;
+    /* eslint-disable-next-line @s/no-extra-parens */
+    return /** @type {Promise<{ clone: U }>} */(cloneDeepProxy(value, options));
 };
 
 export default cloneDeep;
