@@ -204,7 +204,7 @@ export default [{
         'prefer-arrow-callback': ['error', { allowNamedFunctions: true }],
         'one-var': ['error', 'never'],
         'prefer-const': 'error',
-        'prefer-destructuring': 'error',
+        'prefer-destructuring': ['error', { object: true, array: false }],
         'prefer-exponentiation-operator': 'error',
         'prefer-object-has-own': 'error',
         'prefer-object-spread': 'error',

@@ -1,6 +1,7 @@
 import { TOP_LEVEL } from './assign.js';
 import { getSupportedPrototypes } from '../../utils/helpers.js';
 
+/** Container for various data structures often used in cloneDeep. */
 export class GlobalState {
     /**
      * Contains the cloned value.
@@ -20,7 +21,11 @@ export class GlobalState {
      */
     queue;
 
-    /** @type import('../../types').PendingResultItem[]} */
+    /**
+     * A list. Each item contains a promise which resolves to the clone of a
+     * value, as well as metadata for that clone.
+     * @type import('../../types').PendingResultItem[]}
+     */
     pendingResults = [];
 
     /**
@@ -31,10 +36,16 @@ export class GlobalState {
      */
     isExtensibleSealFrozen = [];
 
-    /** @type {import('../../types').Customizer|undefined} */
+    /**
+     * An optional function which customizes the behavior of CloneDeep.
+     * @type {import('../../types').Customizer|undefined}
+     */
     customizer;
 
-    /** An array of all prototypes of supported types in this runtime. */
+    /**
+     * An array of all prototypes of supported types in this runtime.
+     * @type {any[]}
+     */
     supportedPrototypes;
 
     /**
