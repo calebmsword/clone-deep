@@ -153,6 +153,16 @@ html, body {
     align-items: normal;
 }
 
+.type-checking-container {
+    display: flex;
+    justify-content: center;
+}
+
+.type-checking {
+    font-weight: bold;
+    padding-bottom: 3px;
+}
+
 .radios {
     display: flex;
     flex-direction: row;

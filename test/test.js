@@ -34,6 +34,7 @@ import {
     isObject
 } from '../src/utils/type-checking.js';
 import { getDescriptors } from '../src/utils/metadata.js';
+import { GlobalState } from '../src/clone-deep/clone-deep-utils/global-state.js';
 
 // we will monkeypatch console.warn in a second, so hold onto the original
 // implementation for safekeeping
@@ -2745,6 +2746,40 @@ try {
             assert.undefined(castAsInstanceOf(new Date(), () => {
                 return new Date();
             }));
+        });
+
+        test('GlobalState properties are read-only at runtime', () => {
+            // -- arrange
+            const globalState = new GlobalState({
+                value: '',
+                log: () => {
+                    /* no-op */
+                },
+                prioritizePerformance: false,
+                ignoreCloningMethods: false,
+                doThrow: false,
+                async: false
+            });
+
+            // -- act/assert
+            [
+                'container',
+                'cloneStore',
+                'queue',
+                'pendingResults',
+                'isExtensibleSealFrozen',
+                'customizer',
+                'supportedPrototypes',
+                'parentObjectRegistry',
+                'prioritizePerformance',
+                'ignoreCloningMethods',
+                'doThrow',
+                'async'
+            ].forEach((property) => {
+                assert.throws(() => {
+                    globalState[property] = '';
+                });
+            });
         });
     });
 } catch (error) {

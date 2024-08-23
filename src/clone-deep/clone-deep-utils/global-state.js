@@ -1,23 +1,28 @@
 import { TOP_LEVEL } from './assign.js';
 import { getSupportedPrototypes } from '../../utils/helpers.js';
 
-/** Container for various data structures often used in cloneDeep. */
+/**
+ * Container for various data structures often used in cloneDeep.
+ */
 export class GlobalState {
     /**
      * Contains the cloned value.
      * @type {{ clone: any }}
+     * @readonly
      */
     container;
 
     /**
      * Will be used to store cloned values so that we don't loop infinitely on
      * circular references.
+     * @readonly
      */
     cloneStore = new Map();
 
     /**
      * A queue so we can avoid recursion.
      * @type {import('../../types').QueueItem[]}
+     * @readonly
      */
     queue;
 
@@ -25,6 +30,7 @@ export class GlobalState {
      * A list. Each item contains a promise which resolves to the clone of a
      * value, as well as metadata for that clone.
      * @type import('../../types').PendingResultItem[]}
+     * @readonly
      */
     pendingResults = [];
 
@@ -33,18 +39,21 @@ export class GlobalState {
      * Object.isSealed and Object.isFrozen. We do it last so we don't run into
      * issues where we append properties on a frozen object, etc.
      * @type {Array<[any, any]>}
+     * @readonly
      */
     isExtensibleSealFrozen = [];
 
     /**
      * An optional function which customizes the behavior of CloneDeep.
      * @type {import('../../types').Customizer|undefined}
+     * @readonly
      */
     customizer;
 
     /**
      * An array of all prototypes of supported types in this runtime.
      * @type {any[]}
+     * @readonly
      */
     supportedPrototypes;
 
@@ -53,30 +62,35 @@ export class GlobalState {
      * method is in the prototype of an object that was cloned earlier in the
      * chain.
      * @type {Set<any>|undefined}
+     * @readonly
      */
     parentObjectRegistry;
 
     /**
      * Whether or not type-checking will be more performant.
      * @type {boolean}
+     * @readonly
      */
     prioritizePerformance;
 
     /**
      * Whether cloning methods should even be considered.
      * @type {boolean}
+     * @readonly
      */
     ignoreCloningMethods;
 
     /**
      * Whether errors in the customizer should cause the function to throw.
      * @type {boolean}
+     * @readonly
      */
     doThrow;
 
     /**
      * Whether the algorithm will return the clone asynchronously.
      * @type {boolean|undefined}
+     * @readonly
      */
     async;
 
@@ -121,5 +135,11 @@ export class GlobalState {
         this.ignoreCloningMethods = Boolean(ignoreCloningMethods);
         this.doThrow = Boolean(doThrow);
         this.async = Boolean(async);
+
+        return new Proxy(this, {
+            set() {
+                throw new TypeError('GlobalState properties are readonly!');
+            }
+        });
     }
 }
