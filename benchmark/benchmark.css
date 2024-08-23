@@ -2,6 +2,8 @@
     --main-background-color: rgb(176, 175, 175);
     --content-background-color: rgba(0, 191, 255, 0.726); 
     --content-border-color: black;
+    --checkbox-or-radio-border-color: rgb(80, 79, 79);
+    --checkbox-or-radio-background-color: rgb(222, 223, 228);
     --button-color: rgb(255, 174, 0);
     --button-hover-color: rgb(174, 126, 24);
     --button-border-color: black;
@@ -15,7 +17,6 @@ html, body {
 
 .main-container {
     width: 400px;
-    height: 450px;
     margin: 20px;
     display: flex;
     border-style: solid;
@@ -42,7 +43,7 @@ html, body {
     border-style: solid;
     border-color: black;
     border-width: 2px;
-    margin: 0px 50px 50px 50px;
+    margin: 0px 50px 10px 50px;
     font-family:'Courier New', Courier, monospace;
     font-size: 12px;
 }
@@ -100,15 +101,70 @@ html, body {
     padding: 20px;
 }
 
+.checkboxes-and-radios {
+    margin-top: 10px;
+    padding-left: 16.5%;
+    padding-right: 16.5%;
+    flex-grow: 1;
+}
+
+.checkbox-or-radio {
+    display: flex;
+    align-items: center;
+    padding-left: 6px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 2.5px;
+    border-color: var(--checkbox-or-radio-border-color);
+    background-color: var(--checkbox-or-radio-background-color);
+}
+
+.checkboxes {
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    align-items: normal;
+}
+
+.radios {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    row-gap: 10px;
+}
+
+.radio-container {
+    padding-left: 3px;
+    padding-right: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-label {
+    padding-left: 6px;
+}
+
+.radio-label {
+    padding-left: 6px;
+}
+
+input[type="radio"] {
+    margin: 0px;
+}
+
 .button {
     background-color: var(--button-color);
     border-color: var(--button-border-color);
     margin: 1.5px 5px 1.5px 0px;
     border-style: solid;
     border-width: 2px;
-    height: 30px;
+    height: 35px;
     width: fit-content;
-    padding: 0px 8px;
+    padding: 0px 10px;
     display: flex;
     align-items: center;
     justify-content: center;
