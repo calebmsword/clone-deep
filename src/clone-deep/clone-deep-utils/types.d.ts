@@ -37,7 +37,7 @@ export interface AudioData {
 
 /** A "polyfill" for the VideoData type not provided in the version of 
  * TypeScript I am using. */
-export interface VideoData {
+export interface VideoFrame {
     codedHeight: number,
     codedRect: DOMRectReadOnly,
     codedWidth: number,
@@ -50,7 +50,7 @@ export interface VideoData {
     visibleRect: DOMRectReadOnly,
 
     allocationSize: () => number,
-    clone: () => VideoData,
+    clone: () => VideoFrame,
     close: () => void,
     copyTo: (
         destination: ArrayBuffer | TypedArray | DataView,

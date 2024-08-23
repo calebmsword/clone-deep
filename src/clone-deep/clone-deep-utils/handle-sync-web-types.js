@@ -1,7 +1,3 @@
-/* eslint-disable complexity -- We support > 10 types, so we are guaranteed to
-exceed a complexity of 10. I don't see any reason to separate this function
-further. */
-
 import { Tag } from '../../utils/constants.js';
 import { cloneFile, createFileList } from '../../utils/helpers.js';
 import { forAllOwnProperties, hasAccessor } from '../../utils/metadata.js';
@@ -177,7 +173,7 @@ export const handleSyncWebTypes = ({
             }));
 
     } else if ([Tag.AUDIODATA, Tag.VIDEOFRAME].includes(tag)) {
-        /** @type {import('./types').AudioData | import('./types').VideoData} */
+        /** @type {import('./types').AudioData | import('./types').VideoFrame} */
         const data = value;
 
         cloned = saveClone(data.clone());

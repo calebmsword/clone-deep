@@ -1,5 +1,3 @@
-/* eslint-disable complexity */
-
 import { cloneDeepInternal } from './clone-deep-internal.js';
 
 /** @typedef {import('../types').CloneDeepProxyOptions} CloneDeepProxyOptions */

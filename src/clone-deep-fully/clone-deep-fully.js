@@ -1,5 +1,3 @@
-/* eslint-disable complexity */
-
 import {
     cloneDeepFullyInternal,
     cloneDeepFullyInternalAsync

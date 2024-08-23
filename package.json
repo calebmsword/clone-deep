@@ -14,6 +14,7 @@
     "delete-tsdist": "node scripts/delete-tsdist.js",
     "fix": "npx eslint --fix",
     "lint": "npx eslint",
+    "lint-complexity": "npx eslint --no-config-lookup --no-inline-config --rule \"complexity: [warn, 10]\"",
     "serve": "node .\\scripts\\serve.js",
     "test": "node --test",
     "test-coverage": "node --test --experimental-test-coverage",

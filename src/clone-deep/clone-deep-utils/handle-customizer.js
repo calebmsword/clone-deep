@@ -1,5 +1,3 @@
-/* eslint-disable complexity */
-
 import { Warning } from '../../utils/clone-deep-warning.js';
 import { isPropertyKeyArray } from '../../utils/type-checking.js';
 import { handleAdditionalValues } from './handle-additional-values.js';

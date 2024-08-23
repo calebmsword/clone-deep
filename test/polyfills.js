@@ -1,5 +1,4 @@
 /* node:coverage disable */
-/* eslint-disable complexity */
 
 import { isCallable } from '../src/utils/type-checking.js';
 

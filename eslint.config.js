@@ -140,14 +140,6 @@ export default [{
         // https://eslint.org/docs/latest/rules/#suggestions
         'arrow-body-style': ['error', 'always'],
         camelcase: 'error',
-        complexity: [
-            // It can be hard to come up with a good cutoff for complexity. It
-            // really depends on the use case. Hence I won't make it error out
-            // on high complexity. I just want to know if I have started writing
-            // something complex and, if I have, I will decide for myself if I
-            // should start re-engineering.
-            'warn',
-            10],
         curly: 'error',
         'default-case': 'error',
         'default-case-last': 'error',

@@ -4,6 +4,7 @@
     --content-border-color: black;
     --checkbox-or-radio-border-color: rgb(80, 79, 79);
     --checkbox-or-radio-background-color: rgb(222, 223, 228);
+    --block-thread-color: rgb(169 21 100);
     --button-color: rgb(255, 174, 0);
     --button-hover-color: rgb(174, 126, 24);
     --button-border-color: black;
@@ -93,12 +94,35 @@ html, body {
     width: 60%;
 }
 
+.sync-checkbox-main-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60px;
+}
+
+.sync-checkbox-inner-container {
+    display: flex;
+    align-items: center;
+}
+
+.sync-checkbox {
+    transform: scale(2);
+}
+
+.sync-checkbox-label {
+    padding-left: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--block-thread-color);
+}
+
 .buttons {
     flex-grow: 0.85;
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    padding: 20px;
+    padding: 0px 20px 20px 20px;
 }
 
 .checkboxes-and-radios {

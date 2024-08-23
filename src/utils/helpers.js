@@ -8,8 +8,6 @@ import { getWarning, Warning } from './clone-deep-warning.js';
 import { isCallable } from './type-checking.js';
 import { getPrototype } from './metadata.js';
 
-/* eslint-disable complexity -- obviously this function will have a complexity
-greater than 10. There is no point in chunking this function up further. */
 /**
  * Gets the appropriate TypedArray constructor for the given object tag.
  * @param {string} tag
@@ -49,7 +47,6 @@ export const getTypedArrayConstructor = (tag, log) => {
         return DataView;
     }
 };
-/* eslint-enable complexity */
 
 /**
  * Gets the appropriate error constructor for the error name.

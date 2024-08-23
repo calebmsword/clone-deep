@@ -1,7 +1,3 @@
-/* eslint-disable complexity -- We support > 10 types, so we are guaranteed to
-exceed a complexity of 10. I don't see any reason to separate this function
-further. */
-
 import { TOP_LEVEL } from './assign.js';
 import { getWarning, Warning } from '../../utils/clone-deep-warning.js';
 import { Tag } from '../../utils/constants.js';

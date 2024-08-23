@@ -1,5 +1,3 @@
-/* eslint-disable complexity */
-
 import { Warning } from '../../utils/clone-deep-warning.js';
 import { CLONE } from '../../utils/constants.js';
 import {

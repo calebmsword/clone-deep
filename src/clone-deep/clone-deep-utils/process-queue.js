@@ -1,5 +1,3 @@
-/* eslint-disable complexity */
-
 import { assign } from './assign.js';
 import {
     checkCloneStore,
