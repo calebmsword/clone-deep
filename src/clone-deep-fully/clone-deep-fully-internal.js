@@ -128,7 +128,6 @@ export const cloneDeepFullyInternalAsync = async ({
     letCustomizerThrow,
     force
 }) => {
-    // eslint-disable-next-line @s/no-extra-parens
     const { clone } = await /** @type {Promise<{ clone: U }>} */ (
         cloneDeepAsync(value, {
             customizer,

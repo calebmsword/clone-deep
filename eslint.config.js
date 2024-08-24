@@ -46,7 +46,6 @@ export default [{
             ignorePattern: '[\\w\\W]*\\s*@[\\w\\W]*\\s*\\{'
         }],
         '@s/new-parens': ['error', 'always'],
-        '@s/no-extra-parens': 'error',
         '@s/no-floating-decimal': 'error',
         '@s/no-mixed-operators': 'error',
         '@s/no-mixed-spaces-and-tabs': 'error',
