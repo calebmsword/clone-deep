@@ -56,7 +56,9 @@ export const cloneDeepInternal = ({
     if (!async) {
         processQueue(globalState);
 
-        handleMetadata(globalState.isExtensibleSealFrozen);
+        if (globalState.performanceConfig?.ignoreMetadata !== true) {
+            handleMetadata(globalState.isExtensibleSealFrozen);
+        }
 
         return globalState.container.clone;
     }
@@ -72,7 +74,9 @@ export const cloneDeepInternal = ({
                 return processData();
             }
 
-            handleMetadata(globalState.isExtensibleSealFrozen);
+            if (globalState.performanceConfig?.ignoreMetadata !== true) {
+                handleMetadata(globalState.isExtensibleSealFrozen);
+            }
         } catch (reason) {
             return Promise.reject(reason);
         }

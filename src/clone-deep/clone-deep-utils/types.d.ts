@@ -72,8 +72,6 @@ export interface VideoFrame {
 }
 
 export interface PerformanceConfig {
-    ignoreCircularReferences?: boolean,
-    ignorePropertyDesriptors?: boolean,
     ignoreMetadata?: boolean,
     robustTypeChecking?: boolean
 }
