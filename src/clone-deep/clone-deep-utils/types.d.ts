@@ -70,3 +70,8 @@ export interface VideoFrame {
         colorSpace: string
     ) => Promise<{ offset: number, stride: number }[]>
 }
+
+export interface PerformanceConfig {
+    ignoreMetadata?: boolean,
+    robustTypeChecking?: boolean
+}

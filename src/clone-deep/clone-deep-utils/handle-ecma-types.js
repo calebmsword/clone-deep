@@ -38,7 +38,7 @@ export const handleEcmaTypes = ({
 }) => {
 
     const {
-        prioritizePerformance,
+        performanceConfig,
         log,
         queue,
         isExtensibleSealFrozen,
@@ -190,7 +190,7 @@ export const handleEcmaTypes = ({
 
         cloned = saveClone(arrayBuffer);
 
-    } else if (isTypedArray(value, prioritizePerformance, tag)
+    } else if (isTypedArray(value, tag, performanceConfig)
             || Tag.DATAVIEW === tag) {
 
         /** @type {import('../../utils/types').TypedArrayConstructor} */

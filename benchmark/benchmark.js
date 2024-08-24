@@ -19,12 +19,14 @@ const TypeChecking = Object.freeze({
 // -- stateful variables
 let numIterations = DEFAULT_NUM_ITERATIONS;
 let numPrototypes = DEFAULT_NUM_PROTOTYPES;
+
 let benchmarking = false;
-let ignoreCircularReferences = false;
-let ignorePropertyDescriptors = false;
+
 let ignoreMetadata = false;
-let typeChecking = TypeChecking.DEFAULT;
+let robustTypeChecking = TypeChecking.DEFAULT;
+
 let block = false;
+
 let elementUnderCursor;
 
 
@@ -36,8 +38,6 @@ const esToolkitResult = document.querySelector('.es .result-text');
 const cloneDeepResult = document.querySelector('.bottom .result-text');
 const protoResult = document.querySelector('.proto .result-text');
 
-const circularCheckbox = document.querySelector('#ignoreCircular');
-const descriptorCheckbox = document.querySelector('#ignoreDesc');
 const metadataCheckbox = document.querySelector('#ignoreMeta');
 
 const radioDefault = document.querySelector('#default');
@@ -113,10 +113,8 @@ const doBenchmark = (type) => {
     };
 
     const config = {
-        ignoreCircularReferences,
-        ignorePropertyDescriptors,
         ignoreMetadata,
-        typeChecking
+        robustTypeChecking: robustTypeChecking === TypeChecking.ROBUST
     };
 
     if (block) {
@@ -135,20 +133,20 @@ const doBenchmark = (type) => {
 };
 
 const updateTypeChecking = (context) => {
-    typeChecking = radioToTypeChecking.get(context.target);
+    robustTypeChecking = radioToTypeChecking.get(context.target);
 };
 
 window.getState = () => {
     [
-        numIterations,
-        numPrototypes,
-        benchmarking,
-        ignoreCircularReferences,
-        ignorePropertyDescriptors,
-        ignoreMetadata,
-        typeChecking,
-        block
-    ].forEach(console.log);
+        ['numIterations', numIterations],
+        ['numPrototypes', numPrototypes],
+        ['benchmarking', benchmarking],
+        ['ignoreMetadata', ignoreMetadata],
+        ['robustTypeChecking', robustTypeChecking],
+        ['block', block]
+    ].forEach((state) => {
+        console.log(state);
+    });
 };
 
 
@@ -163,17 +161,6 @@ iterationsInput.addEventListener('input', (event) => {
 
 prototypesInput.addEventListener('input', (event) => {
     numPrototypes = Number(event.target.value || DEFAULT_NUM_PROTOTYPES);
-});
-
-circularCheckbox.addEventListener('change', (event) => {
-    ignoreCircularReferences = event.currentTarget.checked;
-    ignoreCircularReferences
-        ? ordinaryObjectButton.classList.add('invisible')
-        : ordinaryObjectButton.classList.remove('invisible');
-});
-
-descriptorCheckbox.addEventListener('change', (event) => {
-    ignorePropertyDescriptors = event.currentTarget.checked;
 });
 
 metadataCheckbox.addEventListener('change', (event) => {

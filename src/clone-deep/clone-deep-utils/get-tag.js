@@ -143,20 +143,20 @@ const typeCheckers = [
  *
  * Since calling prototype methods can be expensive, it is possible to call this
  * function is such a way that `Object.prototype.toString.call` is solely used
- * to determine tags using the `prioritizePerformance` parameter.
+ * to determine tags using the `performanceConfig.robustTypeChecking` parameter.
  *
  * @param {any} value
  * The value to get the tag of.
- * @param {boolean} prioritizePerformance
  * Whether type-checking should be done performantly.
  * @param {import('./global-state.js').GlobalState} globalState
  * The global application state.
+ * @param {import('./types').PerformanceConfig} [performanceConfig]
  * @returns {string} tag
  * A string indicating the value's type.
  */
-export const getTag = (value, prioritizePerformance, globalState) => {
+export const getTag = (value, globalState, performanceConfig) => {
 
-    if (prioritizePerformance) {
+    if (performanceConfig?.robustTypeChecking !== true) {
         return toStringTag(value);
     }
 
@@ -172,10 +172,6 @@ export const getTag = (value, prioritizePerformance, globalState) => {
             : constructorOrString;
 
         if (constructor === undefined) {
-            return false; // continue iterating
-        }
-
-        if (!(value instanceof constructor)) {
             return false; // continue iterating
         }
 

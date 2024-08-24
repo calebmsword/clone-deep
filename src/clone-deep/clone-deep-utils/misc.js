@@ -212,6 +212,7 @@ export const finalizeClone = ({
             }
 
             const meta = Object.getOwnPropertyDescriptor(value, key);
+
             queue.push({
                 value: !hasAccessor(meta) ? value[key] : undefined,
                 parentOrAssigner: cloned,

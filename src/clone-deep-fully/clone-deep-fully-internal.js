@@ -3,6 +3,7 @@ import { cloneDeepInternal } from '../clone-deep/clone-deep-internal.js';
 import { hasMethods } from '../utils/metadata.js';
 import { isObject } from '../utils/type-checking.js';
 
+/** @typedef {import('../clone-deep/clone-deep-utils/types').PerformanceConfig} PerformanceConfig */
 
 /** @typedef {import('../types').Customizer} Customizer */
 
@@ -24,7 +25,7 @@ import { isObject } from '../utils/type-checking.js';
  * @param {string|undefined} spec.logMode
  * Either "silent" or "quiet". This will configure the behavior of the default
  * logger.
- * @param {boolean} spec.prioritizePerformance
+ * @param {PerformanceConfig} spec.performanceConfig
  * Whether type-checking will be performed performantly.
  * @param {boolean} spec.ignoreCloningMethods
  * Whether cloning methods will be observed.
@@ -39,7 +40,7 @@ export const cloneDeepFullyInternal = ({
     customizer,
     log,
     logMode,
-    prioritizePerformance,
+    performanceConfig,
     ignoreCloningMethods,
     letCustomizerThrow,
     force
@@ -49,7 +50,7 @@ export const cloneDeepFullyInternal = ({
         customizer,
         log,
         logMode,
-        prioritizePerformance,
+        performanceConfig,
         ignoreCloningMethods,
         letCustomizerThrow
     });
@@ -76,7 +77,7 @@ export const cloneDeepFullyInternal = ({
             value: Object.getPrototypeOf(tempOrig),
             customizer,
             log,
-            prioritizePerformance,
+            performanceConfig,
             ignoreCloningMethods,
             doThrow: letCustomizerThrow,
             parentObjectRegistry,
@@ -108,7 +109,7 @@ export const cloneDeepFullyInternal = ({
  * @param {string|undefined} spec.logMode
  * Either "silent" or "quiet". This will configure the behavior of the default
  * logger.
- * @param {boolean} spec.prioritizePerformance
+ * @param {PerformanceConfig} spec.performanceConfig
  * Whether type-checking will be performed performantly.
  * @param {boolean} spec.ignoreCloningMethods
  * Whether cloning methods will be observed.
@@ -123,7 +124,7 @@ export const cloneDeepFullyInternalAsync = async ({
     customizer,
     log,
     logMode,
-    prioritizePerformance,
+    performanceConfig,
     ignoreCloningMethods,
     letCustomizerThrow,
     force
@@ -133,7 +134,7 @@ export const cloneDeepFullyInternalAsync = async ({
             customizer,
             log,
             logMode,
-            prioritizePerformance,
+            performanceConfig,
             ignoreCloningMethods,
             letCustomizerThrow,
             async: true
@@ -164,7 +165,7 @@ export const cloneDeepFullyInternalAsync = async ({
             value: Object.getPrototypeOf(tempOrig),
             customizer,
             log,
-            prioritizePerformance,
+            performanceConfig,
             ignoreCloningMethods,
             doThrow: letCustomizerThrow,
             parentObjectRegistry,

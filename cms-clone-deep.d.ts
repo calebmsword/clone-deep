@@ -94,7 +94,7 @@ declare module "cms-clone-deep" {
      * See the documentation for `cloneDeep`.
      * @param {string} options.logMode 
      * See the documentation for `cloneDeep`.
-     * @param {boolean} options.prioritizePerformance 
+     * @param {boolean} options.PerformanceConfig 
      * See the documentation for `cloneDeep`.
      * @param {boolean} optionsOrCustomizer.ignoreCloningMethods 
      * See the documentation for `cloneDeep`.
