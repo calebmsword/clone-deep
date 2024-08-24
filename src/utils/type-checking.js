@@ -73,7 +73,7 @@ export const getGeometryCheckers = (webApiString, methodOrProp, property) => {
      */
     const isSubclass = (value) => {
         const PotentialWebApi = getConstructorFromString(webApiString);
-        if (!isCallable(PotentialWebApi)) {
+        if (typeof PotentialWebApi !== 'function') {
             return false;
         }
 
@@ -93,7 +93,7 @@ export const getGeometryCheckers = (webApiString, methodOrProp, property) => {
             if (typeof methodOrProp === 'object') {
                 descriptors[methodOrProp.name].get?.call(value);
             } else {
-                PotentialWebApi.prototype[methodOrProp].call(value);
+                PotentialWebApi?.prototype[methodOrProp].call(value);
             }
             result = true;
         } catch {
@@ -196,6 +196,24 @@ export const isImageData = (value) => {
             return false;
         }
         getDescriptors(ImageData.prototype).width.get?.call(imageData);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+/**
+ * Returns `true` if the given value is a DOMException, `false` otherwise.
+ * @param {any} value
+ * @returns {boolean}
+ */
+export const isDOMException = (value) => {
+    try {
+        const domException = castAsInstanceOf(value, DOMException);
+        if (!domException) {
+            return false;
+        }
+        getDescriptors(DOMException.prototype).code.get?.call(domException);
         return true;
     } catch {
         return false;

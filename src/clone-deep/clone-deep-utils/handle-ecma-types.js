@@ -8,13 +8,13 @@ import {
 import { getPrototype } from '../../utils/metadata.js';
 import { isIterable, isTypedArray } from '../../utils/type-checking.js';
 
-/** @typedef {import('../../utils/types').Assigner} Assigner */
+/** @typedef {import('../../utils/types.js').Assigner} Assigner */
 
 /**
  * @param {Object} spec
  * @param {import('./global-state.js').GlobalState} spec.globalState
  * The fundamental data structures used for cloneDeep.
- * @param {import('../../types').QueueItem} spec.queueItem
+ * @param {import('../../types.js').QueueItem} spec.queueItem
  * Describes the value and metadata of the data being cloned.
  * @param {string} spec.tag
  * The tag of the provided value.
@@ -29,7 +29,7 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
  *     nativeTypeDetected: boolean
  * }}
  */
-export const handleNativeTypes = ({
+export const handleEcmaTypes = ({
     globalState,
     queueItem,
     tag,
@@ -149,7 +149,7 @@ export const handleNativeTypes = ({
                 : new AggregateError(errors, message, { cause });
 
         } else {
-            /** @type {import('../../utils/types').AtomicErrorConstructor} */
+            /** @type {import('../../utils/types.js').AtomicErrorConstructor} */
             const ErrorConstructor = getAtomicErrorConstructor(error, log);
 
             const { cause } = error;
@@ -193,7 +193,7 @@ export const handleNativeTypes = ({
     } else if (isTypedArray(value, prioritizePerformance, tag)
             || Tag.DATAVIEW === tag) {
 
-        /** @type {import('../../utils/types').TypedArrayConstructor} */
+        /** @type {import('../../utils/types.js').TypedArrayConstructor} */
         const TypedArray = getTypedArrayConstructor(tag, log);
 
         // copy data over to clone

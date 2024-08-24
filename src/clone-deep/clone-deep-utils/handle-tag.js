@@ -1,5 +1,5 @@
 import { handleError } from './misc.js';
-import { handleNativeTypes } from './handle-native-types.js';
+import { handleEcmaTypes } from './handle-ecma-types.js';
 import { handleSyncWebTypes } from './handle-sync-web-types.js';
 import { Warning } from '../../utils/clone-deep-warning.js';
 import { handleAsyncWebTypes } from './handle-async-web-types.js';
@@ -57,7 +57,7 @@ export const handleTag = ({
             ignoreProps,
             ignoreProto,
             nativeTypeDetected
-        } = handleNativeTypes({
+        } = handleEcmaTypes({
             globalState,
             queueItem,
             tag,
@@ -78,19 +78,18 @@ export const handleTag = ({
             }));
         }
 
-        /**
-         * Pushes the given promise into the list of pending results.
-         * @param {Promise<any>} promise
-         */
-        const pushPendingResult = (promise) => {
-            pendingResults?.push({
-                queueItem,
-                promise,
-                propsToIgnore
-            });
-        };
-
         if (async && !nativeTypeDetected && !webTypeDetected) {
+            /**
+             * Pushes the given promise into the list of pending results.
+             * @param {Promise<any>} promise
+             */
+            const pushPendingResult = (promise) => {
+                pendingResults?.push({
+                    queueItem,
+                    promise,
+                    propsToIgnore
+                });
+            };
             asyncWebTypeDetected = handleAsyncWebTypes({
                 queueItem,
                 tag,
