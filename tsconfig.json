@@ -5,11 +5,12 @@
             "ES2022", 
             "DOM"
         ],
-        "target": "ES2022",
+        "target": "ES5",
         "allowJs": true,
         "checkJs": true,
         "strict": true,
-        "noEmit": true
+        "noEmit": false,
+        "downlevelIteration": true
     },
     "include": [
         "src/**/*"
