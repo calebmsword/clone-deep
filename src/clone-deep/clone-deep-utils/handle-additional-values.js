@@ -4,8 +4,8 @@ import { isCallable, isObject } from '../../utils/type-checking.js';
 /**
  * Validates and processes any `additionalValues` from a customizer.
  * @param {Object} spec
- * @param {any} spec.value
- * The value being cloned.
+ * @param {import('../../types').QueueItem} spec.queueItem
+ * Describes the value and metadata of the data being cloned.
  * @param {import('../../utils/types').AdditionalValue[]} [spec.additionalValues]
  * Data associated with value that also will be cloned. This should only
  * represent data that is inaccessible via property access (like, for example,
@@ -18,7 +18,6 @@ import { isCallable, isObject } from '../../utils/type-checking.js';
  * The list of all clones that can only be acquired asynchronously.
  */
 export const handleAdditionalValues = ({
-    value,
     additionalValues,
     asyncMode,
     queue,
@@ -41,9 +40,8 @@ export const handleAdditionalValues = ({
 
         if (async) {
             pendingResults?.push({
-                value,
+                queueItem: { parentOrAssigner: assigner },
                 promise: Promise.resolve(additionalValue),
-                parentOrAssigner: assigner,
                 propsToIgnore: []
             });
         } else {

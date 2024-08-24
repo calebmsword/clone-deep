@@ -1,7 +1,3 @@
-/* eslint-disable complexity -- We support > 10 types, so we are guaranteed to
-exceed a complexity of 10. I don't see any reason to separate this function
-further. */
-
 import { TOP_LEVEL } from './assign.js';
 import { getWarning, Warning } from '../../utils/clone-deep-warning.js';
 import { Tag } from '../../utils/constants.js';
@@ -16,27 +12,16 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
 
 /**
  * @param {Object} spec
- * @param {any} spec.value
- * The value to clone.
- * @param {symbol|object|Assigner} [spec.parentOrAssigner]
- * Either the parent object that the cloned value will be assigned to, or a
- * function which assigns the value itself. If equal to `TOP_LEVEL`, then it
- * is the value that will be returned by the algorithm.
- * @param {string|symbol} [spec.prop]
- * If this value is a nested value being cloned, this is the property on the
- * parent object which contains the value being cloned.
+ * @param {import('./global-state.js').GlobalState} spec.globalState
+ * The fundamental data structures used for cloneDeep.
+ * @param {import('../../types').QueueItem} spec.queueItem
+ * Describes the value and metadata of the data being cloned.
  * @param {string} spec.tag
  * The tag of the provided value.
- * @param {boolean} spec.prioritizePerformance
- * Whether type-checking should sacrifice robustnesss for performance.
- * @param {import('../../types').QueueItem[]} spec.queue
- * @param {[any, any][]} spec.isExtensibleSealFrozen
- * @param {any[]} spec.supportedPrototypes
- * @param {boolean} spec.ignoreCloningMethods
- * @param {boolean} spec.ignoreCloningMethodsThisLoop
  * @param {(string|symbol)[]} spec.propsToIgnore
- * @param {import('../../types').Log} spec.log
+ * A list of properties under this value that should not be cloned.
  * @param {(clone: any) => any} spec.saveClone
+ * A function which stores the clone of `value` into the cloned object.
  * @returns {{
  *     cloned: any,
  *     ignoreProps: boolean,
@@ -45,18 +30,22 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
  * }}
  */
 export const handleNativeTypes = ({
-    value,
-    parentOrAssigner,
-    prop,
+    globalState,
+    queueItem,
     tag,
-    prioritizePerformance,
-    queue,
-    isExtensibleSealFrozen,
-    supportedPrototypes,
     propsToIgnore,
-    log,
     saveClone
 }) => {
+
+    const {
+        prioritizePerformance,
+        log,
+        queue,
+        isExtensibleSealFrozen,
+        supportedPrototypes
+    } = globalState;
+
+    const { value, parentOrAssigner, prop } = queueItem;
 
     /** @type {any} */
     let cloned;
@@ -150,11 +139,7 @@ export const handleNativeTypes = ({
                 : [];
 
             if (!isIterable(aggregateError.errors)) {
-                log(getWarning('Cloning AggregateError with ' +
-                            'non-iterable errors property. It ' +
-                            'will be cloned into an ' +
-                            'AggregateError instance with an ' +
-                            'empty aggregation.'));
+                log(Warning.IMPROPER_AGGREGATE_ERRORS);
             }
 
             const { cause } = aggregateError;

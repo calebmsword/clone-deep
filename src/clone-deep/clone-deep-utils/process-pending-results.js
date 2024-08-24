@@ -4,21 +4,16 @@ import { getWarning } from '../../utils/clone-deep-warning.js';
 
 /**
  * Processes pending results.
- * @template [U = any]
- * @param {Object} spec
- * @param {{ clone: U }} spec.container
- * @param {import('../../types').Log} spec.log
- * @param {import('../../types').QueueItem[]} spec.queue
- * @param {Map<any, any>} spec.cloneStore
- * @param {import('../../types').PendingResultItem[]} spec.pendingResults
+ * @param {import('./global-state.js').GlobalState} globalState
  */
-export const processPendingResults = async ({
-    container,
-    log,
-    queue,
-    cloneStore,
-    pendingResults
-}) => {
+export const processPendingResults = async (globalState) => {
+    const {
+        log,
+        queue,
+        cloneStore,
+        pendingResults
+    } = globalState;
+
     const clones = await Promise
         .allSettled(pendingResults.map((result) => {
             return result.promise;
@@ -31,9 +26,9 @@ export const processPendingResults = async ({
 
         if (clone.status === 'rejected') {
             log(getWarning(
-                'Promise rejected' + (result.prop !== undefined
+                'Promise rejected' + (result.queueItem.prop !== undefined
                     ? ' for value assigned to property ' +
-                      `"${String(result.prop)}". `
+                      `"${String(result.queueItem.prop)}". `
                     : '. ') +
                 'This value will be cloned into an empty object.',
                 { cause: clone.reason }));
@@ -43,22 +38,17 @@ export const processPendingResults = async ({
         }
 
         assign({
-            container,
-            log,
-            cloned,
-            parentOrAssigner: result.parentOrAssigner,
-            prop: result.prop,
-            metadata: result.metadata
+            globalState,
+            queueItem: result.queueItem,
+            cloned
         });
 
         finalizeClone({
-            value: result.value,
+            value: result.queueItem.value,
             cloned,
             cloneIsCached: false,
             ignoreProto: result.ignoreProto,
             ignoreProps: result.ignoreProps,
-            ignoreThisLoop: false,
-            useCustomizerClone: false,
             useCloningMethod: false,
             propsToIgnore: result.propsToIgnore,
             cloneStore,

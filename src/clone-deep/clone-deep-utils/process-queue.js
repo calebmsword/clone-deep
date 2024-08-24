@@ -1,5 +1,3 @@
-/* eslint-disable complexity */
-
 import { assign } from './assign.js';
 import {
     checkCloneStore,
@@ -14,46 +12,24 @@ import { getTag } from './get-tag.js';
 
 /**
  * Iterate through all items in the queue.
- * @template U
- * @param {Object} spec
- * @param {import('../../types').QueueItem[]} spec.queue
- * @param {{ clone: U }} spec.container
- * @param {import('../../types').Log} spec.log
- * @param {import('../../types').Customizer|undefined} spec.customizer
- * @param {Map<any, any>} spec.cloneStore
- * @param {boolean} spec.prioritizePerformance
- * @param {any[]} spec.supportedPrototypes
- * @param {boolean} spec.ignoreCloningMethods
- * @param {boolean} spec.doThrow
- * @param {Set<any>|undefined} spec.parentObjectRegistry
- * @param {[any, any][]} spec.isExtensibleSealFrozen
- * @param {import('../../types').PendingResultItem[]} [spec.pendingResults]
- * @param {boolean} [spec.async]
+ * @param {import('./global-state.js').GlobalState} globalState
+ * The global application state.
  */
-export const processQueue = ({
-    queue,
-    container,
-    log,
-    customizer,
-    cloneStore,
-    prioritizePerformance,
-    supportedPrototypes,
-    ignoreCloningMethods,
-    doThrow,
-    parentObjectRegistry,
-    isExtensibleSealFrozen,
-    pendingResults,
-    async
-}) => {
+export const processQueue = (globalState) => {
 
-    for (let item = queue.shift(); item !== undefined; item = queue.shift()) {
+    const {
+        queue,
+        customizer,
+        cloneStore,
+        isExtensibleSealFrozen,
+        parentObjectRegistry,
+        prioritizePerformance,
+        ignoreCloningMethods
+    } = globalState;
 
-        const {
-            value,
-            parentOrAssigner,
-            prop,
-            metadata
-        } = item;
+    for (let queueItem = queue.shift(); queueItem; queueItem = queue.shift()) {
+
+        const { value } = queueItem;
 
         /**
          * A shortcut for conveniently using {@link assign}.
@@ -62,12 +38,14 @@ export const processQueue = ({
          */
         const saveClone = (clonedValue) => {
             return assign({
-                container,
-                log,
-                cloned: clonedValue,
-                parentOrAssigner,
-                prop,
-                metadata
+                globalState,
+                queueItem: {
+                    value: queueItem?.value,
+                    parentOrAssigner: queueItem?.parentOrAssigner,
+                    prop: queueItem?.prop,
+                    metadata: queueItem?.metadata
+                },
+                cloned: clonedValue
             });
         };
 
@@ -79,9 +57,6 @@ export const processQueue = ({
 
         /** Whether the clone for this value has been cached in the store. */
         let cloneIsCached = false;
-
-        /** Whether the current value should be ignored entirely. */
-        let ignoreThisLoop = false;
 
         /**
          * If true, do not not clone the properties of value.
@@ -124,26 +99,19 @@ export const processQueue = ({
 
         cloneIsCached = checkCloneStore(value, cloneStore, saveClone);
 
-        if (typeof customizer === 'function') {
+        if (!cloneIsCached && typeof customizer === 'function') {
             ({
                 cloned,
                 useCustomizerClone,
                 ignoreProto,
                 ignoreProps,
-                ignoreThisLoop,
                 async: asyncResult
             } = handleCustomizer({
-                log,
-                queue,
                 customizer,
-                value,
-                parentOrAssigner,
-                prop,
-                metadata,
-                saveClone,
-                doThrow,
-                pendingResults,
-                async
+                globalState,
+                queueItem,
+                propsToIgnore,
+                saveClone
             }));
         }
 
@@ -151,73 +119,56 @@ export const processQueue = ({
             saveClone(value);
         }
 
-        const ignore = cloneIsCached || ignoreThisLoop || useCustomizerClone
-            || isPrimitive;
+        const ignore = cloneIsCached || useCustomizerClone || isPrimitive;
 
         ignoreCloningMethodsThisLoop = checkParentObjectRegistry(
             value, parentObjectRegistry);
+
         if (!ignore && !ignoreCloningMethods && !ignoreCloningMethodsThisLoop) {
+            const cloningMethodResult = handleCloningMethods({
+                globalState,
+                queueItem,
+                propsToIgnore,
+                saveClone
+            });
+
             ({
                 cloned,
-                ignoreProps,
-                ignoreProto,
                 useCloningMethod,
                 async: asyncResult
-            } = handleCloningMethods({
-                value,
-                parentOrAssigner,
-                prop,
-                metadata,
-                ignoreCloningMethods,
-                ignoreCloningMethodsThisLoop,
-                propsToIgnore,
-                log,
-                saveClone,
-                pendingResults,
-                async,
-                doThrow
-            }));
+            } = cloningMethodResult);
+
+            ignoreProps ||= cloningMethodResult.ignoreProps;
+            ignoreProto ||= cloningMethodResult.ignoreProto;
         }
 
         if (!ignore && !useCloningMethod) {
-            ({
-                cloned,
-                ignoreProps,
-                ignoreProto
-            } = handleTag({
-                value,
-                parentOrAssigner,
-                prop,
-                metadata,
+            const handleTagResult = handleTag({
+                globalState,
+                queueItem,
                 tag,
-                prioritizePerformance,
-                log,
-                queue,
-                isExtensibleSealFrozen,
-                supportedPrototypes,
-                ignoreCloningMethods,
-                ignoreCloningMethodsThisLoop,
                 propsToIgnore,
-                saveClone,
-                pendingResults,
-                async
-            }));
+                saveClone
+            });
+
+            ({ cloned } = handleTagResult);
+
+            ignoreProps ||= handleTagResult.ignoreProps;
+            ignoreProto ||= handleTagResult.ignoreProto;
         }
 
         isExtensibleSealFrozen.push([value, cloned]);
 
         finalizeClone({
             value,
+            cloneStore,
+            queue,
             cloned,
             cloneIsCached,
             ignoreProto,
             ignoreProps,
-            ignoreThisLoop,
-            useCustomizerClone,
             useCloningMethod,
             propsToIgnore,
-            cloneStore,
-            queue,
             asyncResult
         });
     }

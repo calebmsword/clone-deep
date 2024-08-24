@@ -1,3 +1,6 @@
+/** 
+ * The type of the Tag enum-like object used to hold tags of supported types. 
+ */
 export type Tag = Readonly<{
     [key: string]: string,
 
@@ -55,12 +58,18 @@ export type Tag = Readonly<{
     IMAGEBITMAP: string,
 }>
 
+/** 
+ * A function which has the responsibility of assigning the clone of value.
+ * These should be provided only for data that cannot be assigned to a property
+ * on an object. 
+ */
 export type Assigner = (
     value: any,
     prop: PropertyKey | undefined,
     metadata: PropertyDescriptor | undefined
 ) => void;
 
+/** Constructors of TypedArray subclasses/ */
 export type TypedArrayConstructor =
     DataViewConstructor |
     Float32ArrayConstructor |
@@ -75,6 +84,7 @@ export type TypedArrayConstructor =
     BigInt64ArrayConstructor |
     BigUint64ArrayConstructor;
 
+/** Any error constructor that is not `AggregateErrorConstructor`. */
 export type AtomicErrorConstructor = 
     ErrorConstructor | 
     EvalErrorConstructor | 
@@ -84,43 +94,68 @@ export type AtomicErrorConstructor =
     TypeErrorConstructor | 
     URIErrorConstructor;
 
-type ConstructorFor<T> = new (...args: any[]) => T;
+/** The type of a constructor function. */
+type Constructor<T> = new (...args: any[]) => T;
 
 export type GeometryConstructor = 
-    ConstructorFor<DOMMatrix> |
-    ConstructorFor<DOMMatrixReadOnly> |
-    ConstructorFor<DOMPoint> |
-    ConstructorFor<DOMMatrixReadOnly> |
-    ConstructorFor<DOMRect> |
-    ConstructorFor<DOMRectReadOnly>;
+    Constructor<DOMMatrix> |
+    Constructor<DOMMatrixReadOnly> |
+    Constructor<DOMPoint> |
+    Constructor<DOMMatrixReadOnly> |
+    Constructor<DOMRect> |
+    Constructor<DOMRectReadOnly>;
 
+/**
+ * TypeScript erroneously complains when you arbitrarily access properties of 
+ * DOMQuad instances, even though they are objects just like any other object.
+ * This extends DOMQuad so that you can access arbitrary properties.
+ */
 export interface DOMQuadExtended extends DOMQuad {
     [key: string]: any
 }
 
+/**
+ * TypeScript erroneously complains when you arbitrarily access properties of 
+ * DOMQuad instances, even though they are objects just like any other object.
+ * This extends DOMPoint so that you can access arbitrary properties.
+ */
 export interface DOMPointExtended extends DOMPoint {
     [key: string|symbol]: any
 }
 
+/**
+ * The type of elements of the `additionalValues` array property that can be
+ * in a customizer result.
+ */
 export interface AdditionalValue {
     value: any,
     assigner: (clone: any) => void,
     async?: boolean
 }
 
-export interface ValueTransform {
+/**
+ * The return value of a customizer.
+ */
+export interface CustomizerResult {
+    useCustomizerClone?: boolean,
     clone?: any,
-    additionalValues?: AdditionalValue[],
-    ignore?: boolean,
+    propsToIgnore?: (string|symbol)[],
     ignoreProps?: boolean,
     ignoreProto?: boolean,
-    async?: boolean
+    async?: boolean,
+    additionalValues?: AdditionalValue[],
+    throwWith?: Error
 }
 
-export interface CloneMethodResult<T> {
-    clone: T,
+/**
+ * The return value of a cloning method.
+ */
+export interface CloningMethodResult {
+    useCloningMethod?: boolean,
+    clone: any,
     propsToIgnore?: (string|symbol)[],
     ignoreProps?: boolean,
     ignoreProto: boolean,
-    async?: boolean
+    async?: boolean,
+    throwWith?: Error
 }

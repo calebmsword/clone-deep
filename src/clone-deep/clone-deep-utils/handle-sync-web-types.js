@@ -1,7 +1,3 @@
-/* eslint-disable complexity -- We support > 10 types, so we are guaranteed to
-exceed a complexity of 10. I don't see any reason to separate this function
-further. */
-
 import { Tag } from '../../utils/constants.js';
 import { cloneFile, createFileList } from '../../utils/helpers.js';
 import { forAllOwnProperties, hasAccessor } from '../../utils/metadata.js';
@@ -10,25 +6,31 @@ import { forAllOwnProperties, hasAccessor } from '../../utils/metadata.js';
 
 /**
  * @param {Object} spec
- * @param {any} spec.value
+ * @param {import('./global-state.js').GlobalState} spec.globalState
+ * The fundamental data structures used for cloneDeep.
+ * @param {import('../../types').QueueItem} spec.queueItem
+ * Describes the value and metadata of the data being cloned.
  * @param {string} spec.tag
- * @param {import('../../types').QueueItem[]} spec.queue
- * @param {[any, any][]} spec.isExtensibleSealFrozen
+ * The tag of the provided value.
  * @param {(string|symbol)[]} spec.propsToIgnore
+ * A list of properties under this value that should not be cloned.
  * @param {(clone: any) => any} spec.saveClone
+ * A function which stores the clone of `value` into the cloned object.
  * @returns {{
  *     cloned: any,
  *     webTypeDetected: boolean
  * }}
  */
 export const handleSyncWebTypes = ({
-    value,
+    globalState,
+    queueItem,
     tag,
-    queue,
-    isExtensibleSealFrozen,
     propsToIgnore,
     saveClone
 }) => {
+
+    const { queue, isExtensibleSealFrozen } = globalState;
+    const { value } = queueItem;
 
     /** @type {any} */
     let cloned;
@@ -171,7 +173,7 @@ export const handleSyncWebTypes = ({
             }));
 
     } else if ([Tag.AUDIODATA, Tag.VIDEOFRAME].includes(tag)) {
-        /** @type {import('./types').AudioData | import('./types').VideoData} */
+        /** @type {import('./types').AudioData | import('./types').VideoFrame} */
         const data = value;
 
         cloned = saveClone(data.clone());

@@ -1,5 +1,5 @@
 import { Tag, WebApis } from './constants.js';
-import { getConstructorFromString } from './helpers.js';
+import { castAsInstanceOf, getConstructorFromString } from './helpers.js';
 import { getDescriptors, getPrototype } from './metadata.js';
 
 const { toString } = Object.prototype;
@@ -155,10 +155,11 @@ export const {
  */
 export const isFile = (value) => {
     try {
-        if (!(value instanceof File)) {
+        const file = castAsInstanceOf(value, File);
+        if (!file) {
             return false;
         }
-        getDescriptors(File.prototype).lastModified.get?.call(value);
+        getDescriptors(File.prototype).lastModified.get?.call(file);
         return true;
     } catch {
         return false;
@@ -171,20 +172,12 @@ export const isFile = (value) => {
  * @returns {boolean}
  */
 export const isImageBitmap = (value) => {
-    const ImageBitmapConstructor = getConstructorFromString('ImageBitmap');
-    const heightGetter = ImageBitmapConstructor
-        ? getDescriptors(ImageBitmap.prototype).height.get
-        : undefined;
-
-    if (heightGetter === undefined) {
-        return false;
-    }
-
-    if (!(value instanceof ImageBitmap)) {
-        return false;
-    }
     try {
-        heightGetter.call(value);
+        const imageBitmap = castAsInstanceOf(value, ImageBitmap);
+        if (!imageBitmap) {
+            return false;
+        }
+        getDescriptors(ImageBitmap.prototype).height.get?.call(imageBitmap);
         return true;
     } catch {
         return false;
@@ -197,20 +190,12 @@ export const isImageBitmap = (value) => {
  * @returns {boolean}
  */
 export const isImageData = (value) => {
-    const ImageDataConstructor = getConstructorFromString('ImageData');
-    const widthGetter = ImageDataConstructor !== undefined
-        ? getDescriptors(ImageData.prototype).width.get
-        : undefined;
-
-    if (widthGetter === undefined) {
-        return false;
-    }
-
-    if (!(value instanceof ImageData)) {
-        return false;
-    }
     try {
-        widthGetter.call(value);
+        const imageData = castAsInstanceOf(value, ImageData);
+        if (!imageData) {
+            return false;
+        }
+        getDescriptors(ImageData.prototype).width.get?.call(imageData);
         return true;
     } catch {
         return false;

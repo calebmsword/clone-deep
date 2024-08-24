@@ -61,28 +61,22 @@ const handleMetadata = ({ log, cloned, parent, prop, metadata }) => {
  * Handles the assignment of the cloned value to some persistent place.
  * @template U
  * @param {Object} spec
- * @param {{ clone: U }} spec.container
- * Object containing the top-level object that will be returned by
- * cloneDeepInternal.
- * @param {import('../../types').Log} spec.log
+ * @param {import('./global-state.js').GlobalState} spec.globalState
+ * The fundamental data structures used for cloneDeep.
  * A logger.
+ * @param {import('../../types').QueueItem} spec.queueItem
+ * Describes the value and metadata of the data being cloned.
  * @param {any} spec.cloned
  * The cloned value.
- * @param {Assigner|symbol|object} [spec.parentOrAssigner]
- * Either the parent object that the cloned value will be assigned to, or a
- * function which assigns the value itself. If equal to `TOP_LEVEL`, then it
- * is the value that will be returned by the algorithm.
- * @param {PropertyKey} [spec.prop]
- * If `parentOrAssigner` is a parent object, then `parentOrAssigner[prop]`
- * will be assigned `cloned`.
- * @param {PropertyDescriptor} [spec.metadata]
- * The property descriptor for the object. If not an object, then this is
- * ignored.
  * @returns {any}
  * The cloned value.
  */
-export const assign = (
-    { container, log, cloned, parentOrAssigner, prop, metadata }) => {
+export const assign = ({ globalState, queueItem, cloned }) => {
+
+    const { container, log } = globalState;
+
+    const { parentOrAssigner, prop, metadata } = queueItem;
+
     if (parentOrAssigner === TOP_LEVEL) {
         container.clone = cloned;
     } else if (typeof parentOrAssigner === 'function') {

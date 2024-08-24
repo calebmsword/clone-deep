@@ -1,3 +1,4 @@
+/** Any TypedArray subclass. */
 type TypedArray =
   Int8Array
   | Uint8Array
@@ -11,8 +12,8 @@ type TypedArray =
   | BigInt64Array
   | BigUint64Array;
 
-type Layout = { offset: number, stride: number }[]
-
+/** A "polyfill" for the AudioData type not provided in the version of 
+ * TypeScript I am using. */
 export interface AudioData {
     duration: number,
     format: string,
@@ -31,10 +32,12 @@ export interface AudioData {
             frameOffset: number,
             frameCount: number
         }
-    ) => Promise<Layout>
+    ) => void
 }
 
-export interface VideoData {
+/** A "polyfill" for the VideoData type not provided in the version of 
+ * TypeScript I am using. */
+export interface VideoFrame {
     codedHeight: number,
     codedRect: DOMRectReadOnly,
     codedWidth: number,
@@ -47,7 +50,7 @@ export interface VideoData {
     visibleRect: DOMRectReadOnly,
 
     allocationSize: () => number,
-    clone: () => VideoData,
+    clone: () => VideoFrame,
     close: () => void,
     copyTo: (
         destination: ArrayBuffer | TypedArray | DataView,
@@ -65,5 +68,5 @@ export interface VideoData {
         },
         format: string,
         colorSpace: string
-    ) => Promise<Layout>
+    ) => Promise<{ offset: number, stride: number }[]>
 }

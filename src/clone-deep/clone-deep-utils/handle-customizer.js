@@ -1,4 +1,5 @@
 import { Warning } from '../../utils/clone-deep-warning.js';
+import { isPropertyKeyArray } from '../../utils/type-checking.js';
 import { handleAdditionalValues } from './handle-additional-values.js';
 import { handleCustomError } from './misc.js';
 
@@ -10,54 +11,41 @@ import { handleCustomError } from './misc.js';
  * place, as well as pushing more elements in the appropriate queue if
  * necessary. Errors from the customizers are also handled here.
  * @param {Object} spec
- * @param {import('../../types').Log} spec.log
- * The logger.
- * @param {import('../../types').QueueItem[]} spec.queue
- * The queue of values to clone.
  * @param {import('../../types').Customizer} spec.customizer
  * The customizer used to qualify the default behavior of cloneDeepInternal.
- * @param {any} spec.value
- * The value to clone.
- * @param {symbol|object|Assigner} [spec.parentOrAssigner]
- * Either the parent object that the cloned value will be assigned to, or a
- * function which assigns the value itself. If equal to `TOP_LEVEL`, then it
- * is the value that will be returned by the algorithm.
- * @param {string|symbol} [spec.prop]
- * If this value is a nested value being cloned, this is the property on the
- * parent object which contains the value being cloned.
- * @param {PropertyDescriptor} [spec.metadata]
- * The optional property descriptor for this value, if it has one.
+ * @param {import('./global-state.js').GlobalState} spec.globalState
+ * The fundamental data structures used for cloneDeep.
+ * @param {import('../../types').QueueItem} spec.queueItem
+ * Describes the value and metadata of the data being cloned.
+ * @param {(string|symbol)[]} spec.propsToIgnore
+ * An array of properties of the given value that will not be cloned.
  * @param {(clone: any) => any} spec.saveClone
  * A function which stores the clone of `value` into the cloned object.
- * @param {boolean} [spec.doThrow]
- * Whether errors thrown by customizers or cloning methods should be thrown by
- * the algorithm.
- * @param {import('../../types').PendingResultItem[]} [spec.pendingResults]
- * The list of clones that must be resolved asynchronously.
- * @param {boolean} [spec.async]
- * Whether this algorithm is in async mode.
  * @returns {{
  *     cloned: any,
  *     useCustomizerClone: boolean,
  *     ignoreProto: boolean|undefined,
  *     ignoreProps: boolean|undefined,
- *     ignoreThisLoop: boolean,
  *     async?: boolean
  * }}
  */
 export const handleCustomizer = ({
-    log,
-    queue,
     customizer,
-    value,
-    parentOrAssigner,
-    prop,
-    metadata,
-    saveClone,
-    doThrow,
-    pendingResults,
-    async: asyncMode
+    globalState,
+    queueItem,
+    propsToIgnore,
+    saveClone
 }) => {
+
+    const {
+        log,
+        queue,
+        pendingResults,
+        doThrow,
+        async: asyncMode
+    } = globalState;
+
+    const { value } = queueItem;
 
     /** @type {any} */
     let cloned;
@@ -74,14 +62,16 @@ export const handleCustomizer = ({
     /** @type {boolean|undefined} */
     let ignoreProto;
 
-    /** @type {boolean} */
-    const ignoreThisLoop = false;
-
     /** @type {boolean|undefined} */
     let async;
 
+    /** @type {Error|undefined} */
+    let throwWith;
+
+    let forceThrow = false;
+
     try {
-        const customResult = customizer(value);
+        const customResult = customizer(value, log);
 
         if (typeof customResult !== 'object') {
             return {
@@ -89,7 +79,6 @@ export const handleCustomizer = ({
                 useCustomizerClone: false,
                 ignoreProto,
                 ignoreProps,
-                ignoreThisLoop,
                 async
             };
         }
@@ -98,20 +87,19 @@ export const handleCustomizer = ({
             additionalValues,
             ignoreProps,
             ignoreProto,
-            async
+            async,
+            throwWith
         } = customResult);
-        useCustomizerClone = true;
 
-        if (customResult.ignore === true) {
-            return {
-                cloned,
-                useCustomizerClone,
-                ignoreProto,
-                ignoreProps,
-                ignoreThisLoop: true,
-                async
-            };
+        if (throwWith !== undefined) {
+            forceThrow = true;
+            throw throwWith;
         }
+
+        useCustomizerClone =
+            typeof customResult.useCustomizerClone === 'boolean'
+                ? customResult.useCustomizerClone
+                : true;
 
         if (!Array.isArray(additionalValues)
             && additionalValues !== undefined) {
@@ -122,14 +110,21 @@ export const handleCustomizer = ({
             throw Warning.CUSTOMIZER_ASYNC_IN_SYNC_MODE;
         }
 
+        if (customResult.propsToIgnore !== undefined
+            && !isPropertyKeyArray(customResult.propsToIgnore)) {
+            throw Warning.CUSTOMIZER_IMPROPER_PROPS_TO_IGNORE;
+        }
+
+        if (Array.isArray(customResult.propsToIgnore)
+            && isPropertyKeyArray(customResult.propsToIgnore)) {
+            propsToIgnore.push(...customResult.propsToIgnore);
+        }
+
         if (!asyncMode) {
             cloned = saveClone(customResult.clone);
         } else {
             pendingResults?.push({
-                value,
-                parentOrAssigner,
-                prop,
-                metadata,
+                queueItem,
                 promise: Promise.resolve(customResult.clone),
                 ignoreProto,
                 ignoreProps,
@@ -138,7 +133,7 @@ export const handleCustomizer = ({
         }
 
         handleAdditionalValues({
-            value,
+            queueItem,
             additionalValues,
             asyncMode,
             queue,
@@ -148,7 +143,7 @@ export const handleCustomizer = ({
         useCustomizerClone = handleCustomError({
             log,
             error,
-            doThrow,
+            doThrow: doThrow || forceThrow,
             name: 'Customizer'
         });
     }
@@ -158,7 +153,6 @@ export const handleCustomizer = ({
         useCustomizerClone,
         ignoreProto,
         ignoreProps,
-        ignoreThisLoop,
         async
     };
 };

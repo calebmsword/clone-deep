@@ -8,22 +8,16 @@ import { handleAsyncWebTypes } from './handle-async-web-types.js';
 
 /**
  * @param {Object} spec
- * @param {any} spec.value
- * @param {symbol|object|Assigner} [spec.parentOrAssigner]
- * @param {string|symbol} [spec.prop]
- * @param {PropertyDescriptor} [spec.metadata]
+ * @param {import('./global-state.js').GlobalState} spec.globalState
+ * The fundamental data structures used for cloneDeep.
+ * @param {import('../../types').QueueItem} spec.queueItem
+ * Describes the value and metadata of the data being cloned.
  * @param {string} spec.tag
- * @param {boolean} spec.prioritizePerformance
- * @param {import('../../types').Log} spec.log
- * @param {import('../../types').QueueItem[]} spec.queue
- * @param {[any, any][]} spec.isExtensibleSealFrozen
- * @param {any[]} spec.supportedPrototypes
- * @param {boolean} spec.ignoreCloningMethods
- * @param {boolean} spec.ignoreCloningMethodsThisLoop
+ * The tag for the value.
  * @param {(string|symbol)[]} spec.propsToIgnore
+ * A list of properties under this value that should not be cloned.
  * @param {(clone: any) => any} spec.saveClone
- * @param {import('../../types').PendingResultItem[]} [spec.pendingResults]
- * @param {boolean} [spec.async]
+ * A function which stores the clone of `value` into the cloned object.
  * @returns {{
  *     cloned: any,
  *     ignoreProps: boolean|undefined,
@@ -31,23 +25,18 @@ import { handleAsyncWebTypes } from './handle-async-web-types.js';
  * }}
  */
 export const handleTag = ({
-    value,
-    parentOrAssigner,
-    prop,
-    metadata,
+    globalState,
+    queueItem,
     tag,
-    prioritizePerformance,
-    log,
-    queue,
-    pendingResults,
-    isExtensibleSealFrozen,
-    supportedPrototypes,
-    ignoreCloningMethods,
-    ignoreCloningMethodsThisLoop,
     propsToIgnore,
-    saveClone,
-    async
+    saveClone
 }) => {
+
+    const {
+        log,
+        pendingResults,
+        async
+    } = globalState;
 
     let cloned;
     let ignoreProps;
@@ -69,18 +58,10 @@ export const handleTag = ({
             ignoreProto,
             nativeTypeDetected
         } = handleNativeTypes({
-            value,
-            parentOrAssigner,
-            prop,
+            globalState,
+            queueItem,
             tag,
-            prioritizePerformance,
-            queue,
-            isExtensibleSealFrozen,
-            supportedPrototypes,
-            ignoreCloningMethods,
-            ignoreCloningMethodsThisLoop,
             propsToIgnore,
-            log,
             saveClone
         }));
 
@@ -89,10 +70,9 @@ export const handleTag = ({
                 cloned,
                 webTypeDetected
             } = handleSyncWebTypes({
-                value,
-                queue,
+                globalState,
+                queueItem,
                 tag,
-                isExtensibleSealFrozen,
                 propsToIgnore,
                 saveClone
             }));
@@ -104,10 +84,7 @@ export const handleTag = ({
          */
         const pushPendingResult = (promise) => {
             pendingResults?.push({
-                value,
-                parentOrAssigner,
-                prop,
-                metadata,
+                queueItem,
                 promise,
                 propsToIgnore
             });
@@ -115,7 +92,7 @@ export const handleTag = ({
 
         if (async && !nativeTypeDetected && !webTypeDetected) {
             asyncWebTypeDetected = handleAsyncWebTypes({
-                value,
+                queueItem,
                 tag,
                 pushPendingResult
             });

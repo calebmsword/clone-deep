@@ -4,11 +4,10 @@ import {
     Tag,
     WebApis
 } from './constants.js';
-import { getWarning } from './clone-deep-warning.js';
+import { getWarning, Warning } from './clone-deep-warning.js';
 import { isCallable } from './type-checking.js';
+import { getPrototype } from './metadata.js';
 
-/* eslint-disable complexity -- obviously this function will have a complexity
-greater than 10. There is no point in chunking this function up further. */
 /**
  * Gets the appropriate TypedArray constructor for the given object tag.
  * @param {string} tag
@@ -44,12 +43,10 @@ export const getTypedArrayConstructor = (tag, log) => {
     case Tag.BIGUINT64:
         return BigUint64Array;
     default:
-        log(getWarning('Unrecognized TypedArray subclass. This object ' +
-                           'will be cloned into a DataView instance.'));
+        log(Warning.UNRECOGNIZED_TYPEARRAY_SUBCLASS);
         return DataView;
     }
 };
-/* eslint-enable complexity */
 
 /**
  * Gets the appropriate error constructor for the error name.
@@ -91,20 +88,30 @@ export const getAtomicErrorConstructor = (value, log) => {
  * Creates a FileList.
  * See https://github.com/fisker/create-file-list.
  * @param  {...File} files
- * @returns {FileList}
+ * @returns {FileList|undefined}
  */
 export const createFileList = (...files) => {
-    if (!isCallable(globalThis.DataTransfer)) {
-        throw getWarning('Cannot create FileList in this runtime.');
-    }
+    const getDataTransfer = () => {
+        try {
+            return new DataTransfer();
+        } catch {
+            return new ClipboardEvent('').clipboardData;
+        }
+    };
 
-    const dataTransfer = new DataTransfer();
+    let dataTransfer;
+
+    try {
+        dataTransfer = getDataTransfer();
+    } catch {
+        throw Warning.FILELIST_DISALLOWED;
+    }
 
     for (const file of files) {
-        dataTransfer.items.add(file);
+        dataTransfer?.items.add(file);
     }
 
-    return dataTransfer.files;
+    return dataTransfer?.files;
 };
 
 /**
@@ -119,6 +126,13 @@ export const cloneFile = (file) => {
     });
 };
 
+
+/** @type {any} */
+const __global = globalThis;
+
+/** @type {{ [key: string]: new (...args: any[]) => any | undefined }} */
+const global = __global;
+
 /**
  * Attempts to retreive a web API from the global object.
  * Doing this in a way that utilizes TypeScript effectively is obtuse, hence
@@ -128,12 +142,6 @@ export const cloneFile = (file) => {
  * @returns {new (...args: any[]) => any | undefined}
  */
 export const getConstructorFromString = (string) => {
-    /** @type {any} */
-    const __global = globalThis;
-
-    /** @type {{ [key: string]: new (...args: any[]) => any | undefined }} */
-    const global = __global;
-
     return global[string];
 };
 
@@ -162,4 +170,29 @@ export const getSupportedPrototypes = () => {
     });
 
     return supportedPrototypes.concat(webApiPrototypes);
+};
+
+/**
+ * @template T
+ * Returns the provided value as an "instance" of the given "class".
+ * Where a "class" is a constructor function, and being an instance means having
+ * the prototype of the constructor function in the prototype chain.
+ * If the provided value is not a suitable instance of the class, then the
+ * function returns `undefined`.
+ * @param {any} value
+ * @param {T extends new (...args: any[]) => any ? T : never} constructor
+ * @returns {undefined | ReturnType<T>}
+ */
+export const castAsInstanceOf = (value, constructor) => {
+    if (!isCallable(constructor)) {
+        return;
+    }
+    let tempPrototype = getPrototype(value);
+    while (tempPrototype !== null) {
+        if (tempPrototype === constructor.prototype) {
+            return value;
+        }
+        tempPrototype = getPrototype(tempPrototype);
+    }
+    return;
 };

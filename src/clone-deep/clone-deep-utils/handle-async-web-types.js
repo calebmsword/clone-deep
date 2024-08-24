@@ -5,8 +5,8 @@ import { Tag } from '../../utils/constants.js';
 /**
  * Handles Web API types that can only be cloned asynchronously.
  * @param {Object} spec
- * @param {any} spec.value
- * The value to clone.
+ * @param {import('../../types').QueueItem} spec.queueItem
+ * Describes the value and metadata of the data being cloned.
  * @param {string} spec.tag
  * The tag for the value.
  * @param {(promise: Promise<any>, options?: {
@@ -17,10 +17,12 @@ import { Tag } from '../../utils/constants.js';
  * @returns {boolean}
  */
 export const handleAsyncWebTypes = ({
-    value,
+    queueItem,
     tag,
     pushPendingResult
 }) => {
+
+    const { value } = queueItem;
 
     let asyncWebTypeDetected = true;
 

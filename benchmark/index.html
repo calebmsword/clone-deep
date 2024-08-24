@@ -22,6 +22,21 @@
                         <div class="title-text">structuredClone (ms):</div>
                     </div>
                 </div>
+                <div class="title">
+                    <div class="title-text-container top">
+                        <div class="title-text">lodash (ms):</div>
+                    </div>
+                </div>
+                <div class="title">
+                    <div class="title-text-container top">
+                        <div class="title-text">clone (ms):</div>
+                    </div>
+                </div>
+                <div class="title">
+                    <div class="title-text-container top">
+                        <div class="title-text">es-toolkit (ms):</div>
+                    </div>
+                </div>
                 <div class="title bottom">
                     <div class="title-text-container">
                         <div class="title-text">cloneDeep (ms):</div>
@@ -30,6 +45,21 @@
             </div>
             <div class="table-col right">
                 <div class="result top">
+                    <div class="result-text-container">
+                        <div class="result-text">------</div>
+                    </div>
+                </div>
+                <div class="result">
+                    <div class="result-text-container">
+                        <div class="result-text">------</div>
+                    </div>
+                </div>
+                <div class="result">
+                    <div class="result-text-container">
+                        <div class="result-text">------</div>
+                    </div>
+                </div>
+                <div class="result">
                     <div class="result-text-container">
                         <div class="result-text">------</div>
                     </div>
@@ -47,6 +77,51 @@
             </div>
             <div class="input-container">
                 <input class="iterations" type="number" placeholder="1000">
+            </div>
+        </div>
+        <div class="checkboxes-and-radios">
+            <div class="checkbox-or-radio checkbox-container">
+                <input type="checkbox" id="ignoreCircular" name="ignoreCircular" />
+                <label class="checkbox-label" for="ignoreCircular">
+                    ignore circular references
+                </label>
+            </div>
+            <div class="checkbox-or-radio checkbox-container">
+                <input type="checkbox" id="ignoreDesc" name="ignoreDesc" />
+                <label class="checkbox-label" for="ignoreDesc">
+                    ignore property descriptors
+                </label>
+            </div>
+            <div class="checkbox-or-radio checkbox-container">
+                <input type="checkbox" id="ignoreMeta" name="ignoreMeta" />
+                <label class="checkbox-label" for="ignoreMeta">
+                    ignore metadata
+                </label>
+            </div>
+            <div class="type-checking-container">
+                <div class="type-checking">type checking:</div>
+            </div>
+            <div class="checkbox-or-radio radios">
+                <div class="radio-container">
+                    <input type="radio" id="fast" name="typeChecking" />
+                    <label class="radio-label" for="fast">fast</label>
+                </div>
+                <div class="radio-container">
+                    <input type="radio" id="default" name="typeChecking" checked="checked"/>
+                    <label class="radio-label" for="default">default</label>
+                </div>
+                <div class="radio-container">
+                    <input type="radio" id="robust" name="typeChecking" />
+                    <label class="radio-label" for="robust">robust</label>
+                </div>
+            </div>
+        </div>
+        <div class="sync-checkbox-main-container">
+            <div class="sync-checkbox-inner-container">
+                <input class="sync-checkbox" type="checkbox" id="sync" name="sync" />
+                <label class="sync-checkbox-label" for="sync">
+                    block thread during benchmark
+                </label>
             </div>
         </div>
         <div class="buttons">

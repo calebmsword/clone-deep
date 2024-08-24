@@ -1,5 +1,4 @@
 /* node:coverage disable */
-/* eslint-disable complexity */
 
 import { isCallable } from '../src/utils/type-checking.js';
 
@@ -457,6 +456,10 @@ export const polyfill = () => {
             get files() {
                 return new FileList(this.items.getAll());
             }
+        };
+
+        globalThis.ClipBoardData = class ClipBoardData {
+            clipboardData = new DataTransfer();
         };
     }
 

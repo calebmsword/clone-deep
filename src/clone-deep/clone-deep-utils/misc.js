@@ -4,6 +4,7 @@ import {
     getPrototype,
     hasAccessor
 } from '../../utils/metadata.js';
+import { castAsInstanceOf } from '../../utils/helpers.js';
 import { isObject } from '../../utils/type-checking.js';
 
 /**
@@ -73,7 +74,7 @@ export const checkParentObjectRegistry = (value, registry) => {
  * If an error occurs when handling supported types, it will be handled here.
  * This will have a side effect of storing an empty object in the place where
  * a successful clone should have gone.
- * @param {unknown} error
+ * @param {unknown} thrown
  * The error thrown.
  * @param {import('../../types').Log} log
  * A logger.
@@ -84,18 +85,20 @@ export const checkParentObjectRegistry = (value, registry) => {
  * property indicating that the prototype for the dummy clone value should not
  * be checked.
  */
-export const handleError = (error, log, saveClone) => {
+export const handleError = (thrown, log, saveClone) => {
     const msg = 'Encountered error while attempting to clone specific value. ' +
                 'The value will be "cloned" into an empty object. Error ' +
                 'encountered:';
 
-    if (error instanceof Error) {
+    const error = castAsInstanceOf(thrown, Error);
+
+    if (error) {
         error.message = `${msg} ${error.message}`;
         const cause = error.cause ? { cause: error.cause } : undefined;
         const stack = error.stack ? error.stack : undefined;
         log(getWarning(error.message, cause, stack));
     } else {
-        log(getWarning(msg, { cause: error }));
+        log(getWarning(msg, { cause: thrown }));
     }
 
     return {
@@ -110,26 +113,33 @@ export const handleError = (error, log, saveClone) => {
  * that an error was thrown.
  * @param {Object} spec
  * @param {import('../../types').Log} spec.log
+ * The logger.
  * @param {unknown} spec.error
+ * The error thrown by the customizer/cloning method.
  * @param {boolean} [spec.doThrow]
+ * Whether errors thrown by customizers/cloning methods should be thrown by
+ * the algorithm.
  * @param {string} spec.name
+ * Either 'Customizer' or 'Cloning method'.
  * @returns {boolean}
  */
 export const handleCustomError = ({
     log,
-    error,
+    error: thrown,
     doThrow,
     name
 }) => {
     if (doThrow === true) {
-        throw error;
+        throw thrown;
     }
 
     const msg = `${name} encountered error. Its results will be ignored for ` +
                 'the current value and the algorithm will proceed with ' +
                 'default behavior. ';
 
-    if (error instanceof Error) {
+    const error = castAsInstanceOf(thrown, Error);
+
+    if (error) {
         error.message = `${msg}Error encountered: ${error.message}`;
 
         const cause = error.cause
@@ -152,17 +162,27 @@ export const handleCustomError = ({
  * original value to the queue.
  * @param {Object} spec
  * @param {any} spec.value
+ * The value that was cloned.
  * @param {any} spec.cloned
+ * The clone of `value`.
  * @param {boolean} spec.cloneIsCached
+ * Whether the clone was acquired from the clone store.
  * @param {boolean|undefined} spec.ignoreProto
+ * If tre, the algorithm will not ensure that `value` and `clone` share
+ * prototypes.
  * @param {boolean|undefined} spec.ignoreProps
- * @param {boolean} spec.ignoreThisLoop
+ * If true, the algorithm will not add additional values from the properties of
+ * `value` to the queue.
  * @param {(string|symbol)[]} spec.propsToIgnore
- * @param {boolean} spec.useCustomizerClone
+ * A list of properties under this value that should not be cloned.
  * @param {boolean} spec.useCloningMethod
+ * Whether cloning methods will be observed.
  * @param {Map<any, any>} spec.cloneStore
+ * A store of previously cloned values, used to resolve circular references.
  * @param {import('../../types').QueueItem[]} spec.queue
+ * The queue storing all values to clone.
  * @param {boolean} [spec.asyncResult]
+ * Whether the clone of this value was acquired asynchronously.
  */
 export const finalizeClone = ({
     value,
@@ -170,13 +190,12 @@ export const finalizeClone = ({
     cloneIsCached,
     ignoreProto,
     ignoreProps,
-    ignoreThisLoop,
     propsToIgnore,
     cloneStore,
     queue,
     asyncResult
 }) => {
-    if (!isObject(cloned) || cloneIsCached || ignoreThisLoop || asyncResult) {
+    if (!isObject(cloned) || cloneIsCached || asyncResult) {
         return;
     }
 
@@ -186,7 +205,7 @@ export const finalizeClone = ({
         Object.setPrototypeOf(cloned, getPrototype(value));
     }
 
-    if (!ignoreProps) {
+    if (!ignoreProps && isObject(value)) {
         forAllOwnProperties(value, (key) => {
             if (propsToIgnore.includes(key)) {
                 return;
