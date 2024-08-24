@@ -1,4 +1,4 @@
-import { Warning } from '../../utils/clone-deep-warning.js';
+import { CloneError } from '../../utils/clone-deep-error.js';
 import { isPropertyKeyArray } from '../../utils/type-checking.js';
 import { handleAdditionalValues } from './handle-additional-values.js';
 import { handleCustomError } from './misc.js';
@@ -103,16 +103,16 @@ export const handleCustomizer = ({
 
         if (!Array.isArray(additionalValues)
             && additionalValues !== undefined) {
-            throw Warning.IMPROPER_ADDITIONAL_VALUES;
+            throw CloneError.IMPROPER_ADDITIONAL_VALUES;
         }
 
         if (async && !asyncMode) {
-            throw Warning.CUSTOMIZER_ASYNC_IN_SYNC_MODE;
+            throw CloneError.CUSTOMIZER_ASYNC_IN_SYNC_MODE;
         }
 
         if (customResult.propsToIgnore !== undefined
             && !isPropertyKeyArray(customResult.propsToIgnore)) {
-            throw Warning.CUSTOMIZER_IMPROPER_PROPS_TO_IGNORE;
+            throw CloneError.CUSTOMIZER_IMPROPER_PROPS_TO_IGNORE;
         }
 
         if (Array.isArray(customResult.propsToIgnore)

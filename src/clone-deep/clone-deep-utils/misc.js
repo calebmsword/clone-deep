@@ -1,4 +1,4 @@
-import { getWarning } from '../../utils/clone-deep-warning.js';
+import { getError } from '../../utils/clone-deep-error.js';
 import {
     forAllOwnProperties,
     getPrototype,
@@ -96,9 +96,9 @@ export const handleError = (thrown, log, saveClone) => {
         error.message = `${msg} ${error.message}`;
         const cause = error.cause ? { cause: error.cause } : undefined;
         const stack = error.stack ? error.stack : undefined;
-        log(getWarning(error.message, cause, stack));
+        log(getError(error.message, cause, stack));
     } else {
-        log(getWarning(msg, { cause: thrown }));
+        log(getError(msg, { cause: thrown }));
     }
 
     return {
@@ -147,9 +147,9 @@ export const handleCustomError = ({
             : undefined;
 
         const stack = error.stack ? error.stack : undefined;
-        log(getWarning(error.message, cause, stack));
+        log(getError(error.message, cause, stack));
     } else {
-        log(getWarning(msg, { cause: error }));
+        log(getError(msg, { cause: error }));
     }
 
     return false;

@@ -5,7 +5,7 @@ import {
     WebApis,
     NodeTypes
 } from './constants.js';
-import { getWarning, Warning } from './clone-deep-warning.js';
+import { getError, CloneError } from './clone-deep-error.js';
 import { isCallable } from './type-checking.js';
 import { getPrototype } from './metadata.js';
 
@@ -44,7 +44,7 @@ export const getTypedArrayConstructor = (tag, log) => {
     case Tag.BIGUINT64:
         return BigUint64Array;
     default:
-        log(Warning.UNRECOGNIZED_TYPEARRAY_SUBCLASS);
+        log(CloneError.UNRECOGNIZED_TYPEARRAY_SUBCLASS);
         return DataView;
     }
 };
@@ -77,7 +77,7 @@ export const getAtomicErrorConstructor = (value, log) => {
         return URIError;
     default:
         if (log !== undefined) {
-            log(getWarning('Cloning error with unrecognized name ' +
+            log(getError('Cloning error with unrecognized name ' +
                                 `${name}! It will be cloned into an ` +
                                 'ordinary Error object.'));
         }
@@ -105,7 +105,7 @@ export const createFileList = (...files) => {
     try {
         dataTransfer = getDataTransfer();
     } catch {
-        throw Warning.FILELIST_DISALLOWED;
+        throw CloneError.FILELIST_DISALLOWED;
     }
 
     for (const file of files) {

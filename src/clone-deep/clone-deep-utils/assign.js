@@ -1,4 +1,4 @@
-import { getWarning } from '../../utils/clone-deep-warning.js';
+import { getError } from '../../utils/clone-deep-error.js';
 import { hasAccessor, isDefaultDescriptor } from '../../utils/metadata.js';
 
 /**
@@ -47,7 +47,7 @@ const handleMetadata = ({ log, cloned, parent, prop, metadata }) => {
     }
 
     if (hasAccessor(metadata)) {
-        log(getWarning(
+        log(getError(
             `Cloning value with name ${String(prop)} whose property ` +
             'descriptor contains a get or set accessor.'));
     }

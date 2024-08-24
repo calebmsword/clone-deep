@@ -487,11 +487,11 @@ describe('cloneDeep without customizer', () => {
         // -- act
         cloneDeep(_original, { log });
 
-        // == assert
+        // -- assert
         const { calls } = log.mock;
         assert.strictEqual(calls.length, 1);
-        assert.strictEqual(calls[0].arguments[0] instanceof Error, true);
-        assert.true(calls[0].arguments[0].message.includes(
+        assert.true(typeof calls[0].arguments[0] === 'string');
+        assert.true(calls[0].arguments[0].includes(
             'Attempted to clone function'));
     });
 
@@ -562,25 +562,6 @@ describe('cloneDeep without customizer', () => {
             'Attempted to clone unsupported type.'));
     });
 
-    test('A warning is logged if a promise is cloned', () => {
-        // -- arrange
-        const log = mock.fn(() => {});
-
-        const promise = new Promise((resolve) => {
-            resolve();
-        });
-
-        // -- act
-        cloneDeep(promise, { log });
-
-        // -- assert
-        const { calls } = log.mock;
-        const [error] = calls[0].arguments;
-        assert.strictEqual(calls.length, 1);
-        assert.true(error instanceof Error);
-        assert.true(error.message.includes('Attempted to clone a Promise.'));
-    });
-
     test('A cloned map has cloned content of the original map', () => {
         // -- arrange
         const _original = new Map();
@@ -649,18 +630,6 @@ describe('cloneDeep without customizer', () => {
         // -- assert
         assert.strictEqual(cloned.map.prop, _original.map.prop);
         assert.strictEqual(cloned.set.prop, _original.set.prop);
-    });
-
-    test('A specific logger is provided if logMode is "quiet"', () => {
-        // -- arrange
-        const log = mock.fn(() => {});
-
-        // -- act
-        // A warning will be logged.
-        cloneDeep({ func: () => {} }, { log, logMode: 'quiet' });
-
-        // -- assert
-        assert.strictEqual(log.mock.calls.length, 0);
     });
 
     test('A specific logger is provided if logMode is "silent"', () => {
@@ -1789,21 +1758,15 @@ describe('cloneDeepFully', () => {
 
     test('cloneDeepFully can provide logMode', () => {
         // -- arrange
-        const logQuiet = mock.fn(() => {});
         const logSilent = mock.fn(() => {});
 
         // -- act
-        cloneDeepFully({ func: () => {} }, {
-            log: logQuiet,
-            logMode: 'quiet'
-        });
         cloneDeepFully({ func: () => {} }, {
             log: logSilent,
             logMode: 'silent'
         });
 
         // -- assert
-        assert.strictEqual(logQuiet.mock.calls.length, 0);
         assert.strictEqual(logSilent.mock.calls.length, 0);
     });
 

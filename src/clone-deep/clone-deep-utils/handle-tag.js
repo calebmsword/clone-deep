@@ -3,7 +3,7 @@ import { handleAsyncWebTypes } from './handle-async-web-types.js';
 import { handleEcmaTypes } from './handle-ecma-types.js';
 import { handleNodeTypes } from './handle-node-types.js';
 import { handleSyncWebTypes } from './handle-sync-web-types.js';
-import { Warning } from '../../utils/clone-deep-warning.js';
+import { CloneError } from '../../utils/clone-deep-error.js';
 
 /** @typedef {import('../../utils/types').Assigner} Assigner */
 
@@ -115,7 +115,7 @@ export const handleTag = ({
 
         if (!nodeTypeDetected && !nativeTypeDetected && !webTypeDetected
             && !asyncWebTypeDetected) {
-            throw Warning.UNSUPPORTED_TYPE;
+            throw CloneError.UNSUPPORTED_TYPE;
         }
     } catch (error) {
         ({ cloned, ignoreProto } = handleError(error, log, saveClone));

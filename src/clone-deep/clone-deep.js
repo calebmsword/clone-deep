@@ -1,3 +1,4 @@
+import { defaultLogger } from '../utils/clone-deep-error.js';
 import { cloneDeepInternal } from './clone-deep-internal.js';
 
 /** @typedef {import('./clone-deep-utils/types').PerformanceConfig} PerformanceConfig */
@@ -37,8 +38,7 @@ import { cloneDeepInternal } from './clone-deep-internal.js';
  * Whether cloning methods will be observed.
  * @param {string} options.logMode
  * Case-insensitive. If "silent", no warnings will be logged. Use with caution,
- * as failures to perform true clones are logged as warnings. If "quiet", the
- * stack trace of the warning is ignored.
+ * as failures to perform true clones are logged as warnings.
  * @param {boolean} options.letCustomizerThrow
  * If `true`, errors thrown by the customizer will be thrown by `cloneDeep`. By
  * default, the error is logged and the algorithm proceeds with default
@@ -84,14 +84,11 @@ const cloneDeepProxy = (value, options) => {
     }
 
     if (typeof log !== 'function') {
-        log = console.warn;
+        log = defaultLogger;
     }
 
     if (typeof logMode === 'string' && logMode.toLowerCase() === 'silent') {
         log = () => {};
-    }
-    if (typeof logMode === 'string' && logMode.toLowerCase() === 'quiet') {
-        log = console.warn;
     }
 
     /** @type {U | Promise<{ clone: U }>} */
