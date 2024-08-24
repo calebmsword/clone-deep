@@ -70,3 +70,10 @@ export interface VideoFrame {
         colorSpace: string
     ) => Promise<{ offset: number, stride: number }[]>
 }
+
+export interface PerformanceConfig {
+    ignoreCircularReferences?: boolean,
+    ignorePropertyDesriptors?: boolean,
+    ignoreMetadata?: boolean,
+    robustTypeChecking?: boolean
+}

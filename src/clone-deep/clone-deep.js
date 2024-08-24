@@ -1,5 +1,7 @@
 import { cloneDeepInternal } from './clone-deep-internal.js';
 
+/** @typedef {import('./clone-deep-utils/types').PerformanceConfig} PerformanceConfig */
+
 /** @typedef {import('../types').CloneDeepProxyOptions} CloneDeepProxyOptions */
 
 /** @typedef {import('../types').CloneDeepOptions} CloneDeepOptions */
@@ -29,7 +31,7 @@ import { cloneDeepInternal } from './clone-deep-internal.js';
  * Any errors which occur during the algorithm can optionally be passed to a log
  * function. `log` should take one argument which will be the error encountered.
  * Use this to log the error to a custom logger.
- * @param {boolean} options.prioritizePerformance
+ * @param {PerformanceConfig} [options.performanceConfig]
  * Whether type-checking will be done performantly or robustly.
  * @param {boolean} options.ignoreCloningMethods
  * Whether cloning methods will be observed.
@@ -54,8 +56,8 @@ const cloneDeepProxy = (value, options) => {
     /** @type {Log|undefined} */
     let log;
 
-    /** @type {boolean|undefined} */
-    let prioritizePerformance;
+    /** @type {PerformanceConfig|undefined} */
+    let performanceConfig;
 
     /** @type {string|undefined} */
     let logMode;
@@ -73,7 +75,7 @@ const cloneDeepProxy = (value, options) => {
         ({
             customizer,
             log,
-            prioritizePerformance,
+            performanceConfig,
             logMode,
             ignoreCloningMethods,
             letCustomizerThrow,
@@ -97,7 +99,7 @@ const cloneDeepProxy = (value, options) => {
         value,
         customizer,
         log,
-        prioritizePerformance: prioritizePerformance || false,
+        performanceConfig: performanceConfig || {},
         ignoreCloningMethods: ignoreCloningMethods || false,
         doThrow: letCustomizerThrow || false,
         async: async || false

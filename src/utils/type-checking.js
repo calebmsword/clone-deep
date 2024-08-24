@@ -155,11 +155,7 @@ export const {
  */
 export const isFile = (value) => {
     try {
-        const file = castAsInstanceOf(value, File);
-        if (!file) {
-            return false;
-        }
-        getDescriptors(File.prototype).lastModified.get?.call(file);
+        getDescriptors(File.prototype).lastModified.get?.call(value);
         return true;
     } catch {
         return false;
@@ -173,11 +169,7 @@ export const isFile = (value) => {
  */
 export const isImageBitmap = (value) => {
     try {
-        const imageBitmap = castAsInstanceOf(value, ImageBitmap);
-        if (!imageBitmap) {
-            return false;
-        }
-        getDescriptors(ImageBitmap.prototype).height.get?.call(imageBitmap);
+        getDescriptors(ImageBitmap.prototype).height.get?.call(value);
         return true;
     } catch {
         return false;
@@ -191,11 +183,7 @@ export const isImageBitmap = (value) => {
  */
 export const isImageData = (value) => {
     try {
-        const imageData = castAsInstanceOf(value, ImageData);
-        if (!imageData) {
-            return false;
-        }
-        getDescriptors(ImageData.prototype).width.get?.call(imageData);
+        getDescriptors(ImageData.prototype).width.get?.call(value);
         return true;
     } catch {
         return false;
@@ -252,14 +240,14 @@ const typedArrayTags = Object.freeze([
  * Returns `true` if given value is a TypedArray instance, `false` otherwise.
  * @param {string} value
  * Any arbitrary value
- * @param {boolean} prioritizePerformance
- * Whether type-checking should be done performantly.
  * @param {string} tag
  * The tag for the value.
+ * @param {import('../clone-deep/clone-deep-utils/types').PerformanceConfig} [performanceConfig]
+ * Whether type-checking should be done performantly.
  * @returns {boolean}
  */
-export const isTypedArray = (value, prioritizePerformance, tag) => {
-    if (prioritizePerformance) {
+export const isTypedArray = (value, tag, performanceConfig) => {
+    if (performanceConfig?.robustTypeChecking !== true) {
         return typedArrayTags.includes(tag);
     }
 

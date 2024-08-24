@@ -23,7 +23,7 @@ let benchmarking = false;
 let ignoreCircularReferences = false;
 let ignorePropertyDescriptors = false;
 let ignoreMetadata = false;
-let typeChecking = TypeChecking.DEFAULT;
+let robustTypeChecking = TypeChecking.DEFAULT;
 let block = false;
 let elementUnderCursor;
 
@@ -116,7 +116,7 @@ const doBenchmark = (type) => {
         ignoreCircularReferences,
         ignorePropertyDescriptors,
         ignoreMetadata,
-        typeChecking
+        robustTypeChecking: robustTypeChecking === TypeChecking.ROBUST
     };
 
     if (block) {
@@ -135,7 +135,7 @@ const doBenchmark = (type) => {
 };
 
 const updateTypeChecking = (context) => {
-    typeChecking = radioToTypeChecking.get(context.target);
+    robustTypeChecking = radioToTypeChecking.get(context.target);
 };
 
 window.getState = () => {
@@ -146,7 +146,7 @@ window.getState = () => {
         ignoreCircularReferences,
         ignorePropertyDescriptors,
         ignoreMetadata,
-        typeChecking,
+        robustTypeChecking,
         block
     ].forEach(console.log);
 };

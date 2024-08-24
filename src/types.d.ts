@@ -1,4 +1,5 @@
 import { Assigner, CustomizerResult } from "./utils/types";
+import { PerformanceConfig } from "./clone-deep/clone-deep-utils/types";
 
 /** A function that can alter the default behavior of `cloneDeep`. */
 export type Customizer = (
@@ -13,7 +14,7 @@ export type Log = (error: Error) => any;
 export interface CloneDeepOptions {
     customizer?: Customizer
     log?: Log
-    prioritizePerformance?: boolean
+    performanceConfig?: PerformanceConfig
     ignoreCloningMethods?: boolean
     logMode?: string
     letCustomizerThrow?: boolean

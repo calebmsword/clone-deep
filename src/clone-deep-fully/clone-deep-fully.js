@@ -3,6 +3,8 @@ import {
     cloneDeepFullyInternalAsync
 } from './clone-deep-fully-internal.js';
 
+/** @typedef {import('../clone-deep/clone-deep-utils/types').PerformanceConfig} PerformanceConfig */
+
 /** @typedef {import('../types').CloneDeepFullyProxyOptions} CloneDeepFullyProxyOptions */
 
 /** @typedef {import('../types').CloneDeepFullyOptions} CloneDeepFullyOptions */
@@ -30,7 +32,7 @@ import {
  * See the documentation for `cloneDeep`.
  * @param {Log} options.log
  * See the documentation for `cloneDeep`.
- * @param {boolean} options.prioritizePerformance
+ * @param {PerformanceConfig} [options.performanceConfig]
  * See the documentation for `cloneDeep`.
  * @param {string} options.logMode
  * See the documentation for `cloneDeep`.
@@ -45,7 +47,7 @@ const cloneDeepFullyProxy = (value, options) => {
         customizer,
         log,
         logMode,
-        prioritizePerformance,
+        performanceConfig,
         ignoreCloningMethods,
         letCustomizerThrow,
         force,
@@ -58,7 +60,7 @@ const cloneDeepFullyProxy = (value, options) => {
             customizer,
             log: log || console.warn,
             logMode,
-            prioritizePerformance: prioritizePerformance || false,
+            performanceConfig: performanceConfig || {},
             ignoreCloningMethods: ignoreCloningMethods || false,
             letCustomizerThrow: letCustomizerThrow || false,
             force: force || false
@@ -69,7 +71,7 @@ const cloneDeepFullyProxy = (value, options) => {
         customizer,
         log: log || console.warn,
         logMode,
-        prioritizePerformance: prioritizePerformance || false,
+        performanceConfig: performanceConfig || {},
         ignoreCloningMethods: ignoreCloningMethods || false,
         letCustomizerThrow: letCustomizerThrow || false,
         force: force || false
@@ -89,19 +91,6 @@ const cloneDeepFullyProxy = (value, options) => {
  * @param {T} value
  * The value to deeply copy.
  * @param {CloneDeepFullyOptions} [options]
- * @param {object} [options]
- * @param {Customizer} options.customizer
- * See documentation for_cloneDeep.
- * @param {Log} options.log
- * See documentation for_cloneDeep.
- * @param {boolean} options.prioritizePerformance
- * See documentation for_cloneDeep.
- * @param {boolean} options.ignoreCloningMethods
- * See documentation for_cloneDeep.
- * @param {string} options.logMode
- * See documentation for_cloneDeep.
- * @param {boolean} options.letCustomizerThrow
- * See documentation for_cloneDeep.
  * @returns {U}
  * See documentation for_cloneDeep.
  */
@@ -128,19 +117,6 @@ const cloneDeepFully = (value, options) => {
  * @param {T} value
  * The value to deeply copy.
  * @param {CloneDeepFullyOptions} [options]
- * @param {object} [options]
- * @param {Customizer} options.customizer
- * See documentation for_cloneDeep.
- * @param {Log} options.log
- * See documentation for_cloneDeep.
- * @param {boolean} options.prioritizePerformance
- * See documentation for_cloneDeep.
- * @param {boolean} options.ignoreCloningMethods
- * See documentation for_cloneDeep.
- * @param {string} options.logMode
- * See documentation for_cloneDeep.
- * @param {boolean} options.letCustomizerThrow
- * See documentation for_cloneDeep.
  * @returns {Promise<{ clone: U }> }
  * See documentation for_cloneDeep..
  */

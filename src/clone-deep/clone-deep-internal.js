@@ -18,7 +18,7 @@ import { GlobalState } from './clone-deep-utils/global-state.js';
  * A customizer function.
  * @param {import('../types').Log} spec.log
  * Receives an error object for logging.
- * @param {boolean} spec.prioritizePerformance
+ * @param {import('./clone-deep-utils/types').PerformanceConfig} [spec.performanceConfig]
  * Whether or not type-checking will be more performant.
  * @param {boolean} spec.ignoreCloningMethods
  * Whether cloning methods will be observed.
@@ -35,7 +35,7 @@ export const cloneDeepInternal = ({
     value,
     customizer,
     log,
-    prioritizePerformance,
+    performanceConfig,
     ignoreCloningMethods,
     doThrow,
     parentObjectRegistry,
@@ -47,7 +47,7 @@ export const cloneDeepInternal = ({
         log,
         customizer,
         parentObjectRegistry,
-        prioritizePerformance,
+        performanceConfig,
         ignoreCloningMethods,
         doThrow,
         async

@@ -79,10 +79,10 @@ export class GlobalState {
 
     /**
      * Whether or not type-checking will be more performant.
-     * @type {boolean}
+     * @type {import('./types').PerformanceConfig|undefined}
      * @readonly
      */
-    prioritizePerformance;
+    performanceConfig;
 
     /**
      * Whether cloning methods should even be considered.
@@ -117,7 +117,7 @@ export class GlobalState {
      * This is used by cloneDeepFully to check if an object with a cloning
      * method is in the prototype of an object that was cloned earlier in the
      * chain.
-     * @param {boolean} spec.prioritizePerformance
+     * @param {import('./types').PerformanceConfig} [spec.performanceConfig]
      * Whether or not type-checking will be more performant.
      * @param {boolean} spec.ignoreCloningMethods
      * Whether cloning methods should even be considered.
@@ -131,7 +131,7 @@ export class GlobalState {
         log,
         customizer,
         parentObjectRegistry,
-        prioritizePerformance,
+        performanceConfig,
         ignoreCloningMethods,
         doThrow,
         async
@@ -143,7 +143,7 @@ export class GlobalState {
         this.supportedPrototypes = getSupportedPrototypes();
         this.supportedConstructors = getSupportedConstructors();
         this.parentObjectRegistry = parentObjectRegistry;
-        this.prioritizePerformance = Boolean(prioritizePerformance);
+        this.performanceConfig = performanceConfig;
         this.ignoreCloningMethods = Boolean(ignoreCloningMethods);
         this.doThrow = Boolean(doThrow);
         this.async = Boolean(async);

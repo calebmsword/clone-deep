@@ -306,7 +306,9 @@ try {
                 // -- act
                 const cloned = cloneDeep(value);
                 const clonedFast = cloneDeep(value, {
-                    prioritizePerformance: true
+                    performanceConfig: {
+                        robustTypeChecking: true
+                    }
                 });
 
                 // -- assert
@@ -394,7 +396,9 @@ try {
                     // -- act
                     const cloned = cloneDeep(value);
                     const clonedFast = cloneDeep(value, {
-                        prioritizePerformance: true
+                        performanceConfig: {
+                            robustTypeChecking: true
+                        }
                     });
 
                     // -- assert
@@ -730,8 +734,8 @@ try {
             assert.strictEqual(cloned.typedArray.prop, 'prop');
         });
 
-        test('Unrecognized TypedArray instances are cloned into DataView ' +
-             'instances and a warning is logged', () => {
+        test('in robustTypeChecking mode, unrecognized TypedArray instances ' +
+             'are cloned into DataViews and a warning is logged', () => {
             // -- arrange
             const typedArray = new Uint8Array(new ArrayBuffer(8), 1, 4);
             Object.defineProperty(typedArray, Symbol.toStringTag, {
@@ -741,7 +745,12 @@ try {
             const log = mock.fn(() => {});
 
             // -- act
-            const cloned = cloneDeep(typedArray, { log });
+            const cloned = cloneDeep(typedArray, {
+                performanceConfig: {
+                    robustTypeChecking: true
+                },
+                log
+            });
 
             // -- assert
             assert.doesNotThrow(() => {
@@ -1268,45 +1277,44 @@ try {
             });
         });
 
-        test('DOMQuad correctly clones properties not from its prototype',
-             () => {
-                 // -- arrange
-                 const quad = new DOMQuad();
-                 Object.defineProperty(quad, 'p1', {
-                     value: new DOMQuad()
-                 });
+        test('DOMQuad correctly clones properties that are pressent in its ' +
+             'prototype', () => {
+            // -- arrange
+            const quad = new DOMQuad();
+            Object.defineProperty(quad, 'p1', {
+                value: new DOMQuad()
+            });
 
-                 // -- act
-                 const cloned = cloneDeep(quad);
+            // -- act
+            const cloned = cloneDeep(quad);
 
-                 // -- assert
-                 assert.notStrictEqual(quad, cloned);
-                 assert.deepEqual(quad, cloned);
-                 assert.strictEqual(
-                     true,
-                     Object
-                         .getOwnPropertyNames(cloned)
-                         .includes('p1'));
-             });
+            // -- assert
+            assert.notStrictEqual(quad, cloned);
+            assert.deepEqual(quad, cloned);
+            assert.strictEqual(
+                true,
+                Object
+                    .getOwnPropertyNames(cloned)
+                    .includes('p1'));
+        });
 
-        test('DOMQuad correctly clones its points',
-             () => {
-                 // -- arrange
-                 const quad = new DOMQuad();
-                 quad.p1.test1 = 'test1';
-                 Object.defineProperty(quad.p1, 'test2', {
-                     get: () => {
-                         return 'test2';
-                     }
-                 });
+        test('DOMQuad correctly clones its points', () => {
+            // -- arrange
+            const quad = new DOMQuad();
+            quad.p1.test1 = 'test1';
+            Object.defineProperty(quad.p1, 'test2', {
+                get: () => {
+                    return 'test2';
+                }
+            });
 
-                 // -- act
-                 const cloned = cloneDeep(quad);
+            // -- act
+            const cloned = cloneDeep(quad);
 
-                 // -- assert
-                 assert.strictEqual('test1', cloned.p1.test1);
-                 assert.strictEqual('test2', cloned.p1.test2);
-             });
+            // -- assert
+            assert.strictEqual('test1', cloned.p1.test1);
+            assert.strictEqual('test2', cloned.p1.test2);
+        });
 
         test('ImageData and ImageBitmap instances are only recognized if ' +
              'they were created by the constructor function', () => {
@@ -1921,7 +1929,7 @@ try {
             assert.strictEqual('test', getProto(clone).test);
         });
 
-        test('cloneDeepFullyAsync prioritizePerformance, force, and ' +
+        test('cloneDeepFullyAsync performanceConfig, force, and ' +
              'ignoreCloningMethodsbehave as expected', async () => {
             // -- arrange
             const original = {
@@ -1932,7 +1940,9 @@ try {
 
             // -- act
             const { clone } = await cloneDeepFullyAsync(original, {
-                prioritizePerformance: true,
+                performanceConfig: {
+                    robustTypeChecking: true
+                },
                 force: true,
                 ignoreCloningMethods: true
             });
@@ -2754,7 +2764,6 @@ try {
                 log: () => {
                     /* no-op */
                 },
-                prioritizePerformance: false,
                 ignoreCloningMethods: false,
                 doThrow: false,
                 async: false
@@ -2770,7 +2779,7 @@ try {
                 'customizer',
                 'supportedPrototypes',
                 'parentObjectRegistry',
-                'prioritizePerformance',
+                'performanceConfig',
                 'ignoreCloningMethods',
                 'doThrow',
                 'async'
