@@ -56,6 +56,9 @@ export type Tag = Readonly<{
 
     // Async Web APIs
     IMAGEBITMAP: string,
+
+    // Node types
+    BUFFER: string
 }>
 
 /** 

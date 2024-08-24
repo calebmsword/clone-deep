@@ -4,9 +4,7 @@ import './polyfills.js';
 // eslint-disable-next-line no-duplicate-imports
 import { clearPolyfills, polyfill } from './polyfills.js';
 
-// import assert from 'node:assert';
 import { mock } from 'node:test';
-
 import { assert, test, describe, getProto, tagOf } from './test-utils.js';
 
 import cloneDeep, {
@@ -24,6 +22,7 @@ import {
     getTypedArrayConstructor
 } from '../src/utils/helpers.js';
 import {
+    isBuffer,
     isCallable,
     isDOMMatrix,
     isDOMMatrixReadOnly,
@@ -257,7 +256,10 @@ describe('cloneDeep without customizer', () => {
             file: [new File([], ''), Tag.FILE],
             filelist: [createFileList([]), Tag.FILELIST],
             imagedata: [new ImageData(10, 10), Tag.IMAGEDATA],
-            videoframe: [getVideoFrame(), Tag.VIDEOFRAME]
+            videoframe: [getVideoFrame(), Tag.VIDEOFRAME],
+
+            // Node types
+            buffer: [Buffer.from([]), Tag.BUFFER]
         };
 
         for (const key of Object.keys(type)) {
@@ -266,7 +268,7 @@ describe('cloneDeep without customizer', () => {
 
             // -- act
             const cloned = cloneDeep(value);
-            const clonedFast = cloneDeep(value, {
+            const clonedSlow = cloneDeep(value, {
                 performanceConfig: {
                     robustTypeChecking: true
                 }
@@ -274,10 +276,18 @@ describe('cloneDeep without customizer', () => {
 
             // -- assert
             assert.strictEqual(typeof cloned, 'object');
-            assert.strictEqual(tagOf(cloned), tag);
+            if (tag === Tag.BUFFER) {
+                assert.true(isBuffer(cloned, { Buffer }));
+            } else {
+                assert.strictEqual(tagOf(cloned), tag);
+            }
 
-            assert.strictEqual(typeof clonedFast, 'object');
-            assert.strictEqual(tagOf(clonedFast), tag);
+            assert.strictEqual(typeof clonedSlow, 'object');
+            if (tag === Tag.BUFFER) {
+                assert.true(isBuffer(clonedSlow, { Buffer }));
+            } else {
+                assert.strictEqual(tagOf(clonedSlow), tag);
+            }
         }
     });
 

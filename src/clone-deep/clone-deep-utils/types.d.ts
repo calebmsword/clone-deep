@@ -75,3 +75,9 @@ export interface PerformanceConfig {
     ignoreMetadata?: boolean,
     robustTypeChecking?: boolean
 }
+
+/** A "polyfill" for a Node Buffer. */
+export interface Buffer extends Uint8Array {
+    slice: (start?: number, end?: number) => Buffer
+    toString: () => string
+}

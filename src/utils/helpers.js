@@ -2,7 +2,8 @@ import {
     supportedPrototypes,
     Es6NativeTypes,
     Tag,
-    WebApis
+    WebApis,
+    NodeTypes
 } from './constants.js';
 import { getWarning, Warning } from './clone-deep-warning.js';
 import { isCallable } from './type-checking.js';
@@ -153,13 +154,13 @@ export const getConstructorFromString = (string) => {
  */
 export const getSupportedPrototypes = () => {
     /** @type {object[]} */
-    const webApiPrototypes = [];
+    const additionalPrototypes = [];
 
     Object.keys(WebApis).forEach((webApiString) => {
         const PotentialWebApi = getConstructorFromString(webApiString);
 
         if (PotentialWebApi !== undefined && isCallable(PotentialWebApi)) {
-            webApiPrototypes.push(PotentialWebApi.prototype);
+            additionalPrototypes.push(PotentialWebApi.prototype);
         }
     });
 
@@ -167,11 +168,19 @@ export const getSupportedPrototypes = () => {
         const PotentialArray = getConstructorFromString(typeArrayString);
 
         if (PotentialArray !== undefined && isCallable(PotentialArray)) {
-            webApiPrototypes.push(PotentialArray.prototype);
+            additionalPrototypes.push(PotentialArray.prototype);
         }
     });
 
-    return supportedPrototypes.concat(webApiPrototypes);
+    Object.keys(NodeTypes).forEach((typeArrayString) => {
+        const PotentialArray = getConstructorFromString(typeArrayString);
+
+        if (PotentialArray !== undefined && isCallable(PotentialArray)) {
+            additionalPrototypes.push(PotentialArray.prototype);
+        }
+    });
+
+    return supportedPrototypes.concat(additionalPrototypes);
 };
 
 /**
@@ -184,7 +193,7 @@ export const getSupportedPrototypes = () => {
 export const getSupportedConstructors = () => {
     /** @type {{ [key: string]: Constructor | undefined }} */
     const result = {};
-    Object.keys(Tag).forEach((tag) => {
+    Object.values(Tag).forEach((tag) => {
         const name = tag.substring(8, tag.length - 1);
         result[name] = getConstructorFromString(name);
     });

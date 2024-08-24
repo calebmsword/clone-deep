@@ -18,7 +18,6 @@ export const processQueue = (globalState) => {
         customizer,
         cloneStore,
         isExtensibleSealFrozen,
-        performanceConfig,
         ignoreCloningMethods
     } = globalState;
 
@@ -87,7 +86,7 @@ export const processQueue = (globalState) => {
         const propsToIgnore = [];
 
         /** Identifies the type of the value. */
-        const tag = getTag(value, globalState, performanceConfig);
+        const tag = getTag(value, globalState);
 
         cloneIsCached = checkCloneStore(value, cloneStore, saveClone);
 
