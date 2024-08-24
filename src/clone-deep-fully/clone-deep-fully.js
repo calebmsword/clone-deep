@@ -112,7 +112,6 @@ const cloneDeepFully = (value, options) => {
 
     options.async = false;
 
-    /* eslint-disable-next-line @s/no-extra-parens */
     return /** @type {U} */ (cloneDeepFullyProxy(value, options));
 };
 

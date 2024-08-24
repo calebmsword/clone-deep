@@ -1,5 +1,8 @@
 import { TOP_LEVEL } from './assign.js';
-import { getSupportedPrototypes } from '../../utils/helpers.js';
+import {
+    getSupportedConstructors,
+    getSupportedPrototypes
+} from '../../utils/helpers.js';
 
 /**
  * Container for various data structures often used in cloneDeep.
@@ -56,6 +59,14 @@ export class GlobalState {
      * @readonly
      */
     supportedPrototypes;
+
+    /**
+     * An object mapping constructor names to the constructor itself, or
+     * `undefined` if the constructor is not available in this runtime.
+     * @type {Readonly<{ [key: string]: (new (...args: any[]) => any) | undefined }>}
+     * @readonly
+     */
+    supportedConstructors;
 
     /**
      * This is used by cloneDeepFully to check if an object with a cloning
@@ -130,6 +141,7 @@ export class GlobalState {
         this.log = log;
         this.queue = [{ value, parentOrAssigner: TOP_LEVEL }];
         this.supportedPrototypes = getSupportedPrototypes();
+        this.supportedConstructors = getSupportedConstructors();
         this.parentObjectRegistry = parentObjectRegistry;
         this.prioritizePerformance = Boolean(prioritizePerformance);
         this.ignoreCloningMethods = Boolean(ignoreCloningMethods);

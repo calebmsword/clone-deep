@@ -1,9 +1,5 @@
 import { assign } from './assign.js';
-import {
-    checkCloneStore,
-    checkParentObjectRegistry,
-    finalizeClone
-} from './misc.js';
+import { checkCloneStore, finalizeClone } from './misc.js';
 import { handleCustomizer } from './handle-customizer.js';
 import { handleTag } from './handle-tag.js';
 import { handleCloningMethods } from './handle-cloning-method.js';
@@ -22,7 +18,6 @@ export const processQueue = (globalState) => {
         customizer,
         cloneStore,
         isExtensibleSealFrozen,
-        parentObjectRegistry,
         prioritizePerformance,
         ignoreCloningMethods
     } = globalState;
@@ -91,11 +86,8 @@ export const processQueue = (globalState) => {
          */
         const propsToIgnore = [];
 
-        /** Whether the cloning methods should be observed this loop. */
-        let ignoreCloningMethodsThisLoop = false;
-
         /** Identifies the type of the value. */
-        const tag = getTag(value, prioritizePerformance);
+        const tag = getTag(value, prioritizePerformance, globalState);
 
         cloneIsCached = checkCloneStore(value, cloneStore, saveClone);
 
@@ -121,10 +113,7 @@ export const processQueue = (globalState) => {
 
         const ignore = cloneIsCached || useCustomizerClone || isPrimitive;
 
-        ignoreCloningMethodsThisLoop = checkParentObjectRegistry(
-            value, parentObjectRegistry);
-
-        if (!ignore && !ignoreCloningMethods && !ignoreCloningMethodsThisLoop) {
+        if (!ignore && !ignoreCloningMethods) {
             const cloningMethodResult = handleCloningMethods({
                 globalState,
                 queueItem,

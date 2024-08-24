@@ -5,7 +5,7 @@ import {
     isObject,
     isPropertyKeyArray
 } from '../../utils/type-checking.js';
-import { handleCustomError } from './misc.js';
+import { checkParentObjectRegistry, handleCustomError } from './misc.js';
 
 /** @typedef {import('../../utils/types').Assigner} Assigner */
 
@@ -35,7 +35,13 @@ export const handleCloningMethods = ({
     saveClone
 }) => {
 
-    const { log, pendingResults, async: asyncMode, doThrow } = globalState;
+    const {
+        log,
+        pendingResults,
+        parentObjectRegistry,
+        async: asyncMode,
+        doThrow
+    } = globalState;
 
     const { value } = queueItem;
 
@@ -58,6 +64,16 @@ export const handleCloningMethods = ({
 
     try {
         if (!isCallable(value[CLONE])) {
+            return {
+                cloned,
+                ignoreProps,
+                ignoreProto,
+                useCloningMethod: false,
+                async
+            };
+        }
+
+        if (checkParentObjectRegistry(value, parentObjectRegistry)) {
             return {
                 cloned,
                 ignoreProps,

@@ -127,7 +127,6 @@ const cloneDeep = (value, options) => {
 
     options.async = false;
 
-    /* eslint-disable-next-line @s/no-extra-parens */
     return /** @type {U} */ (cloneDeepProxy(value, options));
 };
 
@@ -154,7 +153,6 @@ export const cloneDeepAsync = (value, options) => {
 
     options.async = true;
 
-    /* eslint-disable-next-line @s/no-extra-parens */
     return /** @type {Promise<{ clone: U }>} */(cloneDeepProxy(value, options));
 };
 

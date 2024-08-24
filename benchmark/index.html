@@ -11,9 +11,9 @@
     
 </head>
 <body>
-    <div class="main-container">
+    <div class="main-container deepClone">
         <div class="table-title-container">
-            <div class="table-title">Average Time:</div>
+            <div class="table-title">Average Time (deep clone):</div>
         </div>
         <div class="table">
             <div class="table-col left">
@@ -44,36 +44,36 @@
                 </div>
             </div>
             <div class="table-col right">
-                <div class="result top">
+                <div class="result sc top">
                     <div class="result-text-container">
-                        <div class="result-text">------</div>
+                        <div class="result-text">-----</div>
                     </div>
                 </div>
-                <div class="result">
+                <div class="result lodash">
                     <div class="result-text-container">
-                        <div class="result-text">------</div>
+                        <div class="result-text">-----</div>
                     </div>
                 </div>
-                <div class="result">
+                <div class="result clone">
                     <div class="result-text-container">
-                        <div class="result-text">------</div>
+                        <div class="result-text">-----</div>
                     </div>
                 </div>
-                <div class="result">
+                <div class="result es">
                     <div class="result-text-container">
-                        <div class="result-text">------</div>
+                        <div class="result-text">-----</div>
                     </div>
                 </div>
                 <div class="result bottom">
                     <div class="result-text-container">
-                        <div class="result-text">------</div>
+                        <div class="result-text">-----</div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="iterations-container">
             <div class= "label-container">
-                <div class="label">Number of iterations:</div>
+                <div class="label">number of iterations:</div>
             </div>
             <div class="input-container">
                 <input class="iterations" type="number" placeholder="1000">
@@ -99,13 +99,9 @@
                 </label>
             </div>
             <div class="type-checking-container">
-                <div class="type-checking">type checking:</div>
+                <div class="type-checking">Type Checking:</div>
             </div>
             <div class="checkbox-or-radio radios">
-                <div class="radio-container">
-                    <input type="radio" id="fast" name="typeChecking" />
-                    <label class="radio-label" for="fast">fast</label>
-                </div>
                 <div class="radio-container">
                     <input type="radio" id="default" name="typeChecking" checked="checked"/>
                     <label class="radio-label" for="default">default</label>
@@ -134,7 +130,41 @@
                 </div>
             </div>
             <div class="button pressable deeply-nested">
-                <div class="button-text">deeply nested (1,000 layers)</div>
+                <div class="button-text">deeply nested (500 layers)</div>
+            </div>
+        </div>
+    </div>
+    <div class="main-container deepCloneFully">
+        <div class="table-title-container">
+            <div class="table-title">Average Time (prototype chain):</div>
+        </div>
+        <div class="table">
+            <div class="table-col left">
+                <div class="title">
+                    <div class="title-text-container top">
+                        <div class="title-text">cloneDeep (ms):</div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-col right">
+                <div class="result proto top">
+                    <div class="result-text-container">
+                        <div class="result-text">-----</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="iterations-container">
+            <div class= "label-container">
+                <div class="label">number of prototypes:</div>
+            </div>
+            <div class="input-container">
+                <input class="prototypes" type="number" placeholder="1000">
+            </div>
+        </div>
+        <div class="buttons">
+            <div class="button pressable prototype-chain">
+                <div class="button-text">clone prototype chain</div>
             </div>
         </div>
     </div>

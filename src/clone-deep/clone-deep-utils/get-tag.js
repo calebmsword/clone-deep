@@ -1,6 +1,6 @@
 import { Tag } from '../../utils/constants.js';
-import { getConstructorFromString } from '../../utils/helpers.js';
 import {
+    isDOMException,
     isDOMMatrix,
     isDOMMatrixReadOnly,
     isDOMPoint,
@@ -15,11 +15,9 @@ import {
 
 /** @typedef {new (...args: any[]) => any} Constructor */
 
-/** @typedef {BigIntConstructor|SymbolConstructor|Constructor} ClassesToTypeCheckConstructor */
-
 /**
  * Convenience array used for `getTag`.
- * @type {Array<[ClassesToTypeCheckConstructor|string, string, string, ...any]>}
+ * @type {Array<[Constructor|string, string, string, ...any]>}
  */
 const classesToTypeCheck = [
     // "standard" classes
@@ -55,6 +53,7 @@ const classesToTypeCheck = [
  * @type {Array<[(value: any) => boolean, string]>}
  */
 const typeCheckers = [
+    [isDOMException, Tag.DOMEXCEPTION],
     [isDOMMatrix, Tag.DOMMATRIX],
     [isDOMMatrixReadOnly, Tag.DOMMATRIXREADONLY],
     [isDOMPoint, Tag.DOMPOINT],
@@ -136,11 +135,9 @@ const typeCheckers = [
  * with get/set accessors. These accessors typically throw if bound to incorrect
  * instances so we can use a nearly equivalent technique for them.
  *
- * Currently, only Array, CryptoKey, Error subclasses, DOMException, and
- * TypedArray subclasses are having their tag retrieved from
- * `Object.prototype.toString.call`. (This is not an issue for Arrays since
- * Array.isArray is the best check for arrays anyway.) All other classes are
- * checked by binding the given value to the appropriate prototype method or
+ * Currently, only Array, Error subclasses, and TypedArray subclasses are having
+ * their tag retrieved from `Object.prototype.toString.call`. All other classes
+ * are checked by binding the given value to the appropriate prototype method or
  * accessor function. No matter which method is used, we return the tag
  * associated with the detected class.
  *
@@ -152,24 +149,33 @@ const typeCheckers = [
  * The value to get the tag of.
  * @param {boolean} prioritizePerformance
  * Whether type-checking should be done performantly.
+ * @param {import('./global-state.js').GlobalState} globalState
+ * The global application state.
  * @returns {string} tag
  * A string indicating the value's type.
  */
-export const getTag = (value, prioritizePerformance) => {
+export const getTag = (value, prioritizePerformance, globalState) => {
 
     if (prioritizePerformance) {
         return toStringTag(value);
     }
 
+    const { supportedConstructors } = globalState;
+
     /** @type {undefined|string} */
     let result;
 
-    classesToTypeCheck.some(([constructor, method, tag, ...args]) => {
-        if (typeof constructor === 'string') {
-            constructor = getConstructorFromString(constructor);
+    classesToTypeCheck.some(([constructorOrString, method, tag, ...args]) => {
+
+        const constructor = typeof constructorOrString === 'string'
+            ? supportedConstructors[constructorOrString]
+            : constructorOrString;
+
+        if (constructor === undefined) {
+            return false; // continue iterating
         }
 
-        if (constructor === undefined || !(value instanceof constructor)) {
+        if (!(value instanceof constructor)) {
             return false; // continue iterating
         }
 

@@ -133,13 +133,15 @@ const __global = globalThis;
 /** @type {{ [key: string]: new (...args: any[]) => any | undefined }} */
 const global = __global;
 
+/** @typedef {new (...args: any[]) => any} Constructor */
+
 /**
  * Attempts to retreive a web API from the global object.
  * Doing this in a way that utilizes TypeScript effectively is obtuse, hence
  * this function was made so that TypeScript jank doesn't obfuscate code
  * elsewhere.
  * @param {string} string
- * @returns {new (...args: any[]) => any | undefined}
+ * @returns {Constructor | undefined}
  */
 export const getConstructorFromString = (string) => {
     return global[string];
@@ -170,6 +172,23 @@ export const getSupportedPrototypes = () => {
     });
 
     return supportedPrototypes.concat(webApiPrototypes);
+};
+
+/**
+ * Returns an object containing all constructors in this runtime.
+ * The object maps names of a constructor ('Array', 'Map', 'AudioData') to the
+ * constructor itself, or `undefined` if the constructor is not available in
+ * this runtime.
+ * @returns {Readonly<{ [key: string]: Constructor | undefined }>}
+ */
+export const getSupportedConstructors = () => {
+    /** @type {{ [key: string]: Constructor | undefined }} */
+    const result = {};
+    Object.keys(Tag).forEach((tag) => {
+        const name = tag.substring(8, tag.length - 1);
+        result[name] = getConstructorFromString(name);
+    });
+    return Object.freeze(result);
 };
 
 /**

@@ -15,7 +15,6 @@ import cloneDeep, {
 } from '../index.js';
 
 import { CLONE, Tag } from '../src/utils/constants.js';
-import { getTag } from '../src/clone-deep/clone-deep-utils/get-tag.js';
 import {
     castAsInstanceOf,
     createFileList,
@@ -45,7 +44,7 @@ const getProto = (object) => {
     return Object.getPrototypeOf(object);
 };
 const tagOf = (value) => {
-    return getTag(value);
+    return Object.prototype.toString.call(value);
 };
 
 assert.true = (condition) => {
@@ -1150,7 +1149,7 @@ try {
             const clone = cloneDeep(fakeFile);
 
             // -- assert
-            assert.strictEqual(Tag.OBJECT, getTag(clone));
+            assert.strictEqual(Tag.OBJECT, tagOf(clone));
         });
 
         describe('geometry web APIs', () => {

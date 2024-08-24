@@ -29,7 +29,7 @@ import { isIterable, isTypedArray } from '../../utils/type-checking.js';
  *     nativeTypeDetected: boolean
  * }}
  */
-export const handleNativeTypes = ({
+export const handleEcmaTypes = ({
     globalState,
     queueItem,
     tag,
