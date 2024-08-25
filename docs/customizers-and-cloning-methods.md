@@ -31,9 +31,6 @@ class Wrapper {
 ## Cloning Method Parameters
 
 <dl>
-  <dt>value</dt>
-  <dd>Every value that is cloned by the algorithm will be passed to this customizer.</dd>
-
   <dt>logger</dt>
   <dd>The logger object used the algorithm is provided to this customizer. It can be used at your discretion.</dd>
 </dl>
