@@ -18,6 +18,11 @@ console.log(cloned[1] === object[1]);  // false
 
 This module is compatible with TypeScript. See [this section](#cms-clone-deep-and-typescript) for more information.
 
+## Links
+
+ - [API docs](https://github.com/calebmsword/clone-deep/blob/main/docs/api.md)
+ - [Customizer and cloning method docs](https://github.com/calebmsword/clone-deep/blob/mainr/docs/customizers-and-cloning-methods.md)
+
 ## Installation
 
 First, install [node.js](https://nodejs.org/en) on your machine. At the time of this writing, the current stable version is **20.10.0**.
@@ -221,9 +226,9 @@ If the customizer returns an object, the default behavior of `cloneDeep` will be
 
 There are many properties that will be observed in the object returned by the customizer. Please see the API documentation for more information.
 
-## `cloneDeepFully` and `useCustomizers`
+## Additional package features
 
-`cloneDeep` is the heart and soul of this package. But `cms-clone-deep` comes with two additional functions:
+`cloneDeep` is the primary function that will be used from package, but `cms-clone-deep` provides some additional functions:
 
  1) `cloneDeepFully` This function will clone an object as well as each object in its prototype chain.
  2) `cloneDeepAsync` This function will return the clone in a promise.
