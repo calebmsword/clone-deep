@@ -19,36 +19,32 @@ cloneDeep(value, options);
   <dt>options</dt>
   <dd>Optional. An object. Available options are:
     <dl>
-      <dt>customizer</dt>
+      <dt>options.customizer</dt>
       <dd>Optional. A customizer function.</dd>
-      <dt>log</dt>
+      <dt>options.log</dt>
       <dd>Optional. A logger object.</dd>
-      <dt>performanceConfig</dt>
+      <dt>options.performanceConfig</dt>
       <dd>Optional. A configuration object to tailor the performance of the algorithm. Available options are:
         <dl>
-          <dt>ignoreMetadata</dt>
+          <dt>performanceConfig.ignoreMetadata</dt>
           <dd>Optional. A boolean. If true, ignore the check for extensibility/sealedness/frozenness. This has marginal improvement to the performance of the algorithm, and can be useful if you have confidence that every object has the default extensibility/sealedness/frozenness.</dd>
-          <dt>robustTypeChecking</dt>
+          <dt>performanceConfig.robustTypeChecking</dt>
           <dd>Optional. A boolean. If true, the algorithm will take extra measures while performing runtime type-checking. When robustTypeChecking is active, values that were constructed with a native constructor will usually be correctly detected even if they have their prototypes changed. Use at your own discretion as this considerably slows the algorithm.</dd>
         </dl>
       </dd>
-      <dt>ignoreCloningMethods</dt>
+      <dt>options.ignoreCloningMethods</dt>
       <dd>Optional. A boolean. If true, cloning methods will not be used to clone objects.</dd>
-      <dt>logMode</dt>
-      <dd>Optional. A string. If the value "silent" (case-insensitive), the no warnings or errors will be printed to the console, even if a custom logger object is provided. Use at your own discretion.</dd>
-      <dt>letCustomizerThrow</dt>
-      <dd>A customizer function.</dd>
-      <dt>async</dt>
-      <dd>A customizer function.</dd>
+      <dt>options.logMode</dt>
+      <dd>Optional. A string. If the value "silent" (case-insensitive), then no warnings or errors will be printed to the console even if a custom logger object is provided. Use at your own discretion.</dd>
+      <dt>options.letCustomizerThrow</dt>
+      <dd>Optional. A boolean. If true, customizers and cloning methods that throw errors will cause the algorithm to throw. By default, these errors are logged and the algorithm continues with default behavior.</dd>
     </dl>
   </dd>
 </dl>
 
-
-
-
 ### Return value
 
+The clone of the provided value.
 
 ## Description
 Creates a deep copy of the provided value. `cloneDeep` behaves like `structuredClone`, but there are differences:
@@ -62,8 +58,6 @@ Creates a deep copy of the provided value. `cloneDeep` behaves like `structuredC
 An optional `customizer` can be provided to extend or modify the functionality of `cloneDeep`. The customizer has extremely high priority over the default behavior of the algorithm. The only logic the algorithm prioritizes over the customizer is the check for circular references. See the section on customizers for more information.
 
 The cloned object returned by `cloneDeep` will point to the *same prototype* as the original. If you need to clone the prototype chain for an object, use `cloneDeepFully`. 
-
-
 
 ## Type Compatibility
 
