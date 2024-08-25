@@ -76,7 +76,7 @@ If you wish to clone an `ImageBitmap`, or if a customizer or cloning method prov
 |                                                               | structuredClone | cloneDeep | cloneDeepAsync |
 | ------------------------------------------------------------- | --------------- | --------- | -------------- |
 | `bigint`\|`boolean`\|`null`\|`number`\|`string`\|`undefined`  |       ✅       |    ❌     |       ❌      |
-| symbol                                                        |       ❌       |    ✅     |       ✅      |
+| `symbol`                                                      |       ❌       |    ✅     |       ✅      |
 | Array                                                         |       ✅       |    ✅     |       ✅      |
 | BigInt                                                        |       ✅       |    ✅     |       ✅      |
 | Boolean                                                       |       ✅       |    ✅     |       ✅      |
