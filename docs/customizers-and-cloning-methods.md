@@ -147,7 +147,68 @@ Customizers are a powerful tool that allow you to extend the functionality of `c
   1. You wish to modify the behavior of `cloneDeep` (or any similar function) in some way.
   2. You wish to provide support for a class or object provided by a third-party library on which it is not possible to attach cloning methods.
 
-For the first point, for example, you could have the algorithm throw an error if a WeakMap or WeakSet is encountered instead of cloning them into empty objects and logging a warning.
+For the first point, for example, you could have the algorithm throw an error if a WeakMap or WeakSet is encountered instead of cloning them into empty objects and logging a warning. For example:
+
+<details>
+  <summary>js</summary>
+
+```javascript
+// A customizer factory, to enable code reuse
+const getUnsupportedType = (constructor) => {
+  return (value) => {
+    if (value instanceof constructor) {
+      return {
+        throwWith: new TypeError(`${constructor.name} unsupported`)
+      };
+    }
+  };  
+}
+
+const throwOnWeakTypes = useCustomizers([
+  getUnsupportedType(WeakMap),
+  getUnsupportedType(WeakSet)
+]);
+
+cloneDeep({ foo: new WeakMap() }, {
+  customizer: throwOnWeakTypes
+});
+// throws TypeError
+```
+
+</details>
+
+<details>
+  <summary>ts</summary>
+
+```typescript
+// A customizer factory, to enable code reuse
+const getUnsupportedType = (constructor: new (...args: any[]) => any): Customizer => {
+  
+  const unsupportedTypeCustomizer: Customizer = (value) => {
+    if (value instanceof constructor) {
+      return {
+        throwWith: new TypeError(`${constructor.name} unsupported`)
+      };
+    }
+    return;
+  }
+  return unsupportedTypeCustomizer;  
+}
+
+const throwOnWeakTypes = useCustomizers([
+  getUnsupportedType(WeakMap),
+  getUnsupportedType(WeakSet)
+]);
+
+cloneDeep({ foo: new WeakMap() }, {
+  customizer: throwOnWeakTypes
+});
+// throws TypeError
+```
+
+</details>
+
+
 
 The API for customizers is similar to cloning methods, with the exception being the `additionalValue` property which can be provided in the result object returned by a customizer. _This property should only be used to clone data associated with a value that is not associated on a property for the value_.
 
