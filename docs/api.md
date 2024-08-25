@@ -47,13 +47,7 @@ cloneDeep(value, options);
 The clone of the provided value.
 
 ## cloneDeep Description
-Creates a deep copy of the provided value. `cloneDeep` behaves like `structuredClone`, but there are differences:
- - The function is not recursive, so the call stack does not blow up for deeply nested objects. (As of August 2024, V8 implements `structuredClone` with a recursive algorithm.)
- - Methods are copied over to the clone. The functions are not clones, they point to the same function as the original.
- - The property descriptor of properties are preserved. `structuredClone` ignores them.
- - The frozenness, sealedness, and extensibility of objects are preserved. `structuredClone` ignores these characteristics.
- - There are many differences in which JavaScript types can be cloned by `structuredClone` and `cloneDeep`. Please see the compatibility table for specifics.
- - `cloneDeep` does not throw errors when unsupported types are encountered. Instead, unsupported types are simply "cloned" into an empty object and a noisy warning is logged to the console (or sent to the custom logger provided).
+Creates a deep copy of the provided value.
 
 An optional `customizer` can be provided to extend or modify the functionality of `cloneDeep`. The customizer has extremely high priority over the default behavior of the algorithm. The only logic the algorithm prioritizes over the customizer is the check for circular references; see the section on customizers for more information.
 
@@ -61,7 +55,20 @@ The cloned object returned by `cloneDeep` will point to the *same prototype* as 
 
 If you wish to clone an `ImageBitmap`, or if a customizer or cloning method provides any clones asynchronously, you should use `cloneDeepAsync` instead.
 
-## cloneDeep Type Support
+### Differences Between cloneDeep and structuredClone 
+`cloneDeep` behaves like `structuredClone`, but there are differences:
+ - `structuredClone` cannot clone objects which have symbols or properties that are symbols. `cloneDeep` can.
+ - `structuredClone` does not clone non-enumerable properties. `cloneDeep` does.
+ - `structuredClone` does not preserve the extensible, sealed, or frozen property of an object or any of its nested objects. `cloneDeep` does.
+ - `structuredClone` does not clone the property descriptor associated with any value in an object. `cloneDeep` does.
+ - `structuredClone` supports all of the types listed [here](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types). `cloneDeep` only supports some of these types. For a full comparison of which native JavaScript types each algorithm can support, please consult the Type Compatibility table.
+ - `structuredClone` is implemented with recursion in some runtimes meaning deeply nested objects blow up the call stack. `cloneDeep` uses no recursion.
+ - `structuredClone` throws an error if the user attempts to clone an object with methods. `cloneDeep` will copy the methods *by value* and noisily log a warning.
+ - `structuredClone` throws an error when provided an object of an unsupported type. On the other hand, `cloneDeep` will copy the type as an empty object and log a warning.
+ - `structuredClone` will identify if an object was created by a native JavaScript constructor function even if the object's prototype is changed or if the `Symbol.toStringTag` property is changed; furthermore, the cloned object will have the prototype from the native constructor function from even if the original object changed its prototype. On the other hand, `deepClone` uses `Object.prototype.toString.call` to identify the type of an object and the cloned object will share the original object's prototype no matter the result of `Object.prototype.toString.call`.
+ - If the prototype of the original object is the prototype of any [supported type](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#supported_types) for the structured clone algorithm, then object returned by `structuredClone` will share the original object's prototype; otherwise, the prototype of the object will be `Object.prototype`. Meanwhile, the object cloned by `cloneDeep` will always share the prototype of the original object. 
+
+### cloneDeep Type Support
 
 <details>
   <summary>Type Support Table</summary>
