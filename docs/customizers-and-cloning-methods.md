@@ -315,5 +315,3 @@ console.log(clone.baz.getWrapped())
 ```
 
 </details>
-
-For more examples for customizers, please see [customizer examples](https://www.customizer-examples.com).
