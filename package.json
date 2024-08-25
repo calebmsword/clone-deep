@@ -7,10 +7,12 @@
   "main": "index.js",
   "types": "cms-clone-deep.d.ts",
   "keywords": [
+    "cms",
     "clone",
     "deep"
   ],
   "scripts": {
+    "build": "npx rollup -c && node scripts/build.js",
     "delete-tsdist": "node scripts/delete-tsdist.js",
     "fix": "npx eslint --fix",
     "lint": "npx eslint",
@@ -19,14 +21,18 @@
     "test": "node --test",
     "test-coverage": "node --test --experimental-test-coverage",
     "tsc": "node -e \"console.log('Running TypeScript compiler; if there is output, it will be in in tsdist directory')\" && npx tsc && npm run delete-tsdist",
-    "verify-project": "node -e \"console.log('Running test suite:')\" && npm test && npm run tsc && node -e \"console.log('\\n\\nRunning linter:')\" &&npm run lint"
+    "verify-project": "node -e \"console.log('Running test suite:')\" && npm test && npm run tsc && node -e \"console.log('\\n\\nRunning linter:')\" && npm run lint"
   },
   "author": "Caleb Sword",
   "license": "MIT",
   "devDependencies": {
+    "@babel/preset-env": "^7.25.4",
+    "@rollup/plugin-babel": "^6.0.4",
     "@stylistic/eslint-plugin-js": "^2.6.2",
     "eslint": "^9.9.0",
     "globals": "^15.9.0",
+    "rollup": "^4.21.0",
+    "rollup-plugin-dts": "^6.1.1",
     "typescript": "^5.3.3"
   }
 }

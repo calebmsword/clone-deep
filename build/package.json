@@ -1,0 +1,16 @@
+{
+  "name": "cms-clone-deep-es5",
+  "repository": "https://github.com/calebmsword/clone-deep/build",
+  "type": "commonjs",
+  "version": "0.0.0",
+  "description": "A dependency-free utility for deeply cloning JavaScript objects.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "keywords": [
+    "clone",
+    "deep",
+    "cms"
+  ],
+  "author": "Caleb Sword",
+  "license": "MIT"
+}
