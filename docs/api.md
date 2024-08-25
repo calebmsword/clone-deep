@@ -74,8 +74,8 @@ If you wish to clone an `ImageBitmap`, or if a customizer or cloning method prov
   <summary>Type Support Table</summary>
 
 |                                                               | structuredClone | cloneDeep | cloneDeepAsync |
-| ------------------------------------------------------------- | --------------- | --------- | -------------- |
-| `bigint`\|`boolean`\|`null`\|`number`\|`string`\|`undefined`  |       ✅       |    ❌     |       ❌      |
+| ------------------------------------------------------------- | :-------------: | :-------: | :------------: |
+| `bigint`\|`boolean`\|`null`\|`number`\|`string`\|`undefined`  |       ✅       |    ✅     |       ✅      |
 | `symbol`                                                      |       ❌       |    ✅     |       ✅      |
 | Array                                                         |       ✅       |    ✅     |       ✅      |
 | BigInt                                                        |       ✅       |    ✅     |       ✅      |
