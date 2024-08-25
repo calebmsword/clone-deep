@@ -17,7 +17,7 @@ const useCustomizers = (customizers) => {
 
     /**
      * @param {any} value
-     * @returns {object|void}
+     * @returns {import('./utils/types').CustomizerResult|void}
      */
     return function combinedCustomizer(value) {
         for (const customizer of customizers) {

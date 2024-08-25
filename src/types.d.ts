@@ -23,7 +23,6 @@ export interface CloneDeepOptions {
     ignoreCloningMethods?: boolean
     logMode?: string
     letCustomizerThrow?: boolean
-    async?: boolean
 }
 
 /** The configuration object which is used by cloneDeepProxy. */

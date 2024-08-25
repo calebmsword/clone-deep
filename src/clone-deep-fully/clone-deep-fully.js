@@ -100,9 +100,10 @@ const cloneDeepFully = (value, options) => {
         options = {};
     }
 
-    options.async = false;
-
-    return /** @type {U} */ (cloneDeepFullyProxy(value, options));
+    return /** @type {U} */ (cloneDeepFullyProxy(value, {
+        ...options,
+        async: false
+    }));
 };
 
 /**
@@ -126,10 +127,10 @@ export const cloneDeepFullyAsync = (value, options) => {
         options = {};
     }
 
-    options.async = true;
-
-    return /** @type {Promise<{ clone: U }>}*/ (
-        cloneDeepFullyProxy(value, options));
+    return /** @type {Promise<{ clone: U }>}*/ (cloneDeepFullyProxy(value, {
+        ...options,
+        async: true
+    }));
 };
 
 export default cloneDeepFully;

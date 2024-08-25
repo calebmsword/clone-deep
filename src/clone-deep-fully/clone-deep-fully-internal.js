@@ -136,8 +136,7 @@ export const cloneDeepFullyInternalAsync = async ({
             logMode,
             performanceConfig,
             ignoreCloningMethods,
-            letCustomizerThrow,
-            async: true
+            letCustomizerThrow
         }));
 
     /** @type {any} */

@@ -129,9 +129,10 @@ const cloneDeep = (value, options) => {
         options = {};
     }
 
-    options.async = false;
-
-    return /** @type {U} */ (cloneDeepProxy(value, options));
+    return /** @type {U} */ (cloneDeepProxy(value, {
+        ...options,
+        async: false
+    }));
 };
 
 /**
@@ -155,9 +156,10 @@ export const cloneDeepAsync = (value, options) => {
         options = {};
     }
 
-    options.async = true;
-
-    return /** @type {Promise<{ clone: U }>} */(cloneDeepProxy(value, options));
+    return /** @type {Promise<{ clone: U }>} */(cloneDeepProxy(value, {
+        ...options,
+        async: true
+    }));
 };
 
 export default cloneDeep;
