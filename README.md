@@ -56,7 +56,7 @@ cloned = cloneDeep(originalObject, {
     customizer: myCustomizer,
 
     // An object can be provided which configures the performance of the
-    // algorithm. Please see the API documentation for more information.
+    // algorithm.
     performanceConfig: {
         robustTypeChecking: true,
         ignoreMetadata: false
@@ -68,7 +68,7 @@ cloned = cloneDeep(originalObject, {
 });
 ```
 
-To see the full list of options, please consult the API documentation.
+To see the full list of options, please consult the [API documentation](https://github.com/calebmsword/clone-deep/blob/main/docs/api.md).
 
 ## Why should I use cloneDeep? JavaScript has structuredClone now!
 
@@ -153,7 +153,7 @@ console.log(clonedObj.foo.get());  // {spam: 'eggs'}
 console.log(clonedObj.foo.get() === obj.foo.get());  // false
 ```
 
-For more details on cloning methods, please see the API documentation.
+For more details on cloning methods, please see the [relevant documentation](https://github.com/calebmsword/clone-deep/blob/main/docs/customizers-and-cloning-methods.md).
 
 ## customizers
 
@@ -224,7 +224,7 @@ console.log(clonedObj.foo.get() === obj.foo.get());  // false
 
 If the customizer returns an object, the default behavior of `cloneDeep` will be overridden, even if the object does not have a `clone` property (in that case, the value will be cloned into the value `undefined`).
 
-There are many properties that will be observed in the object returned by the customizer. Please see the API documentation for more information.
+There are many properties that will be observed in the object returned by the customizer. Please see the [customizer documentation](https://github.com/calebmsword/clone-deep/blob/main/docs/customizers-and-cloning-methods.md#customizers) for more information.
 
 ## Additional package features
 
