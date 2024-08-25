@@ -1,3 +1,13 @@
+# Cloning Methods
+
+## Cloning Method Syntax
+
+## Cloning Method Parameters
+
+## Cloning Method Return Value
+
+## Cloning Method Description
+
 # Customizers
 
 ## Customizer Syntax
@@ -53,12 +63,14 @@ console.log(clone.myClass);
       <dd>Optional. An Error. If provided, the algorithm will immediately throw customizerResult.throwWith.</dd>
       <dt>customizerResult.additionalValues</dt>
       <dd>Optional. An array of "AdditionalValue" objects. Any object in the array represents an additional value that will be recursed by the algorithm. Use this to clone data associated with the provided value that this not accessible via property access. The following properties are available on "AdditionalValue" objects in the array:
-        <dt>additionalValue.value</dt>
-        <dd>Required. Any type. This is a new value that will be recursed later by the algorithm. The customizer will throw an error if this property is not present on the AdditionalValue object.</dd>
-        <dt>additionalValue.assigner</dt>
-        <dd>Required. A function. This function will receive a clone of the additionalValue.value and has the responsibility of storing that clone in a persistent place. The customizer will throw an error if this property is not present on the AdditionalValue object.</dd>
-        <dt>additionalValue.async</dt>
-        <dd>Optional. A boolean. If true, additionalValue.value will be passed to Promise.resolve(), and the resolved value will be used as the clone that is passed to additionalValue.assigner.</dd>
+        <dl>
+          <dt>additionalValue.value</dt>
+          <dd>Required. Any type. This is a new value that will be recursed later by the algorithm. The customizer will throw an error if this property is not present on the AdditionalValue object.</dd>
+          <dt>additionalValue.assigner</dt>
+          <dd>Required. A function. This function will receive a clone of the additionalValue.value and has the responsibility of storing that clone in a persistent place. The customizer will throw an error if this property is not present on the AdditionalValue object.</dd>
+          <dt>additionalValue.async</dt>
+          <dd>Optional. A boolean. If true, additionalValue.value will be passed to Promise.resolve(), and the resolved value will be used as the clone that is passed to additionalValue.assigner.</dd>
+        </dl>
       </dd>
     </dl>
   </dd>
@@ -66,12 +78,115 @@ console.log(clone.myClass);
 
 ## Customizer Description
 
-# Cloning Methods
+Customizers are a powerful tool that allow you to extend the functionality of `cloneDeep`, `cloneDeepAsync`, `cloneDeepFully`, and `cloneDeepFullyAsync`. While cloning methods are the recommended tool for supporting custom types, there are still two use cases for customizers:
 
-## Cloning Method Syntax
+  1. You wish to modify the behavior of `cloneDeep` (or any similar function) in some way.
+  2. You wish to provide support for a class or object provided by a third-party library on which it is not possible to attach cloning methods.
 
-## Cloning Method Parameters
+For the first point, for example, you could have the algorithm throw an error if a WeakMap or WeakSet is encountered instead of cloning them into empty objects and logging a warning.
 
-## Cloning Method Return Value
+The API for customizers is similar to cloning methods, with the exception being the `additionalValue` property which can be provided in the result object returned by a customizer. **This property should only be used to clone data associated with a value that is not associated on a property for the value**.
 
-## Cloning Method Description
+A common use case for the additionalValues property is to clone private variables on a class:
+
+<details open>
+<summary>js</summary>
+
+```javascript
+class Wrapper {
+  #value;
+
+  getWrapped() {
+    return this.#value;
+  }
+
+  setWrapped(value) {
+    this.#value = value;
+  }
+}
+
+const supportWrapper = (value) => {
+  if (value instanceof Wrapper) {
+    const clone = new Wrapper();
+
+    const assigner = (wrappedValue) => {
+      clone.setWrapped(wrappedValue);
+    };
+
+    return {
+      clone,
+      additionalValues: [{
+        value: value.getWrapped(),
+        assigner
+      }]
+    };
+  }
+};
+
+const wrapper = new Wrapper();
+wrapper.setWrapped({ foo: 'bar' });
+
+const clone = cloneDeep({ baz: wrapper }, {
+  customizer: supportWrapper
+});
+console.log(clone.baz.getWrapped())
+//  {foo: 'bar'}
+```
+</details>
+
+
+
+
+<details>
+<summary>ts</summary>
+
+```typescript
+import cloneDeep, { CustomizerResult } from 'cms-clone-deep';
+
+class Wrapper<T> {
+  #value: T|undefined;
+
+  getWrapped() {
+    return this.#value;
+  }
+
+  setWrapped(value: T) {
+    this.#value = value;
+  }
+}
+
+const supportWrapper: Customizer = (value) => {
+  if (!(value instanceof Wrapper)) {
+    return;
+  }
+
+  type Wrapped = ReturnType<typeof value['getWrapped']>;
+
+  const clone = new Wrapper<Wrapped>();
+
+  const assigner = (wrappedValue: Wrapped) => {
+    clone.setWrapped(wrappedValue);
+  };
+
+  return {
+    clone,
+    additionalValues: [{
+      value: value.getWrapped(),
+      assigner
+    }]
+  };
+};
+
+const wrapper = new Wrapper<{ foo: string }>();
+wrapper.setWrapped({ foo: 'bar' });
+
+const clone = cloneDeep({ baz: wrapper }, {
+  customizer: supportWrapper
+});
+console.log(clone.baz.getWrapped())
+//  {foo: 'bar'}
+```
+
+</details>
+
+beans beans beans beans beans
