@@ -70,7 +70,7 @@ If you wish to clone an `ImageBitmap`, or if a customizer or cloning method prov
 
 ### cloneDeep Type Support
 
-<details>
+<details open>
   <summary>Type Support Table</summary>
 
 |                                                               | structuredClone | cloneDeep | cloneDeepAsync |
