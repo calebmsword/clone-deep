@@ -315,3 +315,59 @@ console.log(clone.baz.getWrapped())
 ```
 
 </details>
+
+A use case you might need is to clone functions. While it is possible to truly clone a function, the following customizer comes extremely close:
+
+<details>
+<summary>js</summary>
+
+```javascript
+const supportFunctions = (value) => {
+  if (typeof value !== 'function') {
+    return;
+  }
+
+  const clonedFunction = function(...args) {
+    return value.apply(this, args);
+  }
+
+  return {
+    clone: clonedFunction
+  };
+};
+
+const func = cloneDeep(() => 'hi', {
+  customizer: supportFunctions
+});
+console.log(func); // 'hi'
+```
+  
+</details>
+
+
+
+<details>
+<summary>ts</summary>
+
+```typescript
+const supportFunctions: Customizer = (value) => {
+  if (typeof value !== 'function') {
+    return;
+  }
+
+  const clonedFunction = function(this: any, ...args: any[]) {
+    return (value as Function).apply(this, args);
+  }
+
+  return {
+    clone: clonedFunction
+  };
+};
+
+const func = cloneDeep(() => 'hi', {
+  customizer: supportFunctions
+});
+console.log(func); // 'hi'
+```
+
+</details>
