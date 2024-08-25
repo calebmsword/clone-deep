@@ -55,15 +55,13 @@ Creates a deep copy of the provided value. `cloneDeep` behaves like `structuredC
  - There are many differences in which JavaScript types can be cloned by `structuredClone` and `cloneDeep`. Please see the compatibility table for specifics.
  - `cloneDeep` does not throw errors when unsupported types are encountered. Instead, unsupported types are simply "cloned" into an empty object and a noisy warning is logged to the console (or sent to the custom logger provided).
 
-An optional `customizer` can be provided to extend or modify the functionality of `cloneDeep`. The customizer has extremely high priority over the default behavior of the algorithm. The only logic the algorithm prioritizes over the customizer is the check for circular references. See the section on customizers for more information.
+An optional `customizer` can be provided to extend or modify the functionality of `cloneDeep`. The customizer has extremely high priority over the default behavior of the algorithm. The only logic the algorithm prioritizes over the customizer is the check for circular references; see the section on customizers for more information.
 
-The cloned object returned by `cloneDeep` will point to the *same prototype* as the original. If you need to clone the prototype chain for an object, use `cloneDeepFully`. 
+The cloned object returned by `cloneDeep` will point to the *same prototype* as the original. If you need to clone the prototype chain for an object, use `cloneDeepFully`.
 
-## Type Compatibility
+If you wish to clone an `ImageBitmap`, or if a customizer or cloning method provides any clones asynchronously, you should use `cloneDeepAsync` instead.
 
-<details>
-<summary>Compatibility Table</summary>
-
+## Type Support
 |                                                               | structuredClone | cloneDeep | cloneDeepAsync |
 | ------------------------------------------------------------- | --------------- | --------- | -------------- |
 | `bigint`\|`boolean`\|`null`\|`number`\|`string`\|`undefined`  |       ✅       |    ❌     |       ❌      |
@@ -115,6 +113,3 @@ The cloned object returned by `cloneDeep` will point to the *same prototype* as 
 | ImageData                                                     |       ✅       |    ✅     |       ✅      |
 | RTCCertificate                                                |       ✅       |    ✅     |       ✅      |
 | VideoFrame                                                    |       ✅       |    ✅     |       ✅      |
-
-
-</details>
