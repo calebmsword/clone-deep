@@ -69,7 +69,7 @@ To see the full list of options, please consult the API documentation.
 
 `structuredClone` has many limitations. It cannot clone objects with symbols. It does not clone non-enumerable properties. It does not preserve the extensible, sealed, or frozen status of the object or its nested objects. It does not clone the property descriptor associated with any values in the object.
 
-`cloneDeep` has none of these limitations. See [this section](#cloneDeep-vs-structuredClone) for more about the differences between `cloneDeep` and `structuredClone`.
+`cloneDeep` has none of these limitations. See [this section](https://github.com/calebmsword/clone-deep/blob/main/docs/api.md#differences-between-clonedeep-and-structuredclone) for more about the differences between `cloneDeep` and `structuredClone`.
 
 ## what cannot be cloned
 
