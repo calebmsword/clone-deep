@@ -17,10 +17,6 @@ class Wrapper {
   }
 
   [CLONE](value) {
-    if (!(value instanceof Wrapper)) {
-      return;
-    }
-
     return {
         clone: new Wrapper(this.value);
     };
