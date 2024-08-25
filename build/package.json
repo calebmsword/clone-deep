@@ -3,7 +3,7 @@
   "repository": "https://github.com/calebmsword/clone-deep/build",
   "type": "commonjs",
   "version": "0.0.0",
-  "description": "A dependency-free utility for deeply cloning JavaScript objects.",
+  "description": "A dependency-free, es5-compliant utility for deeply cloning JavaScript objects.",
   "main": "index.js",
   "types": "index.d.ts",
   "keywords": [

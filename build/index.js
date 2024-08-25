@@ -181,6 +181,27 @@ function _nonIterableRest() {
 function _nonIterableSpread() {
   throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
+function ownKeys(e, r) {
+  var t = Object.keys(e);
+  if (Object.getOwnPropertySymbols) {
+    var o = Object.getOwnPropertySymbols(e);
+    r && (o = o.filter(function (r) {
+      return Object.getOwnPropertyDescriptor(e, r).enumerable;
+    })), t.push.apply(t, o);
+  }
+  return t;
+}
+function _objectSpread2(e) {
+  for (var r = 1; r < arguments.length; r++) {
+    var t = null != arguments[r] ? arguments[r] : {};
+    r % 2 ? ownKeys(Object(t), !0).forEach(function (r) {
+      _defineProperty(e, r, t[r]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
+      Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+    });
+  }
+  return e;
+}
 function _possibleConstructorReturn(t, e) {
   if (e && ("object" == typeof e || "function" == typeof e)) return e;
   if (void 0 !== e) throw new TypeError("Derived constructors may only return object or undefined");
@@ -611,6 +632,9 @@ var CloneError = {
 
 /** @type {import('../types').Log} */
 var defaultLog = {
+  info: function info(error) {
+    console.log(error);
+  },
   warn: function warn(error) {
     console.warn(_typeof(error) === 'object' ? error.message : error);
   },
@@ -2333,7 +2357,7 @@ var handleCloningMethods = function handleCloningMethods(_ref) {
     }
 
     /** @type {import('../../utils/types').CloningMethodResult} */
-    var result = value[CLONE](value, log);
+    var result = value[CLONE](log);
     if (!isObject(result)) {
       return {
         cloned: cloned,
@@ -3073,6 +3097,7 @@ var cloneDeepProxy = function cloneDeepProxy(value, options) {
   if (typeof logMode === 'string' && logMode.toLowerCase() === 'silent') {
     var noop = function noop() {};
     log = {
+      info: noop,
       warn: noop,
       error: noop
     };
@@ -3110,8 +3135,9 @@ var cloneDeep = function cloneDeep(value, options) {
   if (options === null || _typeof(options) !== 'object') {
     options = {};
   }
-  options.async = false;
-  return /** @type {U} */cloneDeepProxy(value, options);
+  return /** @type {U} */cloneDeepProxy(value, _objectSpread2(_objectSpread2({}, options), {}, {
+    async: false
+  }));
 };
 
 /**
@@ -3134,8 +3160,9 @@ var cloneDeepAsync$1 = function cloneDeepAsync(value, options) {
   if (options === null || _typeof(options) !== 'object') {
     options = {};
   }
-  options.async = true;
-  return /** @type {Promise<{ clone: U }>} */cloneDeepProxy(value, options);
+  return /** @type {Promise<{ clone: U }>} */cloneDeepProxy(value, _objectSpread2(_objectSpread2({}, options), {}, {
+    async: true
+  }));
 };
 
 /** @typedef {import('../clone-deep/clone-deep-utils/types').PerformanceConfig} PerformanceConfig */
@@ -3257,8 +3284,7 @@ var cloneDeepFullyInternalAsync = /*#__PURE__*/function () {
               logMode: logMode,
               performanceConfig: performanceConfig,
               ignoreCloningMethods: ignoreCloningMethods,
-              letCustomizerThrow: letCustomizerThrow,
-              async: true
+              letCustomizerThrow: letCustomizerThrow
             })
           );
         case 3:
@@ -3401,8 +3427,9 @@ var cloneDeepFully$1 = function cloneDeepFully(value, options) {
   if (options === null || _typeof(options) !== 'object') {
     options = {};
   }
-  options.async = false;
-  return /** @type {U} */cloneDeepFullyProxy(value, options);
+  return /** @type {U} */cloneDeepFullyProxy(value, _objectSpread2(_objectSpread2({}, options), {}, {
+    async: false
+  }));
 };
 
 /**
@@ -3425,10 +3452,9 @@ var cloneDeepFullyAsync$1 = function cloneDeepFullyAsync(value, options) {
   if (options === null || _typeof(options) !== 'object') {
     options = {};
   }
-  options.async = true;
-  return /** @type {Promise<{ clone: U }>}*/(
-    cloneDeepFullyProxy(value, options)
-  );
+  return /** @type {Promise<{ clone: U }>}*/cloneDeepFullyProxy(value, _objectSpread2(_objectSpread2({}, options), {}, {
+    async: true
+  }));
 };
 
 /**
@@ -3449,7 +3475,7 @@ var useCustomizers$1 = function useCustomizers(customizers) {
 
   /**
    * @param {any} value
-   * @returns {object|void}
+   * @returns {import('./utils/types').CustomizerResult|void}
    */
   return function combinedCustomizer(value) {
     var _iterator = _createForOfIteratorHelper(customizers),
