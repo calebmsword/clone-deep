@@ -313,3 +313,34 @@ A promise which resolves to an object which contains the clone of the provided v
 
 ## cloneDeepFullyAsync Description
 Creates a deep copy of the provided value asynchronously, while also cloning the prototype chain of the given value. This extends the support of cloneDeep for ImageBitmap and any customizer or cloning method that determines clones asynchronously. Otherwise, `cloneDeepFullyAsync` has the same functionality as `cloneDeepFully`.
+
+# useCustomizers
+
+## useCustomizers Syntax
+```javascript
+import cloneDeep, { useCustomizers } from 'cms-clone-deep';
+
+const combined = useCustomizers([
+  customizer01,
+  customizer02,
+  customizer03
+]);
+
+cloneDeep(value, {
+  customizer: combined
+});
+```
+
+### useCustomizers Parameters
+
+<dl>
+  <dt>customizers</dt>
+  <dd>Required. An array of customizer functions.</dd>
+</dl>
+
+### useCustomizers Return Value
+
+A customizer which combines the functionality of the given customizers. The returned customizer will execute each customizer one at a time, in order, and will stop and return the return value of the first customizer to return an object. If none of the provided customizers return an object, the combined customizer will return `undefined`.
+
+## useCustomizers Description
+In a large project which intergrates with `cloneDeep`, it is possible that you will create multiple customizers that extend `cloneDeep` for your project. `useCustomizers` can be used to enable code reuse in projects that use multiple customizers.
