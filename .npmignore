@@ -1,6 +1,7 @@
 .github/
 node_modules/
 benchmark/
+build/
 docs/
 scripts/
 test/

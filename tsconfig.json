@@ -9,10 +9,11 @@
         "allowJs": true,
         "checkJs": true,
         "strict": true,
-        "noEmit": false,
+        "noEmit": true,
         "downlevelIteration": true
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "index.js"
     ]
 }

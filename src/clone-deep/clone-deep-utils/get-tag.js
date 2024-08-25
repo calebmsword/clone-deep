@@ -1,5 +1,6 @@
 import { Tag } from '../../utils/constants.js';
 import {
+    isBuffer,
     isDOMException,
     isDOMMatrix,
     isDOMMatrixReadOnly,
@@ -44,7 +45,10 @@ const classesToTypeCheck = [
     ['Blob', 'clone', Tag.BLOB],
     ['DOMQuad', 'toJSON', Tag.DOMQUAD],
     ['FileList', 'item', Tag.FILELIST, 0],
-    ['VideoFrame', 'allocationSize', Tag.VIDEOFRAME, 0]
+    ['VideoFrame', 'allocationSize', Tag.VIDEOFRAME, 0],
+
+    // Node types
+    ['Buffer', 'toString', Tag.BUFFER]
 ];
 
 /**
@@ -150,17 +154,19 @@ const typeCheckers = [
  * Whether type-checking should be done performantly.
  * @param {import('./global-state.js').GlobalState} globalState
  * The global application state.
- * @param {import('./types').PerformanceConfig} [performanceConfig]
  * @returns {string} tag
  * A string indicating the value's type.
  */
-export const getTag = (value, globalState, performanceConfig) => {
+export const getTag = (value, globalState) => {
+
+    const { performanceConfig, supportedConstructors } = globalState;
 
     if (performanceConfig?.robustTypeChecking !== true) {
+        if (isBuffer(value, supportedConstructors)) {
+            return Tag.BUFFER;
+        }
         return toStringTag(value);
     }
-
-    const { supportedConstructors } = globalState;
 
     /** @type {undefined|string} */
     let result;

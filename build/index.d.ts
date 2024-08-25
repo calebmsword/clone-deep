@@ -1,19 +1,71 @@
-import { 
-    Customizer, 
-    CloneDeepOptions, 
-    CloneDeepFullyOptions
-} from "./src/types";
+/**
+ * The type of elements of the `additionalValues` array property that can be
+ * in a customizer result.
+ */
+interface AdditionalValue {
+    value: any,
+    assigner: (clone: any) => void,
+    async?: boolean
+}
 
-export { 
-    Customizer, 
-    CloneDeepOptions, 
-    CloneDeepFullyOptions
-} from "./src/types";
+interface ResultBase {
+    clone: any,
+    propsToIgnore?: (string|symbol)[],
+    ignoreProps?: boolean,
+    ignoreProto: boolean,
+    async?: boolean,
+    throwWith?: Error
+}
 
-export { 
-    AdditionalValue, 
-    CloningMethodResult 
-} from "./src/utils/types";
+/**
+ * The return value of a cloning method.
+ */
+interface CloningMethodResult extends ResultBase {
+    useCloningMethod?: boolean,
+}
+
+/**
+ * The return value of a customizer.
+ */
+interface CustomizerResult extends ResultBase {
+    useCustomizerClone?: boolean
+    additionalValues?: AdditionalValue[]
+}
+
+interface PerformanceConfig {
+    ignoreMetadata?: boolean,
+    robustTypeChecking?: boolean
+}
+
+/** A function that can alter the default behavior of `cloneDeep`. */
+type Customizer = (
+    value: any,
+    log?: Log
+) => CustomizerResult|void;
+
+/** The type of the log object. */
+type Logger = (error: Error|string) => void;
+
+interface Log {
+    info: Logger,
+    warn: Logger,
+    error: Logger
+}
+
+/** The configuration object used by cloneDeep and cloneDeepAsync. */
+interface CloneDeepOptions {
+    customizer?: Customizer
+    log?: Log
+    performanceConfig?: PerformanceConfig
+    ignoreCloningMethods?: boolean
+    logMode?: string
+    letCustomizerThrow?: boolean
+}
+
+/** The configuration object used by cloneDeepFully and cloneDeepFullyAsync. */
+interface CloneDeepFullyOptions extends CloneDeepOptions {
+    force?: boolean
+}
 
 declare module "cms-clone-deep" {
 
@@ -240,3 +292,5 @@ declare module "cms-clone-deep" {
      */
     export const CLONE: symbol;
 }
+
+export type { AdditionalValue, CloneDeepFullyOptions, CloneDeepOptions, CloningMethodResult, Customizer };

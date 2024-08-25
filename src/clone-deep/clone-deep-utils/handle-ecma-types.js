@@ -1,5 +1,5 @@
 import { TOP_LEVEL } from './assign.js';
-import { getWarning, Warning } from '../../utils/clone-deep-warning.js';
+import { CloneError } from '../../utils/clone-deep-error.js';
 import { Tag } from '../../utils/constants.js';
 import {
     getAtomicErrorConstructor,
@@ -58,7 +58,7 @@ export const handleEcmaTypes = ({
 
     // We won't clone weakmaps or weaksets (or their prototypes).
     if ([Tag.WEAKMAP, Tag.WEAKSET].includes(tag)) {
-        throw tag === Tag.WEAKMAP ? Warning.WEAKMAP : Warning.WEAKSET;
+        throw tag === Tag.WEAKMAP ? CloneError.WEAKMAP : CloneError.WEAKSET;
 
     // Ordinary objects, or the rare `arguments` clone.
     // Also, treat prototypes like ordinary objects. The tag wrongly
@@ -72,14 +72,14 @@ export const handleEcmaTypes = ({
         cloned = saveClone(parentOrAssigner !== TOP_LEVEL
             ? value
             : Object.create(Function.prototype));
-        log(getWarning(
+        log.warn(
             `Attempted to clone function` +
             `${typeof prop === 'string'
                 ? ` with name ${prop}`
                 : ''}. JavaScript functions cannot be reliably ` +
             'cloned. If this function is a method, it will be copied ' +
             'directly. If this is the top-level object being cloned, ' +
-            'then an empty object will be returned.'));
+            'then an empty object will be returned.');
         [ignoreProps, ignoreProto] = [true, true];
 
     } else if (Array.isArray(value)) {
@@ -106,8 +106,7 @@ export const handleEcmaTypes = ({
         /** @type {Symbol} */
         const symbol = value;
 
-        cloned = saveClone(
-            Object(Symbol.prototype.valueOf.call(symbol)));
+        cloned = saveClone(Object(Symbol.prototype.valueOf.call(symbol)));
 
     // `typeof Object(BigInt(3))` is `"object"
     } else if (Tag.BIGINT === tag) {
@@ -139,7 +138,7 @@ export const handleEcmaTypes = ({
                 : [];
 
             if (!isIterable(aggregateError.errors)) {
-                log(Warning.IMPROPER_AGGREGATE_ERRORS);
+                log.warn(CloneError.IMPROPER_AGGREGATE_ERRORS);
             }
 
             const { cause } = aggregateError;
@@ -158,8 +157,8 @@ export const handleEcmaTypes = ({
                 : new ErrorConstructor(error.message, { cause });
         }
 
-        const defaultDescriptor = Object.getOwnPropertyDescriptor(
-            new Error(), 'stack');
+        const defaultDescriptor = Object.getOwnPropertyDescriptor(new Error(),
+                                                                  'stack');
         const set = typeof defaultDescriptor === 'object'
             ? defaultDescriptor.set
             : undefined;
@@ -197,8 +196,7 @@ export const handleEcmaTypes = ({
         const TypedArray = getTypedArrayConstructor(tag, log);
 
         // copy data over to clone
-        const buffer = new ArrayBuffer(
-            value.buffer.byteLength);
+        const buffer = new ArrayBuffer(value.buffer.byteLength);
         new Uint8Array(buffer).set(new Uint8Array(value.buffer));
 
         cloned = saveClone(new TypedArray(buffer,
@@ -222,9 +220,7 @@ export const handleEcmaTypes = ({
 
                 /** @param {any} clonedValue */
                 parentOrAssigner(clonedValue) {
-                    isExtensibleSealFrozen.push([
-                        subValue,
-                        clonedValue]);
+                    isExtensibleSealFrozen.push([subValue, clonedValue]);
                     cloneMap.set(key, clonedValue);
                 }
             });
@@ -243,9 +239,7 @@ export const handleEcmaTypes = ({
 
                 /** @param {any} clonedValue */
                 parentOrAssigner(clonedValue) {
-                    isExtensibleSealFrozen.push([
-                        subValue,
-                        clonedValue]);
+                    isExtensibleSealFrozen.push([subValue, clonedValue]);
                     cloneSet.add(clonedValue);
                 }
             });
@@ -260,8 +254,6 @@ export const handleEcmaTypes = ({
         });
 
         saveClone(cloned);
-
-        log(Warning.PROMISE);
 
     } else {
         nativeTypeDetected = false;

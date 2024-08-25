@@ -2,9 +2,10 @@ import {
     supportedPrototypes,
     Es6NativeTypes,
     Tag,
-    WebApis
+    WebApis,
+    NodeTypes
 } from './constants.js';
-import { getWarning, Warning } from './clone-deep-warning.js';
+import { getError, CloneError } from './clone-deep-error.js';
 import { isCallable } from './type-checking.js';
 import { getPrototype } from './metadata.js';
 
@@ -43,7 +44,7 @@ export const getTypedArrayConstructor = (tag, log) => {
     case Tag.BIGUINT64:
         return BigUint64Array;
     default:
-        log(Warning.UNRECOGNIZED_TYPEARRAY_SUBCLASS);
+        log.warn(CloneError.UNRECOGNIZED_TYPEARRAY_SUBCLASS);
         return DataView;
     }
 };
@@ -76,9 +77,9 @@ export const getAtomicErrorConstructor = (value, log) => {
         return URIError;
     default:
         if (log !== undefined) {
-            log(getWarning('Cloning error with unrecognized name ' +
-                                `${name}! It will be cloned into an ` +
-                                'ordinary Error object.'));
+            log.warn(getError('Cloning error with unrecognized name ' +
+                              `${name}! It will be cloned into an ` +
+                              'ordinary Error object.'));
         }
         return Error;
     }
@@ -104,7 +105,7 @@ export const createFileList = (...files) => {
     try {
         dataTransfer = getDataTransfer();
     } catch {
-        throw Warning.FILELIST_DISALLOWED;
+        throw CloneError.FILELIST_DISALLOWED;
     }
 
     for (const file of files) {
@@ -153,13 +154,13 @@ export const getConstructorFromString = (string) => {
  */
 export const getSupportedPrototypes = () => {
     /** @type {object[]} */
-    const webApiPrototypes = [];
+    const additionalPrototypes = [];
 
     Object.keys(WebApis).forEach((webApiString) => {
         const PotentialWebApi = getConstructorFromString(webApiString);
 
         if (PotentialWebApi !== undefined && isCallable(PotentialWebApi)) {
-            webApiPrototypes.push(PotentialWebApi.prototype);
+            additionalPrototypes.push(PotentialWebApi.prototype);
         }
     });
 
@@ -167,11 +168,19 @@ export const getSupportedPrototypes = () => {
         const PotentialArray = getConstructorFromString(typeArrayString);
 
         if (PotentialArray !== undefined && isCallable(PotentialArray)) {
-            webApiPrototypes.push(PotentialArray.prototype);
+            additionalPrototypes.push(PotentialArray.prototype);
         }
     });
 
-    return supportedPrototypes.concat(webApiPrototypes);
+    Object.keys(NodeTypes).forEach((typeArrayString) => {
+        const PotentialArray = getConstructorFromString(typeArrayString);
+
+        if (PotentialArray !== undefined && isCallable(PotentialArray)) {
+            additionalPrototypes.push(PotentialArray.prototype);
+        }
+    });
+
+    return supportedPrototypes.concat(additionalPrototypes);
 };
 
 /**
@@ -184,7 +193,7 @@ export const getSupportedPrototypes = () => {
 export const getSupportedConstructors = () => {
     /** @type {{ [key: string]: Constructor | undefined }} */
     const result = {};
-    Object.keys(Tag).forEach((tag) => {
+    Object.values(Tag).forEach((tag) => {
         const name = tag.substring(8, tag.length - 1);
         result[name] = getConstructorFromString(name);
     });

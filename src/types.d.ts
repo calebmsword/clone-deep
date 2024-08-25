@@ -7,8 +7,14 @@ export type Customizer = (
     log?: Log
 ) => CustomizerResult|void;
 
-/** The type of a logger. */
-export type Log = (error: Error) => any;
+/** The type of the log object. */
+export type Logger = (error: Error|string) => void;
+
+export interface Log {
+    info: Logger,
+    warn: Logger,
+    error: Logger
+}
 
 /** The configuration object used by cloneDeep and cloneDeepAsync. */
 export interface CloneDeepOptions {
@@ -18,7 +24,6 @@ export interface CloneDeepOptions {
     ignoreCloningMethods?: boolean
     logMode?: string
     letCustomizerThrow?: boolean
-    async?: boolean
 }
 
 /** The configuration object which is used by cloneDeepProxy. */

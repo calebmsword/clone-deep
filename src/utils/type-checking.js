@@ -261,6 +261,17 @@ export const isTypedArray = (value, tag, performanceConfig) => {
 };
 
 /**
+ * Returns `true` if given value is a Buffer instance, `false` otherwise.
+ * @param {any} value
+ * @param {{ [key: string]: (new (...args: any[]) => any)|undefined}} supportedConstructors
+ * @returns {boolean}
+ */
+export const isBuffer = (value, supportedConstructors) => {
+    const NodeBuffer = supportedConstructors['Buffer'];
+    return NodeBuffer !== undefined && value instanceof NodeBuffer;
+};
+
+/**
  * Returns true if the provided value is an object, false otherwise.
  * @param {any} value
  * @returns {boolean}

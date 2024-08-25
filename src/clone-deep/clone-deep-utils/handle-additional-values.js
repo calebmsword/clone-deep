@@ -1,4 +1,4 @@
-import { Warning } from '../../utils/clone-deep-warning.js';
+import { CloneError } from '../../utils/clone-deep-error.js';
 import { isCallable, isObject } from '../../utils/type-checking.js';
 
 /**
@@ -31,11 +31,11 @@ export const handleAdditionalValues = ({
         } = additionalValueConfig;
 
         if (!isObject(additionalValueConfig) || !isCallable(assigner)) {
-            throw Warning.IMPROPER_ADDITIONAL_VALUES;
+            throw CloneError.IMPROPER_ADDITIONAL_VALUES;
         }
 
         if (async && !asyncMode) {
-            throw Warning.ADDITIONAL_VALUES_ASYNC_IN_SYNC_MODE;
+            throw CloneError.ADDITIONAL_VALUES_ASYNC_IN_SYNC_MODE;
         }
 
         if (async) {

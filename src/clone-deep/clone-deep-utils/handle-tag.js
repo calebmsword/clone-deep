@@ -1,8 +1,9 @@
 import { handleError } from './misc.js';
-import { handleEcmaTypes } from './handle-ecma-types.js';
-import { handleSyncWebTypes } from './handle-sync-web-types.js';
-import { Warning } from '../../utils/clone-deep-warning.js';
 import { handleAsyncWebTypes } from './handle-async-web-types.js';
+import { handleEcmaTypes } from './handle-ecma-types.js';
+import { handleNodeTypes } from './handle-node-types.js';
+import { handleSyncWebTypes } from './handle-sync-web-types.js';
+import { CloneError } from '../../utils/clone-deep-error.js';
 
 /** @typedef {import('../../utils/types').Assigner} Assigner */
 
@@ -44,6 +45,9 @@ export const handleTag = ({
 
     try {
         /** @type {boolean|undefined} */
+        let nodeTypeDetected;
+
+        /** @type {boolean|undefined} */
         let nativeTypeDetected;
 
         /** @type {boolean|undefined} */
@@ -54,18 +58,29 @@ export const handleTag = ({
 
         ({
             cloned,
-            ignoreProps,
-            ignoreProto,
-            nativeTypeDetected
-        } = handleEcmaTypes({
-            globalState,
+            nodeTypeDetected
+        } = handleNodeTypes({
             queueItem,
             tag,
-            propsToIgnore,
             saveClone
         }));
 
-        if (!nativeTypeDetected) {
+        if (!nodeTypeDetected) {
+            ({
+                cloned,
+                ignoreProps,
+                ignoreProto,
+                nativeTypeDetected
+            } = handleEcmaTypes({
+                globalState,
+                queueItem,
+                tag,
+                propsToIgnore,
+                saveClone
+            }));
+        }
+
+        if (!nodeTypeDetected && !nativeTypeDetected) {
             ({
                 cloned,
                 webTypeDetected
@@ -78,7 +93,8 @@ export const handleTag = ({
             }));
         }
 
-        if (async && !nativeTypeDetected && !webTypeDetected) {
+        if (async && !nodeTypeDetected && !nativeTypeDetected
+            && !webTypeDetected) {
             /**
              * Pushes the given promise into the list of pending results.
              * @param {Promise<any>} promise
@@ -97,8 +113,9 @@ export const handleTag = ({
             });
         }
 
-        if (!nativeTypeDetected && !webTypeDetected && !asyncWebTypeDetected) {
-            throw Warning.UNSUPPORTED_TYPE;
+        if (!nodeTypeDetected && !nativeTypeDetected && !webTypeDetected
+            && !asyncWebTypeDetected) {
+            throw CloneError.UNSUPPORTED_TYPE;
         }
     } catch (error) {
         ({ cloned, ignoreProto } = handleError(error, log, saveClone));

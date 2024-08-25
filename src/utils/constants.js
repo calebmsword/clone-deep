@@ -57,25 +57,10 @@ export const Tag = Object.freeze({
     VIDEOFRAME: '[object VideoFrame]',
 
     // Async Web APIs
-    IMAGEBITMAP: '[object ImageBitmap]'
-});
+    IMAGEBITMAP: '[object ImageBitmap]',
 
-export const WebApis = Object.freeze({
-    AudioData: 'AudioData',
-    Blob: 'Blob',
-    DOMException: 'DOMException',
-    DOMMatrix: 'DOMMatrix',
-    DOMMatrixReadOnly: 'DOMMatrixReadOnly',
-    DOMPoint: 'DOMPoint',
-    DOMPointReadOnly: 'DOMPointReadOnly',
-    DOMQuad: 'DOMQuad',
-    DOMRect: 'DOMRect',
-    DOMRectReadOnly: 'DOMRectReadOnly',
-    File: 'File',
-    FileList: 'FileList',
-    ImageBitmap: 'ImageBitmap',
-    ImageData: 'ImageData',
-    VideoFrame: 'VideoFrame'
+    // Node types
+    BUFFER: '[object Buffer]'
 });
 
 export const Es6NativeTypes = Object.freeze({
@@ -97,6 +82,28 @@ export const Es6NativeTypes = Object.freeze({
     Uint32Array: 'Uint32Array',
     BigInt64Array: 'BigInt64Array',
     BigUint64Array: 'BigUint64Array'
+});
+
+export const WebApis = Object.freeze({
+    AudioData: 'AudioData',
+    Blob: 'Blob',
+    DOMException: 'DOMException',
+    DOMMatrix: 'DOMMatrix',
+    DOMMatrixReadOnly: 'DOMMatrixReadOnly',
+    DOMPoint: 'DOMPoint',
+    DOMPointReadOnly: 'DOMPointReadOnly',
+    DOMQuad: 'DOMQuad',
+    DOMRect: 'DOMRect',
+    DOMRectReadOnly: 'DOMRectReadOnly',
+    File: 'File',
+    FileList: 'FileList',
+    ImageBitmap: 'ImageBitmap',
+    ImageData: 'ImageData',
+    VideoFrame: 'VideoFrame'
+});
+
+export const NodeTypes = Object.freeze({
+    Buffer: 'Buffer'
 });
 
 /** All prototypes of supported types. */

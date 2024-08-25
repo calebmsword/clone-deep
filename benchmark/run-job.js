@@ -135,7 +135,6 @@ const runJob = async (type, numIterations, numPrototypes, config) => {
             ] : [
                 useCloneDeepFully
             ];
-        console.log(funcs);
         funcs.forEach((func) => {
             const max = type === 'prototype'
                 ? 1

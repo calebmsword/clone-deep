@@ -1,6 +1,6 @@
 import { assign } from './assign.js';
 import { finalizeClone } from './misc.js';
-import { getWarning } from '../../utils/clone-deep-warning.js';
+import { getError } from '../../utils/clone-deep-error.js';
 
 /**
  * Processes pending results.
@@ -25,7 +25,7 @@ export const processPendingResults = async (globalState) => {
         const result = pendingResults[i];
 
         if (clone.status === 'rejected') {
-            log(getWarning(
+            log.warn(getError(
                 'Promise rejected' + (result.queueItem.prop !== undefined
                     ? ' for value assigned to property ' +
                       `"${String(result.queueItem.prop)}". `

@@ -1,3 +1,4 @@
+import { defaultLog } from '../utils/clone-deep-error.js';
 import {
     cloneDeepFullyInternal,
     cloneDeepFullyInternalAsync
@@ -58,7 +59,7 @@ const cloneDeepFullyProxy = (value, options) => {
         return cloneDeepFullyInternal({
             value,
             customizer,
-            log: log || console.warn,
+            log: log || defaultLog,
             logMode,
             performanceConfig: performanceConfig || {},
             ignoreCloningMethods: ignoreCloningMethods || false,
@@ -69,7 +70,7 @@ const cloneDeepFullyProxy = (value, options) => {
     return cloneDeepFullyInternalAsync({
         value,
         customizer,
-        log: log || console.warn,
+        log: log || defaultLog,
         logMode,
         performanceConfig: performanceConfig || {},
         ignoreCloningMethods: ignoreCloningMethods || false,
@@ -99,9 +100,10 @@ const cloneDeepFully = (value, options) => {
         options = {};
     }
 
-    options.async = false;
-
-    return /** @type {U} */ (cloneDeepFullyProxy(value, options));
+    return /** @type {U} */ (cloneDeepFullyProxy(value, {
+        ...options,
+        async: false
+    }));
 };
 
 /**
@@ -125,10 +127,10 @@ export const cloneDeepFullyAsync = (value, options) => {
         options = {};
     }
 
-    options.async = true;
-
-    return /** @type {Promise<{ clone: U }>}*/ (
-        cloneDeepFullyProxy(value, options));
+    return /** @type {Promise<{ clone: U }>}*/ (cloneDeepFullyProxy(value, {
+        ...options,
+        async: true
+    }));
 };
 
 export default cloneDeepFully;

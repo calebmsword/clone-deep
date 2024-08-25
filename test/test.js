@@ -4,10 +4,15 @@ import './polyfills.js';
 // eslint-disable-next-line no-duplicate-imports
 import { clearPolyfills, polyfill } from './polyfills.js';
 
-// import assert from 'node:assert';
 import { mock } from 'node:test';
-
-import { assert, test, describe, getProto, tagOf } from './test-utils.js';
+import {
+    assert,
+    createLog,
+    describe,
+    getProto,
+    tagOf,
+    test
+} from './test-utils.js';
 
 import cloneDeep, {
     cloneDeepAsync,
@@ -24,6 +29,7 @@ import {
     getTypedArrayConstructor
 } from '../src/utils/helpers.js';
 import {
+    isBuffer,
     isCallable,
     isDOMMatrix,
     isDOMMatrixReadOnly,
@@ -257,7 +263,10 @@ describe('cloneDeep without customizer', () => {
             file: [new File([], ''), Tag.FILE],
             filelist: [createFileList([]), Tag.FILELIST],
             imagedata: [new ImageData(10, 10), Tag.IMAGEDATA],
-            videoframe: [getVideoFrame(), Tag.VIDEOFRAME]
+            videoframe: [getVideoFrame(), Tag.VIDEOFRAME],
+
+            // Node types
+            buffer: [Buffer.from([]), Tag.BUFFER]
         };
 
         for (const key of Object.keys(type)) {
@@ -266,7 +275,7 @@ describe('cloneDeep without customizer', () => {
 
             // -- act
             const cloned = cloneDeep(value);
-            const clonedFast = cloneDeep(value, {
+            const clonedSlow = cloneDeep(value, {
                 performanceConfig: {
                     robustTypeChecking: true
                 }
@@ -274,10 +283,18 @@ describe('cloneDeep without customizer', () => {
 
             // -- assert
             assert.strictEqual(typeof cloned, 'object');
-            assert.strictEqual(tagOf(cloned), tag);
+            if (tag === Tag.BUFFER) {
+                assert.true(isBuffer(cloned, { Buffer }));
+            } else {
+                assert.strictEqual(tagOf(cloned), tag);
+            }
 
-            assert.strictEqual(typeof clonedFast, 'object');
-            assert.strictEqual(tagOf(clonedFast), tag);
+            assert.strictEqual(typeof clonedSlow, 'object');
+            if (tag === Tag.BUFFER) {
+                assert.true(isBuffer(clonedSlow, { Buffer }));
+            } else {
+                assert.strictEqual(tagOf(clonedSlow), tag);
+            }
         }
     });
 
@@ -475,13 +492,13 @@ describe('cloneDeep without customizer', () => {
         const _original = { func: () => {} };
 
         // -- act
-        cloneDeep(_original, { log });
+        cloneDeep(_original, { log: createLog(log) });
 
-        // == assert
+        // -- assert
         const { calls } = log.mock;
         assert.strictEqual(calls.length, 1);
-        assert.strictEqual(calls[0].arguments[0] instanceof Error, true);
-        assert.true(calls[0].arguments[0].message.includes(
+        assert.true(typeof calls[0].arguments[0] === 'string');
+        assert.true(calls[0].arguments[0].includes(
             'Attempted to clone function'));
     });
 
@@ -495,7 +512,7 @@ describe('cloneDeep without customizer', () => {
         };
 
         // -- act
-        cloneDeep(_original, { log });
+        cloneDeep(_original, { log: createLog(log) });
 
         // -- assert
         const { calls } = log.mock;
@@ -521,7 +538,7 @@ describe('cloneDeep without customizer', () => {
         });
 
         // -- act
-        cloneDeep(_original, { log });
+        cloneDeep(_original, { log: createLog(log) });
 
         // -- assert
         const { calls } = log.mock;
@@ -542,7 +559,7 @@ describe('cloneDeep without customizer', () => {
         const _original = { [Symbol.toStringTag]: 'Unsupported' };
 
         // -- act
-        cloneDeep(_original, { log });
+        cloneDeep(_original, { log: createLog(log) });
 
         // -- assert
         const { calls } = log.mock;
@@ -550,25 +567,6 @@ describe('cloneDeep without customizer', () => {
         assert.true(calls[0].arguments[0] instanceof Error);
         assert.true(calls[0].arguments[0].message.includes(
             'Attempted to clone unsupported type.'));
-    });
-
-    test('A warning is logged if a promise is cloned', () => {
-        // -- arrange
-        const log = mock.fn(() => {});
-
-        const promise = new Promise((resolve) => {
-            resolve();
-        });
-
-        // -- act
-        cloneDeep(promise, { log });
-
-        // -- assert
-        const { calls } = log.mock;
-        const [error] = calls[0].arguments;
-        assert.strictEqual(calls.length, 1);
-        assert.true(error instanceof Error);
-        assert.true(error.message.includes('Attempted to clone a Promise.'));
     });
 
     test('A cloned map has cloned content of the original map', () => {
@@ -641,18 +639,6 @@ describe('cloneDeep without customizer', () => {
         assert.strictEqual(cloned.set.prop, _original.set.prop);
     });
 
-    test('A specific logger is provided if logMode is "quiet"', () => {
-        // -- arrange
-        const log = mock.fn(() => {});
-
-        // -- act
-        // A warning will be logged.
-        cloneDeep({ func: () => {} }, { log, logMode: 'quiet' });
-
-        // -- assert
-        assert.strictEqual(log.mock.calls.length, 0);
-    });
-
     test('A specific logger is provided if logMode is "silent"', () => {
         // -- arrange
         const log = mock.fn(() => {});
@@ -698,7 +684,7 @@ describe('cloneDeep without customizer', () => {
             performanceConfig: {
                 robustTypeChecking: true
             },
-            log
+            log: createLog(log)
         });
 
         // -- assert
@@ -828,7 +814,7 @@ describe('cloneDeep without customizer', () => {
     });
 
     test('Unrecognized errors are cloned using the ordinary Error ' +
-            'constructor function and a warning is logged', () => {
+         'constructor function and a warning is logged', () => {
         const ErrorOriginal = Error;
 
         try {
@@ -850,7 +836,7 @@ describe('cloneDeep without customizer', () => {
 
             // -- act
             cloneDeep(new TestError('error'), { log: undefined });
-            cloneDeep(new TestError('error'), { log });
+            cloneDeep(new TestError('error'), { log: createLog(log) });
 
             // -- assert
             // note that TestError inherits the Error constructor
@@ -910,7 +896,7 @@ describe('cloneDeep without customizer', () => {
             error.errors = {};
 
             // -- act
-            const cloned = cloneDeep(error, { log });
+            const cloned = cloneDeep(error, { log: createLog(log) });
 
             // -- assert
             assert.deepClone(cloned, error);
@@ -954,7 +940,7 @@ describe('cloneDeep without customizer', () => {
             };
 
             // -- act
-            cloneDeep({}, { log });
+            cloneDeep({}, { log: createLog(log) });
 
             // -- assert
             const { calls } = log.mock;
@@ -986,7 +972,7 @@ describe('cloneDeep without customizer', () => {
             };
 
             // -- act
-            cloneDeep({}, { log });
+            cloneDeep({}, { log: createLog(log) });
 
             // -- assert
             const { calls } = log.mock;
@@ -1017,7 +1003,7 @@ describe('cloneDeep without customizer', () => {
             };
 
             // -- act
-            cloneDeep({}, { log });
+            cloneDeep({}, { log: createLog(log) });
 
             // -- assert
             const { calls } = log.mock;
@@ -1382,7 +1368,7 @@ describe('customizer', () => {
                     };
                 }
             },
-            log
+            log: createLog(log)
         });
 
         // -- assert
@@ -1450,7 +1436,7 @@ describe('customizer', () => {
             customizer: () => {
                 throw new Error('error');
             },
-            log
+            log: createLog(log)
         });
 
         // -- assert
@@ -1483,7 +1469,7 @@ describe('customizer', () => {
                 // eslint-disable-next-line no-throw-literal
                 throw 'not an error object';
             },
-            log
+            log: createLog(log)
         });
 
         // -- assert
@@ -1500,7 +1486,7 @@ describe('customizer', () => {
             customizer: () => {
                 throw Object.assign(Object.create(Error.prototype));
             },
-            log
+            log: createLog(log)
         });
 
         // -- assert
@@ -1518,7 +1504,7 @@ describe('customizer', () => {
             customizer: () => {
                 throw new Error('error', { cause: 'cause' });
             },
-            log
+            log: createLog(log)
         });
 
         // -- assert
@@ -1580,9 +1566,9 @@ describe('customizer', () => {
         // -- act
         cloneDeep({}, {
             customizer(_value, logger) {
-                logger('test');
+                logger.warn('test');
             },
-            log
+            log: createLog(log)
         });
 
         // -- assert
@@ -1625,8 +1611,8 @@ describe('customizer', () => {
 
 
         // -- act
-        cloneDeep({}, { customizer: customizer1, log: log1 });
-        cloneDeep({}, { customizer: customizer2, log: log2 });
+        cloneDeep({}, { customizer: customizer1, log: createLog(log1) });
+        cloneDeep({}, { customizer: customizer2, log: createLog(log2) });
 
         // -- assert
         assert.true(true, log1.mock.calls[0].arguments[0].message.includes(
@@ -1771,7 +1757,7 @@ describe('cloneDeepFully', () => {
         const log = mock.fn(() => {});
 
         // -- act
-        cloneDeepFully({ func: () => {} }, { log });
+        cloneDeepFully({ func: () => {} }, { log: createLog(log) });
 
         // -- assert
         assert.strictEqual(log.mock.calls.length, 1);
@@ -1779,21 +1765,15 @@ describe('cloneDeepFully', () => {
 
     test('cloneDeepFully can provide logMode', () => {
         // -- arrange
-        const logQuiet = mock.fn(() => {});
         const logSilent = mock.fn(() => {});
 
         // -- act
-        cloneDeepFully({ func: () => {} }, {
-            log: logQuiet,
-            logMode: 'quiet'
-        });
         cloneDeepFully({ func: () => {} }, {
             log: logSilent,
             logMode: 'silent'
         });
 
         // -- assert
-        assert.strictEqual(logQuiet.mock.calls.length, 0);
         assert.strictEqual(logSilent.mock.calls.length, 0);
     });
 
@@ -2093,8 +2073,8 @@ describe('CLONE', () => {
 
 
         // -- act
-        cloneDeep(new Test1(), { log: log1 });
-        cloneDeep(new Test2(), { log: log2 });
+        cloneDeep(new Test1(), { log: createLog(log1) });
+        cloneDeep(new Test2(), { log: createLog(log2) });
 
         // -- assert
         assert.true(log1.mock.calls[0].arguments[0].message.includes(
@@ -2185,7 +2165,7 @@ describe('CLONE', () => {
             [CLONE]() {
                 throw new Error('fail');
             }
-        }, { log });
+        }, { log: createLog(log) });
 
         // -- assert
         // it complains a second time when it tries to clone cloning method
@@ -2219,19 +2199,29 @@ describe('CLONE', () => {
     });
 
     test('cloning method receives logger', () => {
-        // -- arrange
-        const log = mock.fn(() => {});
+        const consoleDotLog = console.log;
+        try {
+            // -- arrange
+            const spy = mock.fn(() => {});
+            console.log = spy;
 
-        // -- act
-        cloneDeep(Object.create({
-            [CLONE](_value, logger) {
-                logger('test');
-            }
-        }), { log });
+            const proto = {
+                [CLONE](logger) {
+                    logger.info('test');
+                }
+            };
 
-        // -- assert
-        assert.strictEqual(1, log.mock.calls.length);
-        assert.strictEqual('test', log.mock.calls[0].arguments[0]);
+            // -- act
+            cloneDeep(Object.create(proto));
+
+            // -- assert
+            assert.strictEqual(1, spy.mock.calls.length);
+            assert.strictEqual('test', spy.mock.calls[0].arguments[0]);
+
+        } catch (error) {
+            console.log = consoleDotLog;
+            throw error;
+        }
     });
 
     test('cloning method can force algorithm to throw', () => {
@@ -2392,7 +2382,7 @@ describe('async mode', () => {
                     async: true
                 };
             },
-            log,
+            log: createLog(log),
             async: true
         });
 
@@ -2432,7 +2422,7 @@ describe('async mode', () => {
                     async: true
                 };
             },
-            log
+            log: createLog(log)
         });
 
         // -- assert
@@ -2474,7 +2464,7 @@ describe('async mode', () => {
 
         // -- act
         cloneDeep({}, {
-            log,
+            log: createLog(log),
             customizer(value) {
                 if (typeof value !== 'object') {
                     return;
@@ -2530,7 +2520,7 @@ describe('async mode', () => {
             }
         };
         // -- act
-        cloneDeep(obj, { log });
+        cloneDeep(obj, { log: createLog(log) });
 
         // -- assert
         // it complains a second time when trying to clone cloning method
@@ -2545,7 +2535,7 @@ describe('async mode', () => {
         };
 
         // -- act
-        await cloneDeepAsync(unsupported, { log });
+        await cloneDeepAsync(unsupported, { log: createLog(log) });
 
         // -- assert
         assert.strictEqual(1, log.mock.calls.length);
@@ -2557,7 +2547,7 @@ describe('misc', () => {
     test('getTypedArrayConstructor returns DataView constructor if ' +
          'non-TypedArray tag is provided', () => {
         // -- arrange/act
-        const constructor = getTypedArrayConstructor('', () => {});
+        const constructor = getTypedArrayConstructor('', createLog(() => {}));
 
         // -- assert
         assert.strictEqual(DataView, constructor);
@@ -2676,4 +2666,3 @@ describe('misc', () => {
         });
     });
 });
-

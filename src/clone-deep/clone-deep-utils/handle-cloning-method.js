@@ -1,4 +1,4 @@
-import { Warning } from '../../utils/clone-deep-warning.js';
+import { CloneError } from '../../utils/clone-deep-error.js';
 import { CLONE } from '../../utils/constants.js';
 import {
     isCallable,
@@ -84,7 +84,7 @@ export const handleCloningMethods = ({
         }
 
         /** @type {import('../../utils/types').CloningMethodResult} */
-        const result = value[CLONE](value, log);
+        const result = value[CLONE](log);
 
         if (!isObject(result)) {
             return {
@@ -103,12 +103,12 @@ export const handleCloningMethods = ({
 
 
         if (result.async && !asyncMode) {
-            throw Warning.CLONING_METHOD_ASYNC_IN_SYNC_MODE;
+            throw CloneError.CLONING_METHOD_ASYNC_IN_SYNC_MODE;
         }
 
         if (result.propsToIgnore !== undefined
             && !isPropertyKeyArray(result.propsToIgnore)) {
-            throw Warning.CLONING_METHOD_IMPROPER_PROPS_TO_IGNORE;
+            throw CloneError.CLONING_METHOD_IMPROPER_PROPS_TO_IGNORE;
         }
 
         if (typeof result.useCloningMethod === 'boolean') {

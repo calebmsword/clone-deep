@@ -1,3 +1,5 @@
+import { defaultLog } from '../utils/clone-deep-error.js';
+import { isCallable } from '../utils/type-checking.js';
 import { cloneDeepInternal } from './clone-deep-internal.js';
 
 /** @typedef {import('./clone-deep-utils/types').PerformanceConfig} PerformanceConfig */
@@ -37,8 +39,7 @@ import { cloneDeepInternal } from './clone-deep-internal.js';
  * Whether cloning methods will be observed.
  * @param {string} options.logMode
  * Case-insensitive. If "silent", no warnings will be logged. Use with caution,
- * as failures to perform true clones are logged as warnings. If "quiet", the
- * stack trace of the warning is ignored.
+ * as failures to perform true clones are logged as warnings.
  * @param {boolean} options.letCustomizerThrow
  * If `true`, errors thrown by the customizer will be thrown by `cloneDeep`. By
  * default, the error is logged and the algorithm proceeds with default
@@ -83,15 +84,17 @@ const cloneDeepProxy = (value, options) => {
         } = options);
     }
 
-    if (typeof log !== 'function') {
-        log = console.warn;
+    if (log === undefined || !isCallable(log?.warn) || !isCallable(log?.error)) {
+        log = defaultLog;
     }
 
     if (typeof logMode === 'string' && logMode.toLowerCase() === 'silent') {
-        log = () => {};
-    }
-    if (typeof logMode === 'string' && logMode.toLowerCase() === 'quiet') {
-        log = console.warn;
+        const noop = () => {};
+        log = {
+            info: noop,
+            warn: noop,
+            error: noop
+        };
     }
 
     /** @type {U | Promise<{ clone: U }>} */
@@ -127,9 +130,10 @@ const cloneDeep = (value, options) => {
         options = {};
     }
 
-    options.async = false;
-
-    return /** @type {U} */ (cloneDeepProxy(value, options));
+    return /** @type {U} */ (cloneDeepProxy(value, {
+        ...options,
+        async: false
+    }));
 };
 
 /**
@@ -153,9 +157,10 @@ export const cloneDeepAsync = (value, options) => {
         options = {};
     }
 
-    options.async = true;
-
-    return /** @type {Promise<{ clone: U }>} */(cloneDeepProxy(value, options));
+    return /** @type {Promise<{ clone: U }>} */(cloneDeepProxy(value, {
+        ...options,
+        async: true
+    }));
 };
 
 export default cloneDeep;
