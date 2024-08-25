@@ -72,6 +72,9 @@ export const CloneError = {
 
 /** @type {import('../types').Log} */
 export const defaultLog = {
+    info(error) {
+        console.log(error);
+    },
     warn(error) {
         console.warn(typeof error === 'object' ? error.message : error);
     },

@@ -91,6 +91,7 @@ const cloneDeepProxy = (value, options) => {
     if (typeof logMode === 'string' && logMode.toLowerCase() === 'silent') {
         const noop = () => {};
         log = {
+            info: noop,
             warn: noop,
             error: noop
         };

@@ -84,7 +84,7 @@ export const handleCloningMethods = ({
         }
 
         /** @type {import('../../utils/types').CloningMethodResult} */
-        const result = value[CLONE](value, log);
+        const result = value[CLONE](log);
 
         if (!isObject(result)) {
             return {

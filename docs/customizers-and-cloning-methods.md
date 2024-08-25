@@ -375,7 +375,7 @@ console.log(func); // 'hi'
 There are some limitations of this approach to cloning functions:
 
   1. The cloned function adds an additional layer to the call stack.
-  2. The name associated with the original function will not be given to clone.
+  2. The name associated with the original function will not be given to the clone.
   3. Cloning a cloned function adds an additional redundant layer to the call stack. 
 
 The first point is impossible to avoid, but the latter two points can be resolved; it is good exercise to experiment for yourself to see how you can do so.

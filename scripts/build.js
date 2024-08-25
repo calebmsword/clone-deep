@@ -21,7 +21,7 @@ const packageDotJson = `{
   "repository": "https://github.com/calebmsword/clone-deep/build",
   "type": "commonjs",
   "version": "${VERSION}",
-  "description": "A dependency-free utility for deeply cloning JavaScript objects.",
+  "description": "A dependency-free, es5-compliant utility for deeply cloning JavaScript objects.",
   "main": "index.js",
   "types": "index.d.ts",
   "keywords": [
@@ -38,7 +38,6 @@ const readme = `
 # cms-clone-deep-es5
 
 This package is a bundled, es5-compliant version of [cms-clone-deep](https://github.com/calebmsword/clone-deep).
-
 `;
 
 try {

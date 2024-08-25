@@ -11,6 +11,7 @@ export type Customizer = (
 export type Logger = (error: Error|string) => void;
 
 export interface Log {
+    info: Logger,
     warn: Logger,
     error: Logger
 }

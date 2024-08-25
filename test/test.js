@@ -2199,19 +2199,29 @@ describe('CLONE', () => {
     });
 
     test('cloning method receives logger', () => {
-        // -- arrange
-        const log = mock.fn(() => {});
+        const consoleDotLog = console.log;
+        try {
+            // -- arrange
+            const spy = mock.fn(() => {});
+            console.log = spy;
 
-        // -- act
-        cloneDeep(Object.create({
-            [CLONE](_value, logger) {
-                logger.warn('test');
-            }
-        }), { log: createLog(log) });
+            const proto = {
+                [CLONE](logger) {
+                    logger.info('test');
+                }
+            };
 
-        // -- assert
-        assert.strictEqual(1, log.mock.calls.length);
-        assert.strictEqual('test', log.mock.calls[0].arguments[0]);
+            // -- act
+            cloneDeep(Object.create(proto));
+
+            // -- assert
+            assert.strictEqual(1, spy.mock.calls.length);
+            assert.strictEqual('test', spy.mock.calls[0].arguments[0]);
+
+        } catch (error) {
+            console.log = consoleDotLog;
+            throw error;
+        }
     });
 
     test('cloning method can force algorithm to throw', () => {
@@ -2656,4 +2666,3 @@ describe('misc', () => {
         });
     });
 });
-

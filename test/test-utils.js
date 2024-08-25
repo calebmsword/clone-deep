@@ -16,9 +16,10 @@ export const tagOf = (value) => {
     return Object.prototype.toString.call(value);
 };
 
-export const createLog = (warn, error) => {
+export const createLog = (warn, info, error) => {
     return {
         warn,
+        info: info !== undefined ? info : warn,
         error: error !== undefined ? error : warn
     };
 };
