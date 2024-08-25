@@ -1,4 +1,5 @@
-import { defaultLogger } from '../utils/clone-deep-error.js';
+import { defaultLog } from '../utils/clone-deep-error.js';
+import { isCallable } from '../utils/type-checking.js';
 import { cloneDeepInternal } from './clone-deep-internal.js';
 
 /** @typedef {import('./clone-deep-utils/types').PerformanceConfig} PerformanceConfig */
@@ -83,12 +84,16 @@ const cloneDeepProxy = (value, options) => {
         } = options);
     }
 
-    if (typeof log !== 'function') {
-        log = defaultLogger;
+    if (log === undefined || !isCallable(log?.warn) || !isCallable(log?.error)) {
+        log = defaultLog;
     }
 
     if (typeof logMode === 'string' && logMode.toLowerCase() === 'silent') {
-        log = () => {};
+        const noop = () => {};
+        log = {
+            warn: noop,
+            error: noop
+        };
     }
 
     /** @type {U | Promise<{ clone: U }>} */

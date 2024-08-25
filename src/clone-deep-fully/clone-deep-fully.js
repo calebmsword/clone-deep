@@ -1,4 +1,4 @@
-import { defaultLogger } from '../utils/clone-deep-error.js';
+import { defaultLog } from '../utils/clone-deep-error.js';
 import {
     cloneDeepFullyInternal,
     cloneDeepFullyInternalAsync
@@ -59,7 +59,7 @@ const cloneDeepFullyProxy = (value, options) => {
         return cloneDeepFullyInternal({
             value,
             customizer,
-            log: log || defaultLogger,
+            log: log || defaultLog,
             logMode,
             performanceConfig: performanceConfig || {},
             ignoreCloningMethods: ignoreCloningMethods || false,
@@ -70,7 +70,7 @@ const cloneDeepFullyProxy = (value, options) => {
     return cloneDeepFullyInternalAsync({
         value,
         customizer,
-        log: log || defaultLogger,
+        log: log || defaultLog,
         logMode,
         performanceConfig: performanceConfig || {},
         ignoreCloningMethods: ignoreCloningMethods || false,

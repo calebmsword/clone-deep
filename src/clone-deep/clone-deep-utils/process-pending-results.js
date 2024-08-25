@@ -25,7 +25,7 @@ export const processPendingResults = async (globalState) => {
         const result = pendingResults[i];
 
         if (clone.status === 'rejected') {
-            log(getError(
+            log.warn(getError(
                 'Promise rejected' + (result.queueItem.prop !== undefined
                     ? ' for value assigned to property ' +
                       `"${String(result.queueItem.prop)}". `

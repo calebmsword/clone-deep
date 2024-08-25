@@ -46,8 +46,13 @@ type Customizer = (
     log?: Log
 ) => CustomizerResult|void;
 
-/** The type of a logger. */
-type Log = (error: Error|string) => void;
+/** The type of the log object. */
+type Logger = (error: Error|string) => void;
+
+interface Log {
+    warn: Logger,
+    error: Logger
+}
 
 /** The configuration object used by cloneDeep and cloneDeepAsync. */
 interface CloneDeepOptions {

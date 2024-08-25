@@ -72,7 +72,8 @@ export const handleEcmaTypes = ({
         cloned = saveClone(parentOrAssigner !== TOP_LEVEL
             ? value
             : Object.create(Function.prototype));
-        log(`Attempted to clone function` +
+        log.warn(
+            `Attempted to clone function` +
             `${typeof prop === 'string'
                 ? ` with name ${prop}`
                 : ''}. JavaScript functions cannot be reliably ` +
@@ -137,7 +138,7 @@ export const handleEcmaTypes = ({
                 : [];
 
             if (!isIterable(aggregateError.errors)) {
-                log(CloneError.IMPROPER_AGGREGATE_ERRORS);
+                log.warn(CloneError.IMPROPER_AGGREGATE_ERRORS);
             }
 
             const { cause } = aggregateError;

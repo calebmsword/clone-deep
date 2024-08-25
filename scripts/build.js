@@ -9,7 +9,7 @@ console.log(
 
 const regexp = /[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}/;
 if (!Array.isArray(regexp.exec(VERSION))) {
-    console.log(
+    throw new Error(
         `Provided version ${VERSION} is in the incorrect format. Use the ` +
         'command `npm run build --<VERSION>` to provide a proper version ' +
         'number. See https://docs.npmjs.com/about-semantic-versioning for ' +

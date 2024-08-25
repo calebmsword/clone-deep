@@ -610,85 +610,13 @@ var CloneError = {
 };
 
 /** @type {import('../types').Log} */
-var defaultLogger = function defaultLogger(error) {
-  console.warn(_typeof(error) === 'object' ? error.message : error);
-};
-
-/**
- * Gets the prototype of the provided object.
- * @param {any} value
- * @returns {any}
- */
-var getPrototype = function getPrototype(value) {
-  return Object.getPrototypeOf(value);
-};
-
-/**
- * Retrieves the property descriptors of the provided object.
- * The result is a hash which maps properties to their property descriptor.
- * @param {any} value
- * @returns {{ [property: string|symbol]: PropertyDescriptor }}
- */
-var getDescriptors = function getDescriptors(value) {
-  return Object.getOwnPropertyDescriptors(value);
-};
-
-/**
- * Whether the provided property descriptor is the default value.
- * @param {PropertyDescriptor} [descriptor]
- * @returns {boolean}
- */
-var isDefaultDescriptor = function isDefaultDescriptor(descriptor) {
-  return _typeof(descriptor) === 'object' && descriptor.configurable === true && descriptor.enumerable === true && descriptor.writable === true;
-};
-
-/**
- * Whether the property descriptor is for a property with getter and/or setter.
- * @param {PropertyDescriptor} [metadata]
- * @returns {boolean}
- */
-var hasAccessor = function hasAccessor(metadata) {
-  return _typeof(metadata) === 'object' && (typeof metadata.get === 'function' || typeof metadata.set === 'function');
-};
-
-/**
- * Returns an array of all properties in the object.
- * This includes symbols and non-enumerable properties. `undefined` or `null`
- * returns an empty array.
- * @param {Object} object An object.
- * @returns {(string|symbol)[]} An array of property names.
- */
-var getAllPropertiesOf = function getAllPropertiesOf(object) {
-  return [Object.getOwnPropertyNames(object), Object.getOwnPropertySymbols(object)].flat();
-};
-
-/**
- * Is true if the provided object has methods. Is false otherwise.
- * @param {any} object An object
- * @returns {Boolean}
- */
-var hasMethods = function hasMethods(object) {
-  // We cannot access some properties of Function.prototype in strict mode
-  if (object === Function.prototype) {
-    return true;
+var defaultLog = {
+  warn: function warn(error) {
+    console.warn(_typeof(error) === 'object' ? error.message : error);
+  },
+  error: function error(_error) {
+    console.error(_error);
   }
-  return getAllPropertiesOf(object).some(function (key) {
-    return typeof object[key] === 'function';
-  });
-};
-
-/**
- * Iterate the provided callback on every owned property of the given object.
- * This includes symbols and non-enumerable properties but not properties from
- * the prototype chain.
- * This is more performant than using {@link getAllPropertiesOf}.
- * @param {any} object
- * @param {(key: string|symbol) => void} propertyCallback
- */
-var forAllOwnProperties = function forAllOwnProperties(object, propertyCallback) {
-  [Object.getOwnPropertyNames(object), Object.getOwnPropertySymbols(object)].forEach(function (array) {
-    array.forEach(propertyCallback);
-  });
 };
 
 /** Used to create methods for cloning objects.*/
@@ -794,6 +722,291 @@ var NodeTypes = Object.freeze({
 
 /** All prototypes of supported types. */
 var supportedPrototypes = Object.freeze([Array.prototype, Boolean.prototype, Date.prototype, Error.prototype, Function.prototype, Number.prototype, Object.prototype, RegExp.prototype, String.prototype]);
+
+/**
+ * Gets the prototype of the provided object.
+ * @param {any} value
+ * @returns {any}
+ */
+var getPrototype = function getPrototype(value) {
+  return Object.getPrototypeOf(value);
+};
+
+/**
+ * Retrieves the property descriptors of the provided object.
+ * The result is a hash which maps properties to their property descriptor.
+ * @param {any} value
+ * @returns {{ [property: string|symbol]: PropertyDescriptor }}
+ */
+var getDescriptors = function getDescriptors(value) {
+  return Object.getOwnPropertyDescriptors(value);
+};
+
+/**
+ * Whether the provided property descriptor is the default value.
+ * @param {PropertyDescriptor} [descriptor]
+ * @returns {boolean}
+ */
+var isDefaultDescriptor = function isDefaultDescriptor(descriptor) {
+  return _typeof(descriptor) === 'object' && descriptor.configurable === true && descriptor.enumerable === true && descriptor.writable === true;
+};
+
+/**
+ * Whether the property descriptor is for a property with getter and/or setter.
+ * @param {PropertyDescriptor} [metadata]
+ * @returns {boolean}
+ */
+var hasAccessor = function hasAccessor(metadata) {
+  return _typeof(metadata) === 'object' && (typeof metadata.get === 'function' || typeof metadata.set === 'function');
+};
+
+/**
+ * Returns an array of all properties in the object.
+ * This includes symbols and non-enumerable properties. `undefined` or `null`
+ * returns an empty array.
+ * @param {Object} object An object.
+ * @returns {(string|symbol)[]} An array of property names.
+ */
+var getAllPropertiesOf = function getAllPropertiesOf(object) {
+  return [Object.getOwnPropertyNames(object), Object.getOwnPropertySymbols(object)].flat();
+};
+
+/**
+ * Is true if the provided object has methods. Is false otherwise.
+ * @param {any} object An object
+ * @returns {Boolean}
+ */
+var hasMethods = function hasMethods(object) {
+  // We cannot access some properties of Function.prototype in strict mode
+  if (object === Function.prototype) {
+    return true;
+  }
+  return getAllPropertiesOf(object).some(function (key) {
+    return typeof object[key] === 'function';
+  });
+};
+
+/**
+ * Iterate the provided callback on every owned property of the given object.
+ * This includes symbols and non-enumerable properties but not properties from
+ * the prototype chain.
+ * This is more performant than using {@link getAllPropertiesOf}.
+ * @param {any} object
+ * @param {(key: string|symbol) => void} propertyCallback
+ */
+var forAllOwnProperties = function forAllOwnProperties(object, propertyCallback) {
+  [Object.getOwnPropertyNames(object), Object.getOwnPropertySymbols(object)].forEach(function (array) {
+    array.forEach(propertyCallback);
+  });
+};
+
+/**
+ * Gets the appropriate TypedArray constructor for the given object tag.
+ * @param {string} tag
+ * The tag for the object.
+ * @param {import('../types').Log} log
+ * A logging function.
+ * @returns {import('./types').TypedArrayConstructor}
+ */
+var getTypedArrayConstructor = function getTypedArrayConstructor(tag, log) {
+  switch (tag) {
+    case Tag.DATAVIEW:
+      return DataView;
+    case Tag.FLOAT32:
+      return Float32Array;
+    case Tag.FLOAT64:
+      return Float64Array;
+    case Tag.INT8:
+      return Int8Array;
+    case Tag.INT16:
+      return Int16Array;
+    case Tag.INT32:
+      return Int32Array;
+    case Tag.UINT8:
+      return Uint8Array;
+    case Tag.UINT8CLAMPED:
+      return Uint8ClampedArray;
+    case Tag.UINT16:
+      return Uint16Array;
+    case Tag.UINT32:
+      return Uint32Array;
+    case Tag.BIGINT64:
+      return BigInt64Array;
+    case Tag.BIGUINT64:
+      return BigUint64Array;
+    default:
+      log.warn(CloneError.UNRECOGNIZED_TYPEARRAY_SUBCLASS);
+      return DataView;
+  }
+};
+
+/**
+ * Gets the appropriate error constructor for the error name.
+ * @param {Error} value
+ * The object itself. This is necessary to correctly find constructors for
+ * various Error subclasses.
+ * @param {import('../types').Log} [log]
+ * An optional logging function.
+ * @returns {import('./types').AtomicErrorConstructor}
+ */
+var getAtomicErrorConstructor = function getAtomicErrorConstructor(value, log) {
+  var name = value.name;
+  switch (name) {
+    case 'Error':
+      return Error;
+    case 'EvalError':
+      return EvalError;
+    case 'RangeError':
+      return RangeError;
+    case 'ReferenceError':
+      return ReferenceError;
+    case 'SyntaxError':
+      return SyntaxError;
+    case 'TypeError':
+      return TypeError;
+    case 'URIError':
+      return URIError;
+    default:
+      if (log !== undefined) {
+        log.warn(getError('Cloning error with unrecognized name ' + "".concat(name, "! It will be cloned into an ") + 'ordinary Error object.'));
+      }
+      return Error;
+  }
+};
+
+/**
+ * Creates a FileList.
+ * See https://github.com/fisker/create-file-list.
+ * @param  {...File} files
+ * @returns {FileList|undefined}
+ */
+var createFileList = function createFileList() {
+  var _dataTransfer2;
+  var getDataTransfer = function getDataTransfer() {
+    try {
+      return new DataTransfer();
+    } catch (_unused) {
+      return new ClipboardEvent('').clipboardData;
+    }
+  };
+  var dataTransfer;
+  try {
+    dataTransfer = getDataTransfer();
+  } catch (_unused2) {
+    throw CloneError.FILELIST_DISALLOWED;
+  }
+  for (var _len = arguments.length, files = new Array(_len), _key = 0; _key < _len; _key++) {
+    files[_key] = arguments[_key];
+  }
+  for (var _i = 0, _files = files; _i < _files.length; _i++) {
+    var _dataTransfer;
+    var file = _files[_i];
+    (_dataTransfer = dataTransfer) === null || _dataTransfer === void 0 || _dataTransfer.items.add(file);
+  }
+  return (_dataTransfer2 = dataTransfer) === null || _dataTransfer2 === void 0 ? void 0 : _dataTransfer2.files;
+};
+
+/**
+ * Returns a deep clone of the given File.
+ * @param {File} file
+ * @returns {File}
+ */
+var cloneFile = function cloneFile(file) {
+  return new File([file], file.name, {
+    type: file.type,
+    lastModified: file.lastModified
+  });
+};
+
+/** @type {any} */
+var __global = globalThis;
+
+/** @type {{ [key: string]: new (...args: any[]) => any | undefined }} */
+var global = __global;
+
+/** @typedef {new (...args: any[]) => any} Constructor */
+
+/**
+ * Attempts to retreive a web API from the global object.
+ * Doing this in a way that utilizes TypeScript effectively is obtuse, hence
+ * this function was made so that TypeScript jank doesn't obfuscate code
+ * elsewhere.
+ * @param {string} string
+ * @returns {Constructor | undefined}
+ */
+var getConstructorFromString = function getConstructorFromString(string) {
+  return global[string];
+};
+
+/**
+ * Returns an array of prototypes of available supported types for this runtime.
+ * @returns {any[]}
+ */
+var getSupportedPrototypes = function getSupportedPrototypes() {
+  /** @type {object[]} */
+  var additionalPrototypes = [];
+  Object.keys(WebApis).forEach(function (webApiString) {
+    var PotentialWebApi = getConstructorFromString(webApiString);
+    if (PotentialWebApi !== undefined && isCallable(PotentialWebApi)) {
+      additionalPrototypes.push(PotentialWebApi.prototype);
+    }
+  });
+  Object.keys(Es6NativeTypes).forEach(function (typeArrayString) {
+    var PotentialArray = getConstructorFromString(typeArrayString);
+    if (PotentialArray !== undefined && isCallable(PotentialArray)) {
+      additionalPrototypes.push(PotentialArray.prototype);
+    }
+  });
+  Object.keys(NodeTypes).forEach(function (typeArrayString) {
+    var PotentialArray = getConstructorFromString(typeArrayString);
+    if (PotentialArray !== undefined && isCallable(PotentialArray)) {
+      additionalPrototypes.push(PotentialArray.prototype);
+    }
+  });
+  return supportedPrototypes.concat(additionalPrototypes);
+};
+
+/**
+ * Returns an object containing all constructors in this runtime.
+ * The object maps names of a constructor ('Array', 'Map', 'AudioData') to the
+ * constructor itself, or `undefined` if the constructor is not available in
+ * this runtime.
+ * @returns {Readonly<{ [key: string]: Constructor | undefined }>}
+ */
+var getSupportedConstructors = function getSupportedConstructors() {
+  /** @type {{ [key: string]: Constructor | undefined }} */
+  var result = {};
+  Object.values(Tag).forEach(function (tag) {
+    var name = tag.substring(8, tag.length - 1);
+    result[name] = getConstructorFromString(name);
+  });
+  return Object.freeze(result);
+};
+
+/**
+ * @template T
+ * Returns the provided value as an "instance" of the given "class".
+ * Where a "class" is a constructor function, and being an instance means having
+ * the prototype of the constructor function in the prototype chain.
+ * If the provided value is not a suitable instance of the class, then the
+ * function returns `undefined`.
+ * @param {any} value
+ * @param {T extends new (...args: any[]) => any ? T : never} constructor
+ * @returns {undefined | ReturnType<T>}
+ */
+var castAsInstanceOf = function castAsInstanceOf(value, constructor) {
+  if (!isCallable(constructor)) {
+    return;
+  }
+  var tempPrototype = getPrototype(value);
+  while (tempPrototype !== null) {
+    if (tempPrototype === constructor.prototype) {
+      return value;
+    }
+    tempPrototype = getPrototype(tempPrototype);
+  }
+  return;
+};
 
 var toString = Object.prototype.toString;
 
@@ -1061,214 +1274,6 @@ var isPropertyKeyArray = function isPropertyKeyArray(value) {
 };
 
 /**
- * Gets the appropriate TypedArray constructor for the given object tag.
- * @param {string} tag
- * The tag for the object.
- * @param {import('../types').Log} log
- * A logging function.
- * @returns {import('./types').TypedArrayConstructor}
- */
-var getTypedArrayConstructor = function getTypedArrayConstructor(tag, log) {
-  switch (tag) {
-    case Tag.DATAVIEW:
-      return DataView;
-    case Tag.FLOAT32:
-      return Float32Array;
-    case Tag.FLOAT64:
-      return Float64Array;
-    case Tag.INT8:
-      return Int8Array;
-    case Tag.INT16:
-      return Int16Array;
-    case Tag.INT32:
-      return Int32Array;
-    case Tag.UINT8:
-      return Uint8Array;
-    case Tag.UINT8CLAMPED:
-      return Uint8ClampedArray;
-    case Tag.UINT16:
-      return Uint16Array;
-    case Tag.UINT32:
-      return Uint32Array;
-    case Tag.BIGINT64:
-      return BigInt64Array;
-    case Tag.BIGUINT64:
-      return BigUint64Array;
-    default:
-      log(CloneError.UNRECOGNIZED_TYPEARRAY_SUBCLASS);
-      return DataView;
-  }
-};
-
-/**
- * Gets the appropriate error constructor for the error name.
- * @param {Error} value
- * The object itself. This is necessary to correctly find constructors for
- * various Error subclasses.
- * @param {import('../types').Log} [log]
- * An optional logging function.
- * @returns {import('./types').AtomicErrorConstructor}
- */
-var getAtomicErrorConstructor = function getAtomicErrorConstructor(value, log) {
-  var name = value.name;
-  switch (name) {
-    case 'Error':
-      return Error;
-    case 'EvalError':
-      return EvalError;
-    case 'RangeError':
-      return RangeError;
-    case 'ReferenceError':
-      return ReferenceError;
-    case 'SyntaxError':
-      return SyntaxError;
-    case 'TypeError':
-      return TypeError;
-    case 'URIError':
-      return URIError;
-    default:
-      if (log !== undefined) {
-        log(getError('Cloning error with unrecognized name ' + "".concat(name, "! It will be cloned into an ") + 'ordinary Error object.'));
-      }
-      return Error;
-  }
-};
-
-/**
- * Creates a FileList.
- * See https://github.com/fisker/create-file-list.
- * @param  {...File} files
- * @returns {FileList|undefined}
- */
-var createFileList = function createFileList() {
-  var _dataTransfer2;
-  var getDataTransfer = function getDataTransfer() {
-    try {
-      return new DataTransfer();
-    } catch (_unused) {
-      return new ClipboardEvent('').clipboardData;
-    }
-  };
-  var dataTransfer;
-  try {
-    dataTransfer = getDataTransfer();
-  } catch (_unused2) {
-    throw CloneError.FILELIST_DISALLOWED;
-  }
-  for (var _len = arguments.length, files = new Array(_len), _key = 0; _key < _len; _key++) {
-    files[_key] = arguments[_key];
-  }
-  for (var _i = 0, _files = files; _i < _files.length; _i++) {
-    var _dataTransfer;
-    var file = _files[_i];
-    (_dataTransfer = dataTransfer) === null || _dataTransfer === void 0 || _dataTransfer.items.add(file);
-  }
-  return (_dataTransfer2 = dataTransfer) === null || _dataTransfer2 === void 0 ? void 0 : _dataTransfer2.files;
-};
-
-/**
- * Returns a deep clone of the given File.
- * @param {File} file
- * @returns {File}
- */
-var cloneFile = function cloneFile(file) {
-  return new File([file], file.name, {
-    type: file.type,
-    lastModified: file.lastModified
-  });
-};
-
-/** @type {any} */
-var __global = globalThis;
-
-/** @type {{ [key: string]: new (...args: any[]) => any | undefined }} */
-var global = __global;
-
-/** @typedef {new (...args: any[]) => any} Constructor */
-
-/**
- * Attempts to retreive a web API from the global object.
- * Doing this in a way that utilizes TypeScript effectively is obtuse, hence
- * this function was made so that TypeScript jank doesn't obfuscate code
- * elsewhere.
- * @param {string} string
- * @returns {Constructor | undefined}
- */
-var getConstructorFromString = function getConstructorFromString(string) {
-  return global[string];
-};
-
-/**
- * Returns an array of prototypes of available supported types for this runtime.
- * @returns {any[]}
- */
-var getSupportedPrototypes = function getSupportedPrototypes() {
-  /** @type {object[]} */
-  var additionalPrototypes = [];
-  Object.keys(WebApis).forEach(function (webApiString) {
-    var PotentialWebApi = getConstructorFromString(webApiString);
-    if (PotentialWebApi !== undefined && isCallable(PotentialWebApi)) {
-      additionalPrototypes.push(PotentialWebApi.prototype);
-    }
-  });
-  Object.keys(Es6NativeTypes).forEach(function (typeArrayString) {
-    var PotentialArray = getConstructorFromString(typeArrayString);
-    if (PotentialArray !== undefined && isCallable(PotentialArray)) {
-      additionalPrototypes.push(PotentialArray.prototype);
-    }
-  });
-  Object.keys(NodeTypes).forEach(function (typeArrayString) {
-    var PotentialArray = getConstructorFromString(typeArrayString);
-    if (PotentialArray !== undefined && isCallable(PotentialArray)) {
-      additionalPrototypes.push(PotentialArray.prototype);
-    }
-  });
-  return supportedPrototypes.concat(additionalPrototypes);
-};
-
-/**
- * Returns an object containing all constructors in this runtime.
- * The object maps names of a constructor ('Array', 'Map', 'AudioData') to the
- * constructor itself, or `undefined` if the constructor is not available in
- * this runtime.
- * @returns {Readonly<{ [key: string]: Constructor | undefined }>}
- */
-var getSupportedConstructors = function getSupportedConstructors() {
-  /** @type {{ [key: string]: Constructor | undefined }} */
-  var result = {};
-  Object.values(Tag).forEach(function (tag) {
-    var name = tag.substring(8, tag.length - 1);
-    result[name] = getConstructorFromString(name);
-  });
-  return Object.freeze(result);
-};
-
-/**
- * @template T
- * Returns the provided value as an "instance" of the given "class".
- * Where a "class" is a constructor function, and being an instance means having
- * the prototype of the constructor function in the prototype chain.
- * If the provided value is not a suitable instance of the class, then the
- * function returns `undefined`.
- * @param {any} value
- * @param {T extends new (...args: any[]) => any ? T : never} constructor
- * @returns {undefined | ReturnType<T>}
- */
-var castAsInstanceOf = function castAsInstanceOf(value, constructor) {
-  if (!isCallable(constructor)) {
-    return;
-  }
-  var tempPrototype = getPrototype(value);
-  while (tempPrototype !== null) {
-    if (tempPrototype === constructor.prototype) {
-      return value;
-    }
-    tempPrototype = getPrototype(tempPrototype);
-  }
-  return;
-};
-
-/**
  * Checks the clone store to see if we the given value was already cloned.
  * This is used to avoid infinite loops on objects with circular references.
  * This may have a side effect of saving the clone to a persistent place.
@@ -1354,9 +1359,9 @@ var handleError = function handleError(thrown, log, saveClone) {
       cause: error.cause
     } : undefined;
     var stack = error.stack ? error.stack : undefined;
-    log(getError(error.message, cause, stack));
+    log.error(getError(error.message, cause, stack));
   } else {
-    log(getError(msg, {
+    log.error(getError(msg, {
       cause: thrown
     }));
   }
@@ -1398,9 +1403,9 @@ var handleCustomError = function handleCustomError(_ref) {
       cause: error.cause
     } : undefined;
     var stack = error.stack ? error.stack : undefined;
-    log(getError(error.message, cause, stack));
+    log.error(getError(error.message, cause, stack));
   } else {
-    log(getError(msg, {
+    log.error(getError(msg, {
       cause: error
     }));
   }
@@ -1538,7 +1543,7 @@ var handleMetadata = function handleMetadata(_ref) {
     clonedMetadata.set = metadata.set;
   }
   if (hasAccessor(metadata)) {
-    log(getError("Cloning value with name ".concat(String(prop), " whose property ") + 'descriptor contains a get or set accessor.'));
+    log.warn(getError("Cloning value with name ".concat(String(prop), " whose property ") + 'descriptor contains a get or set accessor.'));
   }
   Object.defineProperty(parent, prop, clonedMetadata);
 };
@@ -1851,7 +1856,7 @@ var handleEcmaTypes = function handleEcmaTypes(_ref) {
     // We only copy functions if they are methods.
   } else if (typeof value === 'function') {
     cloned = saveClone(parentOrAssigner !== TOP_LEVEL ? value : Object.create(Function.prototype));
-    log("Attempted to clone function" + "".concat(typeof prop === 'string' ? " with name ".concat(prop) : '', ". JavaScript functions cannot be reliably ") + 'cloned. If this function is a method, it will be copied ' + 'directly. If this is the top-level object being cloned, ' + 'then an empty object will be returned.');
+    log.warn("Attempted to clone function" + "".concat(typeof prop === 'string' ? " with name ".concat(prop) : '', ". JavaScript functions cannot be reliably ") + 'cloned. If this function is a method, it will be copied ' + 'directly. If this is the top-level object being cloned, ' + 'then an empty object will be returned.');
     ignoreProps = true;
     ignoreProto = true;
   } else if (Array.isArray(value)) {
@@ -1891,7 +1896,7 @@ var handleEcmaTypes = function handleEcmaTypes(_ref) {
       var aggregateError = value;
       var errors = isIterable(aggregateError.errors) ? aggregateError.errors : [];
       if (!isIterable(aggregateError.errors)) {
-        log(CloneError.IMPROPER_AGGREGATE_ERRORS);
+        log.warn(CloneError.IMPROPER_AGGREGATE_ERRORS);
       }
       var cause = aggregateError.cause;
       var message = aggregateError.message;
@@ -2709,7 +2714,7 @@ var processPendingResults = /*#__PURE__*/function () {
             var cloned;
             var result = pendingResults[i];
             if (clone.status === 'rejected') {
-              log(getError('Promise rejected' + (result.queueItem.prop !== undefined ? ' for value assigned to property ' + "\"".concat(String(result.queueItem.prop), "\". ") : '. ') + 'This value will be cloned into an empty object.', {
+              log.warn(getError('Promise rejected' + (result.queueItem.prop !== undefined ? ' for value assigned to property ' + "\"".concat(String(result.queueItem.prop), "\". ") : '. ') + 'This value will be cloned into an empty object.', {
                 cause: clone.reason
               }));
               cloned = {};
@@ -3032,6 +3037,7 @@ var cloneDeepInternal = function cloneDeepInternal(_ref) {
  * The deep copy.
  */
 var cloneDeepProxy = function cloneDeepProxy(value, options) {
+  var _log, _log2;
   /** @type {Customizer|undefined} */
   var customizer;
 
@@ -3061,11 +3067,15 @@ var cloneDeepProxy = function cloneDeepProxy(value, options) {
     letCustomizerThrow = options.letCustomizerThrow;
     async = options.async;
   }
-  if (typeof log !== 'function') {
-    log = defaultLogger;
+  if (log === undefined || !isCallable((_log = log) === null || _log === void 0 ? void 0 : _log.warn) || !isCallable((_log2 = log) === null || _log2 === void 0 ? void 0 : _log2.error)) {
+    log = defaultLog;
   }
   if (typeof logMode === 'string' && logMode.toLowerCase() === 'silent') {
-    log = function log() {};
+    var noop = function noop() {};
+    log = {
+      warn: noop,
+      error: noop
+    };
   }
 
   /** @type {U | Promise<{ clone: U }>} */
@@ -3351,7 +3361,7 @@ var cloneDeepFullyProxy = function cloneDeepFullyProxy(value, options) {
     return cloneDeepFullyInternal({
       value: value,
       customizer: customizer,
-      log: log || defaultLogger,
+      log: log || defaultLog,
       logMode: logMode,
       performanceConfig: performanceConfig || {},
       ignoreCloningMethods: ignoreCloningMethods || false,
@@ -3362,7 +3372,7 @@ var cloneDeepFullyProxy = function cloneDeepFullyProxy(value, options) {
   return cloneDeepFullyInternalAsync({
     value: value,
     customizer: customizer,
-    log: log || defaultLogger,
+    log: log || defaultLog,
     logMode: logMode,
     performanceConfig: performanceConfig || {},
     ignoreCloningMethods: ignoreCloningMethods || false,

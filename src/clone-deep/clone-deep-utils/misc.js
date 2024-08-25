@@ -96,9 +96,9 @@ export const handleError = (thrown, log, saveClone) => {
         error.message = `${msg} ${error.message}`;
         const cause = error.cause ? { cause: error.cause } : undefined;
         const stack = error.stack ? error.stack : undefined;
-        log(getError(error.message, cause, stack));
+        log.error(getError(error.message, cause, stack));
     } else {
-        log(getError(msg, { cause: thrown }));
+        log.error(getError(msg, { cause: thrown }));
     }
 
     return {
@@ -147,9 +147,9 @@ export const handleCustomError = ({
             : undefined;
 
         const stack = error.stack ? error.stack : undefined;
-        log(getError(error.message, cause, stack));
+        log.error(getError(error.message, cause, stack));
     } else {
-        log(getError(msg, { cause: error }));
+        log.error(getError(msg, { cause: error }));
     }
 
     return false;

@@ -47,7 +47,7 @@ const handleMetadata = ({ log, cloned, parent, prop, metadata }) => {
     }
 
     if (hasAccessor(metadata)) {
-        log(getError(
+        log.warn(getError(
             `Cloning value with name ${String(prop)} whose property ` +
             'descriptor contains a get or set accessor.'));
     }

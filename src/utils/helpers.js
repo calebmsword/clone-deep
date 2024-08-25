@@ -44,7 +44,7 @@ export const getTypedArrayConstructor = (tag, log) => {
     case Tag.BIGUINT64:
         return BigUint64Array;
     default:
-        log(CloneError.UNRECOGNIZED_TYPEARRAY_SUBCLASS);
+        log.warn(CloneError.UNRECOGNIZED_TYPEARRAY_SUBCLASS);
         return DataView;
     }
 };
@@ -77,9 +77,9 @@ export const getAtomicErrorConstructor = (value, log) => {
         return URIError;
     default:
         if (log !== undefined) {
-            log(getError('Cloning error with unrecognized name ' +
-                                `${name}! It will be cloned into an ` +
-                                'ordinary Error object.'));
+            log.warn(getError('Cloning error with unrecognized name ' +
+                              `${name}! It will be cloned into an ` +
+                              'ordinary Error object.'));
         }
         return Error;
     }
