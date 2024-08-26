@@ -5,13 +5,15 @@
             "ES2022", 
             "DOM"
         ],
-        "target": "ES2022",
+        "target": "ES5",
         "allowJs": true,
         "checkJs": true,
-        "strict": true
+        "strict": true,
+        "noEmit": true,
+        "downlevelIteration": true
     },
     "include": [
-        "clone-deep.js",
-        "clone-deep-utils.js"
+        "src/**/*",
+        "index.js"
     ]
 }

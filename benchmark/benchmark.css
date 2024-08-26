@@ -2,6 +2,9 @@
     --main-background-color: rgb(176, 175, 175);
     --content-background-color: rgba(0, 191, 255, 0.726); 
     --content-border-color: black;
+    --checkbox-or-radio-border-color: rgb(80, 79, 79);
+    --checkbox-or-radio-background-color: rgb(222, 223, 228);
+    --block-thread-color: rgb(152, 17, 89);
     --button-color: rgb(255, 174, 0);
     --button-hover-color: rgb(174, 126, 24);
     --button-border-color: black;
@@ -11,11 +14,12 @@ html, body {
     margin: 0px;
     padding: 0px;
     background-color: var(--main-background-color);
+    display: flex;
+    align-items: flex-start;
 }
 
 .main-container {
     width: 400px;
-    height: 450px;
     margin: 20px;
     display: flex;
     border-style: solid;
@@ -42,7 +46,7 @@ html, body {
     border-style: solid;
     border-color: black;
     border-width: 2px;
-    margin: 0px 50px 50px 50px;
+    margin: 0px 50px 10px 50px;
     font-family:'Courier New', Courier, monospace;
     font-size: 12px;
 }
@@ -53,10 +57,13 @@ html, body {
     flex-direction: column;
 }
 
-
 .table-col .title {
     flex-grow: 1;
     padding: 20px;
+}
+
+.title-text {
+    font-size: 11px;
 }
 
 .table-col .result {
@@ -92,12 +99,104 @@ html, body {
     width: 60%;
 }
 
+.sync-checkbox-main-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60px;
+}
+
+.sync-checkbox-inner-container {
+    display: flex;
+    align-items: center;
+}
+
+.sync-checkbox {
+    transform: scale(2);
+}
+
+.sync-checkbox-label {
+    padding-left: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--block-thread-color);
+}
+
 .buttons {
     flex-grow: 0.85;
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    padding: 20px;
+    padding: 0px 20px 20px 20px;
+}
+
+.checkboxes-and-radios {
+    margin-top: 10px;
+    padding-left: 16.5%;
+    padding-right: 16.5%;
+    flex-grow: 1;
+}
+
+.checkbox-or-radio {
+    display: flex;
+    align-items: center;
+    padding-left: 6px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 2.5px;
+    border-color: var(--checkbox-or-radio-border-color);
+    background-color: var(--checkbox-or-radio-background-color);
+}
+
+.checkboxes {
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    align-items: normal;
+}
+
+.type-checking-container {
+    display: flex;
+    justify-content: center;
+}
+
+.type-checking {
+    font-weight: bold;
+    padding-bottom: 3px;
+}
+
+.radios {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    row-gap: 10px;
+}
+
+.radio-container {
+    padding-left: 3px;
+    padding-right: 20px;
+    display: flex;
+    align-items: center;
+}
+
+input[type='checkbox'].sync-checkbox {
+    accent-color: var(--block-thread-color);
+}
+
+.checkbox-label {
+    padding-left: 6px;
+}
+
+.radio-label {
+    padding-left: 6px;
+}
+
+input[type="radio"] {
+    margin: 0px;
 }
 
 .button {
@@ -106,16 +205,20 @@ html, body {
     margin: 1.5px 5px 1.5px 0px;
     border-style: solid;
     border-width: 2px;
-    height: 30px;
+    height: 35px;
     width: fit-content;
-    padding: 0px 8px;
+    padding: 0px 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 5px;
 }
 
-.button:hover {
+.button.pressable:hover {
     background-color: var(--button-hover-color);
     cursor: pointer;
+}
+
+.button.invisible {
+    display: none;
 }
