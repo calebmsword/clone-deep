@@ -7,9 +7,9 @@ export type Customizer = (
     log?: Log
 ) => CustomizerResult|void;
 
-/** The type of the log object. */
 export type Logger = (error: Error|string) => void;
 
+/** The type of the log object. */
 export interface Log {
     info: Logger,
     warn: Logger,

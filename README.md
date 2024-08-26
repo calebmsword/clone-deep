@@ -265,7 +265,7 @@ We use eslint to lint this project. All merge requests to the dev and main branc
 
 ## benchmarking
 
-Some rudimentary benchmarking can be done within the repository. In the directory containing the source code, execute `npm run serve -- <PORT>`, where the `-- <PORT>` command line option is optional and defaults to `8787`, and visit `http://localhost:<PORT>` to see the benchmarking UI. You can use your favorite browser's dev tools to profile the result.
+Some rudimentary benchmarking can be done within the repository. In the directory containing the source code, execute `node serve.js <PORT>`, where the `PORT` command line option is optional and defaults to `8787`, and visit `http://localhost:<PORT>` to see the benchmarking UI. `benchmark.js` and `benchmark.css` contain the JavaScript and styling, respectively, for the hosted web page. You can use your favorite browser's dev tools to profile the result.
 
 ## contribution guidelines
 
@@ -285,7 +285,7 @@ Some rudimentary benchmarking can be done within the repository. In the director
    - [blikblum](https://github.com/blikblum)
  - Thanks to Tiago Bertolo, the author of [this article](https://medium.com/@tiagobertolo/which-is-the-best-method-for-deep-cloning-in-javascript-are-they-all-bad-101f32d620c5). It reminded me to clone the metadata of objects.
  - Thanks to MDN and its documentation on the [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm).
- - Thanks to StackExchange user Jonathan Tran for his `http.createServer` [example](https://stackoverflow.com/a/13635318/22334683).
+ - Thanks to StackExchange user Jonathan Tran for his `http.createServer` example.
  - Thanks to [clone](https://www.npmjs.com/package/clone) for its implementation of cloning Promises.
  - Thanks to [this](https://stackoverflow.com/a/62491100/22334683) stackoverflow answer for its suggestion for cloning Files.
  - Thanks to [fisker](https://github.com/fisker) and their [package](https://github.com/fisker/create-file-list) for its implementation of creating FileList instances.

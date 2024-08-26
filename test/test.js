@@ -45,8 +45,8 @@ import { GlobalState } from '../src/clone-deep/clone-deep-utils/global-state.js'
 
 describe('index.js', () => {
     test('exports cloneDeep as a default export. Also exports CLONE, ' +
-            'cloneDeepAsync, cloneDeepFully, cloneDeepFullyAsync, and ' +
-            'useCustomizers as named exports', async () => {
+         'cloneDeepAsync, cloneDeepFully, cloneDeepFullyAsync, and ' +
+         'useCustomizers as named exports', async () => {
         const module = await import('../index.js');
         const array = [];
         const getPusher = (n) => {
@@ -309,7 +309,6 @@ describe('cloneDeep without customizer', () => {
             };
 
             const type = {
-                // "standard" classes
                 args: [
                     {
                         callee: mock.fn(),

@@ -4,13 +4,14 @@ import {
     CloneDeepFullyOptions
 } from "./src/types";
 
-export { 
+export {
+    Log, 
     Customizer, 
     CloneDeepOptions, 
     CloneDeepFullyOptions
 } from "./src/types";
 
-export { 
+export {
     AdditionalValue, 
     CloningMethodResult 
 } from "./src/utils/types";
@@ -61,7 +62,7 @@ declare module "cms-clone-deep" {
      */
     export default function cloneDeep<T, U = T>(
         value: T, 
-        options: CloneDeepOptions|Customizer|undefined
+        options?: CloneDeepOptions
     ) : U;
 
     /**
