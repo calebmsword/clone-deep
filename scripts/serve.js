@@ -23,6 +23,11 @@ http.createServer((request, response) => {
     const uri = parse(request.url).pathname;
     let filename = path.join(directory, uri);
 
+    if (filename
+        .includes('.well-known\\appspecific\\com.chrome.devtools.json')) {
+        return;
+    };
+
     if (fs.statSync(filename).isDirectory()) {
         filename += '\\benchmark\\index.html';
     }
